@@ -1,0 +1,29 @@
+# Notas de release (corpo da release do GitHub): mesmos grupos do cliff.toml, sem título de versão nem cabeçalho.
+# A faixa de commits vem do release.yml (beta: desde a beta anterior da mesma versão; estável: desde a última estável).
+
+[changelog]
+header = ""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{% if commit.breaking %}**QUEBRA:** {% endif %}{{ commit.message | split(pat="\n") | first | upper_first | trim }}\
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+sort_commits = "oldest"
+topo_order = false
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Novidades" },
+  { message = "^fix", group = "<!-- 1 -->Correções" },
+  { message = "^(docs|refactor|perf|test|build|ci|chore|style|revert)", group = "<!-- 2 -->Outros" },
+]

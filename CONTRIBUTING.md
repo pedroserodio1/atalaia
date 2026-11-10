@@ -108,6 +108,23 @@ Regras completas em [`.claude/rules/app-kotlin.md`](.claude/rules/app-kotlin.md)
 A skill `/verificar-contribuicao` (ou o script `.claude/skills/verificar-contribuicao/verificar.ps1`) faz as checagens
 mecânicas.
 
+## Ramos, versões e releases
+
+O detalhe está em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Em resumo:
+
+| Canal | Ramo | Tag | Release |
+|---|---|---|---|
+| Estável | `main` | `vX.Y.Z` | normal |
+| Beta | `development` | `vX.Y.Z-beta.N` | pré-lançamento |
+| Trabalho | `beta/X.Y.Z` e sub-ramos (`feat/`, `fix/`, `docs/`, `chore/`) | sem tag | nenhuma |
+
+- Abra o PR **para o ramo do ciclo** (`beta/X.Y.Z`, o mais recente), não para `main` nem `development`. Quem integra o ciclo é o mantenedor.
+- Merge: sub-ramo para `beta/X.Y.Z` por *squash*; `beta/X.Y.Z` para `development` e `development` para `main` por *merge commit*.
+- Versão (SemVer): **patch** é correção compatível; **minor** é recurso novo compatível (plugin, tela, campo opcional no protocolo);
+  **major** é quebra (protocolo incompatível, configuração que deixa de funcionar, requisito mínimo maior). Antes da 1.0, o minor
+  pode quebrar, com aviso nas notas. **Beta** (`-beta.N`) é uma candidata: vem antes da estável de mesmo número.
+- Só o mantenedor cria tags e releases. Tag publicada nunca é movida nem apagada.
+
 ## Commits e pull requests
 
 - Mensagens no padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/), em português: `feat(agent): ...`,

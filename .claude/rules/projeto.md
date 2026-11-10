@@ -39,6 +39,9 @@ Valem para qualquer mudança no repositório.
 - **Sem linhas de atribuição** nas mensagens (`Co-Authored-By`, "Generated with ...").
 - Não commite sem o usuário pedir. Nunca altere a configuração do git nem use `push --force` em branch compartilhada.
 - Nunca inclua `appsettings.Local.json`, `.env`, `local.properties`, chaves ou builds.
+- Ramos, versões e releases seguem `docs/versionamento-e-releases.md`: trabalho em `beta/X.Y.Z` (sub-ramos por squash), `development`
+  recebe o ciclo (merge commit) e gera betas (`vX.Y.Z-beta.N`), `main` só recebe estável (`vX.Y.Z`). Nada de commit direto em
+  `main` nem em `development`. **Nunca crie, mova nem apague tag**: quem cria a tag é o mantenedor.
 
 ## Verificar antes de dizer que terminou
 - `dotnet test` (em `agent/`) e `./gradlew :core:test` (em `app/`) precisam passar. Se não conseguiu rodar algo, diga isso, e

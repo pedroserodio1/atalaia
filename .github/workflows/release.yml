@@ -1,0 +1,214 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Pedro Serôdio
+#
+# Release: ao subir uma tag v*, valida, constrói o instalador do agente e o APK assinado, gera as notas e cria a release.
+# Ensaio (dry_run): `gh workflow run release.yml --ref development -f tag=v0.1.1-beta.1 -f dry_run=true` constrói tudo e NÃO publica.
+# Quem cria a tag é o mantenedor; este workflow só a valida. Regras: docs/versionamento-e-releases.md.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag simulada do ensaio (ex.: v0.1.1-beta.1). Não precisa existir.'
+        required: true
+        type: string
+      dry_run:
+        description: 'Ensaio: constrói tudo e não publica. Para publicar, suba uma tag.'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+  ENSAIO: ${{ github.event_name != 'push' }}
+
+jobs:
+  validar:
+    name: validar
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      version: ${{ steps.v.outputs.version }}
+      core: ${{ steps.v.outputs.core }}
+      pre: ${{ steps.v.outputs.pre }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+      versioncode: ${{ steps.v.outputs.versionCode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # tags e ramos (origin/main, origin/development) para a validação
+      - name: Só tag publica; o disparo manual é sempre ensaio
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}
+        run: |
+          echo "::error::O disparo manual só faz ensaio. Para publicar, o mantenedor sobe a tag."
+          exit 1
+      - name: Validar a tag
+        id: v
+        run: |
+          set -euo pipefail
+          opcoes=()
+          if [ "$ENSAIO" = true ]; then opcoes+=(-Ensaio); fi
+          saida=$(pwsh -NoProfile -File scripts/versao.ps1 -Acao validar -Tag "$TAG" -Sha "$GITHUB_SHA" "${opcoes[@]}")
+          echo "$saida"
+          echo "$saida" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Estável precisa do CHANGELOG da versão
+        if: ${{ steps.v.outputs.prerelease == 'false' }}
+        run: |
+          grep -q "^## \[${{ steps.v.outputs.core }}\]" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md sem a seção ## [${{ steps.v.outputs.core }}]. Gere com scripts/changelog.ps1 antes do PR para main."
+            exit 1
+          }
+
+  notas:
+    name: notas
+    needs: validar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: git-cliff (versão e somas fixas)
+        run: pip install --require-hashes -r scripts/requisitos-cliff.txt
+      - name: Notas desde a beta anterior (ou a última estável)
+        env:
+          CORE: ${{ needs.validar.outputs.core }}
+          PRERELEASE: ${{ needs.validar.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          fim="$TAG"; if [ "$ENSAIO" = true ]; then fim="$GITHUB_SHA"; fi
+          ultima_estavel=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | grep -v -- '-' | grep -vxF "$TAG" | head -n1 || true)
+          base="$ultima_estavel"
+          if [ "$PRERELEASE" = true ]; then
+            anterior=$(git tag --list "v${CORE}-beta.*" --sort=-v:refname | grep -vxF "$TAG" | head -n1 || true)
+            base="${anterior:-$ultima_estavel}"
+          fi
+          faixa="$fim"; if [ -n "$base" ]; then faixa="$base..$fim"; fi
+          echo "Faixa das notas: $faixa"
+          git-cliff --config cliff-notas.toml "$faixa" --output notas.md
+          cat notas.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notas
+          path: notas.md
+
+  agente:
+    name: agente
+    needs: validar
+    runs-on: windows-latest   # alvo net10.0-windows; o Inno Setup só existe no Windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Testes
+        run: dotnet test agent/Atalaia.sln --configuration Release -p:AtalaiaPre=${{ needs.validar.outputs.pre }}
+      - name: Instalador (publish autocontido + Inno Setup)
+        shell: pwsh
+        run: scripts/build-installer.ps1 -Versao '${{ needs.validar.outputs.version }}' -Pre '${{ needs.validar.outputs.pre }}' -Saida dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agente
+          path: dist/Atalaia-Agent-Setup-*.exe
+          if-no-files-found: error
+
+  app:
+    name: app
+    needs: validar
+    runs-on: ubuntu-latest
+    environment: release   # os segredos do keystore ficam neste environment (docs/assinatura-apk.md)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK (aceita as licenças; o AGP baixa a plataforma 37 e as build-tools que faltarem)
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Keystore de release
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ATALAIA_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/atalaia-release.jks"
+            echo "ATALAIA_KEYSTORE_PATH=$RUNNER_TEMP/atalaia-release.jks" >> "$GITHUB_ENV"
+          elif [ "$ENSAIO" = true ]; then
+            echo "::warning::Sem keystore: o APK do ensaio sai com a chave de debug (não serve para publicar)."
+          else
+            echo "::error::Segredo ATALAIA_KEYSTORE_BASE64 ausente: release sem chave própria é recusada."
+            exit 1
+          fi
+      - name: Testes e APK de release
+        working-directory: app
+        env:
+          ATALAIA_KEYSTORE_PASSWORD: ${{ secrets.ATALAIA_KEYSTORE_PASSWORD }}
+          ATALAIA_KEY_ALIAS: ${{ secrets.ATALAIA_KEY_ALIAS }}
+          ATALAIA_KEY_PASSWORD: ${{ secrets.ATALAIA_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew :core:test :tablet:assembleRelease -PappPre="${{ needs.validar.outputs.pre }}"
+      - name: Conferir versão e assinatura do APK
+        run: |
+          set -euo pipefail
+          apk=app/tablet/build/outputs/apk/release/tablet-release.apk
+          atual=$(cd app && ./gradlew -q :tablet:printVersion -PappPre="${{ needs.validar.outputs.pre }}" | grep '^versionCode=')
+          if [ "$atual" != "versionCode=${{ needs.validar.outputs.versioncode }}" ]; then
+            echo "::error::versionCode do Gradle ($atual) difere do calculado (${{ needs.validar.outputs.versioncode }})"; exit 1
+          fi
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n1)
+          "$apksigner" verify --print-certs "$apk" | tee certs.txt
+          if grep -q 'Android Debug' certs.txt; then
+            if [ "$ENSAIO" = true ]; then echo "::warning::APK do ensaio assinado com a chave de debug."
+            else echo "::error::APK assinado com a chave de debug: recusado."; exit 1; fi
+          fi
+          mkdir -p dist
+          cp "$apk" "dist/Atalaia-Tablet-${{ needs.validar.outputs.version }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: dist/Atalaia-Tablet-*.apk
+          if-no-files-found: error
+
+  publicar:
+    name: publicar
+    needs: [validar, notas, agente, app]
+    if: ${{ github.event_name == 'push' }}   # ensaio nunca publica
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # só este job escreve (cria a release)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Somas SHA-256
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          sha256sum Atalaia-Agent-Setup-*.exe Atalaia-Tablet-*.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Criar a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ needs.validar.outputs.prerelease }}
+          VERSION: ${{ needs.validar.outputs.version }}
+        run: |
+          set -euo pipefail
+          opcoes=()
+          if [ "$PRERELEASE" = true ]; then opcoes+=(--prerelease); fi
+          gh release create "$TAG" dist/Atalaia-Agent-Setup-*.exe dist/Atalaia-Tablet-*.apk dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "Atalaia $VERSION" --notes-file dist/notas.md "${opcoes[@]}"

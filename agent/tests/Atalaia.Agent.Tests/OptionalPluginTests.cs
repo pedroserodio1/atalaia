@@ -30,7 +30,10 @@ public class WeatherTests
             Assert.Equal(12, d.GetProperty("windKmh").GetInt32());
             Assert.Equal(3, d.GetProperty("code").GetInt32());
             Assert.Equal("Nublado", d.GetProperty("condition").GetString());
-            Assert.Equal("2026-11-09T17:00:00-03:00", d.GetProperty("updatedAt").GetString());
+            // A data sai em hora local do PC (Json.Iso), então o deslocamento depende de onde o teste roda: confere o formato e o instante.
+            var updatedAt = d.GetProperty("updatedAt").GetString()!;
+            Assert.Matches(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$", updatedAt);
+            Assert.Equal(new DateTimeOffset(2026, 11, 9, 20, 0, 0, TimeSpan.Zero), DateTimeOffset.Parse(updatedAt, CultureInfo.InvariantCulture));
         }
         finally { CultureInfo.CurrentCulture = saved; }
     }

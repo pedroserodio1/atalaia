@@ -4,6 +4,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>0.0.1-beta</Version>
+  </PropertyGroup>
+  <!-- Versão: o X.Y.Z vem do arquivo VERSION (raiz do repositório); o sufixo, de -p:AtalaiaPre=
+       (dev = build local, padrão; beta.N; stable = sem sufixo). Ver docs/versionamento-e-releases.md. -->
+  <PropertyGroup>
+    <AtalaiaPre Condition="'$(AtalaiaPre)' == ''">dev</AtalaiaPre>
+    <VersionPrefix>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\VERSION').Trim())</VersionPrefix>
+    <VersionSuffix Condition="'$(AtalaiaPre)' != 'stable'">$(AtalaiaPre)</VersionSuffix>
   </PropertyGroup>
 </Project>
