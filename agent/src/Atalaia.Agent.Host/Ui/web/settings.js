@@ -137,6 +137,8 @@ function channelPicker(v, d) {
 }
 
 function updatesView() {
+  // Criado uma vez: dentro do paint ele nasceria vazio a cada redesenho (a cada 1,5 s), piscando, e deixaria um timer novo para trás.
+  const tablet = tabletUpdateCard();
   const view = stepView(() => call('updates.get'), (v) => {
     const d = v.data;
     const [text] = updateStatusLine(d);
@@ -153,7 +155,7 @@ function updatesView() {
           toggle('Instalar sozinho', d.autoInstall, (on) => v.run('Gravando…', () => call('updates.setAutoInstall', { enabled: on })), v.busy)),
         row('Canal', 'Estável ou Beta'), channelPicker(v, d)),
       busyNote(v),
-      tabletUpdateCard(),
+      tablet,
     ];
   }, 1500);
   return view.box;
