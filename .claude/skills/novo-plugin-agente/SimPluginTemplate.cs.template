@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) {{ANO}} {{SEU_NOME}}
+
+using System.Text.Json;
+using Atalaia.Agent.Core;
+
+namespace Atalaia.Agent.Plugins.Simulator;
+
+// Cole esta classe em um arquivo novo desta pasta (ou ao lado das outras) e acrescente `new Sim{{Nome}}()` em SimulatorPlugins.All().
+
+/// <summary>Versão com dados falsos de {{id}}: mesmo id e mesmo formato de data do plugin real.</summary>
+public sealed class Sim{{Nome}}() : SimBase("{{id}}", "{{Nome legível}}", 5000)
+{
+    public override IReadOnlyList<ActionDescriptor> Actions { get; } = [RefreshAction];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct) => Result(new
+    {
+        value = (int)Rand(0, 100),                                                       // mesmos campos do plugin real
+        updatedAt = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz"),
+    });
+}

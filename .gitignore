@@ -23,3 +23,6 @@ TestResults/
 # Sistema
 Thumbs.db
 .DS_Store
+
+# Claude Code: configuracao local de cada pessoa (as regras e skills em .claude/ vao para o repositorio)
+.claude/settings.local.json

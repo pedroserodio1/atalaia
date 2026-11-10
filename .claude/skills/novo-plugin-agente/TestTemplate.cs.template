@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) {{ANO}} {{SEU_NOME}}
+
+using System.Text.Json;
+using Atalaia.Agent.Core;
+using Atalaia.Agent.Plugins.{{Nome}};
+
+namespace Atalaia.Agent.Tests;
+
+public class {{Nome}}Tests
+{
+    [Fact]
+    public void Build_devolve_o_formato_do_protocolo()
+    {
+        var d = {{Nome}}Plugin.Build(new DateTimeOffset(2026, 11, 9, 17, 0, 0, TimeSpan.FromHours(-3)));
+        Assert.Equal(42, d.GetProperty("value").GetInt32());                                   // troque pelos seus campos
+        Assert.Equal("2026-11-09T17:00:00-03:00", d.GetProperty("updatedAt").GetString());
+    }
+
+    [Fact]
+    public async Task Refresh_e_valido_e_o_resto_e_acao_desconhecida()
+    {
+        var plugin = new {{Nome}}Plugin();
+        Assert.True((await plugin.ExecuteAsync("refresh", Json.EmptyObject, CancellationToken.None)).Ok);
+        var r = await plugin.ExecuteAsync("apagar-tudo", Json.EmptyObject, CancellationToken.None);
+        Assert.False(r.Ok);
+        Assert.Equal("unknown_action", r.Error);
+    }
+}

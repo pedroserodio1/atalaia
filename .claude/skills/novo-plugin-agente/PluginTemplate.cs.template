@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) {{ANO}} {{SEU_NOME}}
+
+using System.Text.Json;
+using Atalaia.Agent.Core;
+
+namespace Atalaia.Agent.Plugins.{{Nome}};
+
+/// <summary>{{Uma frase: de onde vem o dado desta fonte.}}</summary>
+public sealed class {{Nome}}Plugin : IPlugin
+{
+    public string Id => "{{id}}";                       // camelCase, único. É o "source" do protocolo; nunca renomeie depois de publicado
+    public string Name => "{{Nome legível}}";           // aparece no hello
+    public int DefaultIntervalMs => 5_000;              // Plugins:{{id}}:intervalMs sobrescreve
+    public IReadOnlyList<ActionDescriptor> Actions { get; } = [new("refresh", "coleta de novo agora")];
+
+    public Task StartAsync(IPluginContext ctx, CancellationToken ct)
+    {
+        // Leia a configuração aqui: ctx.Options["chave"] (seção Plugins:{{id}}).
+        // Sem a configuração necessária, lance InvalidOperationException com uma mensagem em português dizendo QUAL
+        // chave configurar; o plugin fica com status "error" e o agente tenta de novo sozinho.
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;   // libere HttpClient, processos, handles
+
+    /// <summary>Coleta e converte. Exceção = o agendador marca "error" e aplica backoff; devolver null = "sem dado agora".</summary>
+    public Task<JsonElement?> CollectAsync(CancellationToken ct) =>
+        Task.FromResult<JsonElement?>(Build(DateTimeOffset.Now));
+
+    /// <summary>Lógica pura, sem rede nem hardware: é o que os testes chamam. Nomes em camelCase; sem leitura = null.</summary>
+    public static JsonElement Build(DateTimeOffset now) => Json.ToElement(new
+    {
+        value = 42,                      // troque pelos campos da fonte (unidades do protocolo; números com InvariantCulture)
+        updatedAt = Json.Iso(now),       // ISO-8601 com offset
+    });
+
+    public Task<ActionResult> ExecuteAsync(string action, JsonElement args, CancellationToken ct) =>
+        Task.FromResult(action == "refresh" ? new ActionResult(true) : new ActionResult(false, "unknown_action"));
+    // "refresh" só responde ok: com Ok=true o agendador já coleta de novo em seguida.
+    // Ação com argumento: valide e limite args; inválido => new ActionResult(false, "invalid_args").
+}
