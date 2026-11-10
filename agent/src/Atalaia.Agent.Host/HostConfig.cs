@@ -29,32 +29,37 @@ internal static class AppPaths
 
 internal static class HostConfig
 {
-    /// <summary>appsettings.json → appsettings.Local.json → settings.json (a janela do agente) → .env → variáveis ATALAIA_*.</summary>
+    /// <summary>appsettings.json → appsettings.Local.json → settings.json (a janela do agente) → cofre de segredos → .env → variáveis ATALAIA_*.</summary>
     public static IConfiguration Build()
     {
         LoadDotEnv();
         SettingsQuarantined = SettingsStore.Default.QuarantineIfInvalid();   // settings.json estragado não pode impedir o agente de subir
-        return Compose(AppContext.BaseDirectory, SettingsStore.Default);
+        SecretsQuarantined = SecretVault.Default.QuarantineIfUnreadable();   // idem o cofre: ilegível não impede de subir
+        return Compose(AppContext.BaseDirectory, SettingsStore.Default, SecretVault.Default);
     }
 
     /// <summary>Se o <c>settings.json</c> estava inválido na partida, onde a cópia dele foi guardada (o <c>Program</c> avisa no log).</summary>
     public static string? SettingsQuarantined { get; private set; }
 
+    /// <summary>Se o cofre de segredos não pôde ser decifrado na partida, onde a cópia dele foi guardada (o <c>Program</c> avisa no log, sem conteúdo).</summary>
+    public static string? SecretsQuarantined { get; private set; }
+
     /// <summary>
     /// A ordem de carga, sem o <c>.env</c> (que mexe nas variáveis do processo). O <c>.env</c> entra em <see cref="Build"/> por variável
-    /// de ambiente, então vale a mesma precedência: a variável vence o <c>settings.json</c>.
+    /// de ambiente, então vale a mesma precedência: a variável vence o <c>settings.json</c> e o cofre de segredos.
     /// </summary>
-    internal static IConfiguration Compose(string baseDirectory, SettingsStore settings)
+    internal static IConfiguration Compose(string baseDirectory, SettingsStore settings, SecretVault? vault = null)
     {
         var settingsDir = Path.GetDirectoryName(settings.FilePath)!;
         Directory.CreateDirectory(settingsDir);   // o provedor de arquivos exige que a pasta exista
-        return new ConfigurationBuilder()
+        var builder = new ConfigurationBuilder()
             .SetBasePath(baseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile("appsettings.Local.json", optional: true)
-            .AddJsonFile(new PhysicalFileProvider(settingsDir), Path.GetFileName(settings.FilePath), optional: true, reloadOnChange: false)
-            .AddEnvironmentVariables("ATALAIA_")
-            .Build();
+            .AddJsonFile(new PhysicalFileProvider(settingsDir), Path.GetFileName(settings.FilePath), optional: true, reloadOnChange: false);
+        // Os segredos entram só na memória do processo (chave "Plugins:steam:apiKey" → valor), acima do settings.json e abaixo do ambiente.
+        if (vault is not null) builder.AddInMemoryCollection(vault.Read().Select(p => new KeyValuePair<string, string?>(p.Key, p.Value)));
+        return builder.AddEnvironmentVariables("ATALAIA_").Build();
     }
 
     /// <summary>

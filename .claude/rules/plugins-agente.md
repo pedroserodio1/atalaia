@@ -50,8 +50,14 @@ O contrato está em `agent/src/Atalaia.Agent.Core/Contracts.cs` (`IPlugin`, `IPl
 ## Configuração e segredos
 - Entrada em `agent/appsettings.json`: `{ "enabled": ..., "intervalMs": ... }` mais as chaves próprias. Plugin que precisa de
   credencial ou de dado pessoal nasce `enabled: false`.
-- **Segredo nunca no `appsettings.json`:** só por variável de ambiente `ATALAIA_Plugins__<id>__<chave>` ou `.env`, documentado
-  (sem valor) em `agent/.env.example`.
+- **Segredo nunca no `appsettings.json` nem no `settings.json`:** entra por variável de ambiente `ATALAIA_Plugins__<id>__<chave>` ou `.env`
+  (documentado, sem valor, em `agent/.env.example`) **ou** pelo formulário da janela, que o guarda no cofre (`SecretVault`, DPAPI do usuário
+  atual, `%LOCALAPPDATA%\AtalaiaAgent\secrets.dat`). O plugin não muda: lê tudo em `ctx.Options["chave"]`, e a ordem de carga põe o ambiente
+  acima do cofre.
+- **Quer a fonte configurável pela janela?** Declare os campos em `SourceCredentials` (`Sources/SourceCredentials.cs`: nome, rótulo, tipo de
+  validação e se é segredo) e acrescente os testes. Segredo: o valor nunca volta para a página (só "configurada"), nunca vai para o log, e a
+  mudança religa o agente e desfaz (`settings.json` e cofre) se ele não subir. Dado pessoal que não é segredo (coordenada, ID público) vai para o
+  `settings.json`.
 - Leia a configuração em `ctx.Options["chave"]`. Nada de caminho, IP, usuário, localização ou nome de dispositivo no código.
 
 ## Privacidade e sistema do usuário

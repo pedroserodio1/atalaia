@@ -57,8 +57,9 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
    para instalar sem cabo.
 4. **Código de pareamento:** mostra o código de 6 dígitos (só aqui e no menu da bandeja), copia, e conclui sozinho quando um tablet conecta (USB ou Wi-Fi).
 5. **Fontes de dados:** as onze fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
-   banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`, Claude sem a pasta). Chaves de API **nunca** são gravadas por aqui: a janela só diz
-   qual variável de ambiente definir.
+   banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`, Claude sem a pasta). **Clima, Steam e Discord têm o botão Configurar**, com um
+   formulário por fonte (veja [Credenciais das fontes](#credenciais-das-fontes-pela-janela)): o que é segredo vai para um cofre criptografado
+   com a sua conta do Windows e **nunca volta à tela** (só "Configurada", com Trocar e Remover).
 6. **Pronto:** resumo real de cada item, **Iniciar com o Windows** (valor `Atalaia` na chave `HKCU\...\Run`, só para o `AtalaiaAgent.exe` instalado) e
    **Buscar atualizações sozinho** (`Updates:AutoCheck`).
 
@@ -117,14 +118,38 @@ dotnet test
 
 ## Configuração
 
-Ordem de carga (o último vence): `appsettings.json` → `appsettings.Local.json` → **`settings.json`** → `.env` → variáveis de
+Ordem de carga (o último vence): `appsettings.json` → `appsettings.Local.json` → **`settings.json`** → **cofre de segredos** → `.env` → variáveis de
 ambiente com prefixo `ATALAIA_` (use `__` no lugar de `:`, por exemplo `ATALAIA_Plugins__ups__enabled=true`).
 Uma variável já definida no ambiente tem prioridade sobre a do `.env`.
 
-O **`settings.json`** (em `%LOCALAPPDATA%\AtalaiaAgent\`) é o que a janela do agente grava: o estado do onboarding e, nas próximas etapas,
-as opções que você muda pela janela. Fica fora da pasta de instalação (que não é gravável) e o `appsettings.json` versionado nunca recebe
-configuração pessoal. **Segredos** (chaves de API) nunca vão para o `settings.json`: só por variável de ambiente ou `.env`. Se o arquivo ficar
-ilegível, o agente o guarda ao lado como `settings.json.corrompido-<data>` e sobe com a configuração padrão (o log avisa).
+O **`settings.json`** (em `%LOCALAPPDATA%\AtalaiaAgent\`) é o que a janela do agente grava: o estado do onboarding e as opções que você muda pela
+janela. Fica fora da pasta de instalação (que não é gravável) e o `appsettings.json` versionado nunca recebe configuração pessoal. **Segredos**
+(chave da Steam, `clientSecret` do Discord) nunca vão para o `settings.json`: ficam no cofre (abaixo) ou, se preferir, em variável de ambiente ou
+`.env`. Se o arquivo ficar ilegível, o agente o guarda ao lado como `settings.json.corrompido-<data>` e sobe com a configuração padrão (o log avisa).
+
+### Credenciais das fontes pela janela
+
+Em **Fontes de dados** (e no passo 5 do onboarding), o botão **Configurar** de cada fonte abre um formulário, com validação e mensagens em português:
+
+| Fonte | Campos | Onde ficam |
+|---|---|---|
+| Clima (Open-Meteo) | `Plugins:weather:latitude` (−90 a 90) e `longitude` (−180 a 180), graus decimais **com ponto** | `settings.json` (não são segredo) |
+| Steam | `Plugins:steam:apiKey` (obrigatória) e `steamId64` (exatamente 17 dígitos) | `apiKey` no cofre; `steamId64` no `settings.json` |
+| Discord | `Plugins:discord:clientId` e `clientSecret` (obrigatórios, sem espaços) | `clientSecret` no cofre; `clientId` (identificador público do aplicativo) no `settings.json` |
+
+- **O cofre** é o arquivo `%LOCALAPPDATA%\AtalaiaAgent\secrets.dat`, inteiro cifrado com a **DPAPI do Windows no escopo do usuário atual**: só a mesma
+  conta do Windows, neste PC, consegue lê-lo. Ele fica fora do repositório e do `settings.json`, e o agente o lê ao montar a configuração
+  (acima do `settings.json`, **abaixo** do `.env` e das variáveis `ATALAIA_*`, que continuam mandando). Copiar o arquivo para outro PC ou outra
+  conta não serve: se não puder ser decifrado, o agente o guarda ao lado como `secrets.dat.ilegivel-<data>`, sobe sem as credenciais e o log avisa
+  (sem conteúdo); é só digitá-las de novo.
+- **O valor de um segredo nunca volta para a tela nem vai para o log.** Depois de salvo, o campo mostra só "Configurada"; deixar em branco ao salvar
+  **mantém** o valor, digitar outro **troca** e **Remover** (com confirmação) apaga os campos da fonte, o segredo inclusive.
+- **Variável de ambiente manda.** Se `ATALAIA_Plugins__<id>__<chave>` (ou o `.env`) define um campo, ele aparece travado com o nome da variável, e a
+  janela não grava por cima.
+- **Salvar religa o agente** (o código de acesso não muda) e **desfaz** tudo (`settings.json` e cofre) se ele não subir, como nas outras telas.
+- **Salvar não liga a fonte**: use o interruptor ao lado. Na primeira vez, o Discord mostra um pop-up de autorização; o refresh token fica em
+  `%LOCALAPPDATA%\AtalaiaAgent\discord.json`.
+- A DPAPI protege o arquivo de outras contas e de quem o copia, **não** de um programa rodando como você, que pode pedir a mesma descriptografia.
 
 Os ajustes pessoais vão em **`agent/appsettings.Local.json`** (fora do git; é copiado para a pasta de saída ao
 compilar, ou pode ficar ao lado do `AtalaiaAgent.exe`). Só precisa conter o que muda:
@@ -163,7 +188,7 @@ Chaves principais (padrões em `appsettings.json`):
 | `Usb:AdbPath` | Caminho do `adb.exe`; vazio = o do PATH, depois `ANDROID_HOME`/`ANDROID_SDK_ROOT`\platform-tools |
 | `Usb:PollSeconds` / `Usb:Serial` | Intervalo da conferência (3 s; de 1 a 60) e, se preenchido, o único aparelho a atender (vazio = todos os autorizados) |
 
-Plugins opcionais (todos ligáveis em `appsettings.Local.json`; segredos só em variável de ambiente ou `.env`,
+Plugins opcionais (todos ligáveis em `appsettings.Local.json`; segredos pelo botão Configurar da janela, ou em variável de ambiente ou `.env`,
 nunca no `appsettings.json`; veja o `.env.example`):
 
 | Chave | Significado |

@@ -55,7 +55,7 @@ internal static class SourceCatalog
                 }
             case "weather":
                 return Coordinate(p.Option("latitude")) && Coordinate(p.Option("longitude"))
-                    ? [] : ["Faltam a latitude e a longitude do seu local (Plugins:weather:latitude e Plugins:weather:longitude, em graus decimais com ponto)."];
+                    ? [] : ["Faltam a latitude e a longitude do seu local: use o botão Configurar (graus decimais, com ponto). Também valem Plugins:weather:latitude e Plugins:weather:longitude."];
             case "claude":
                 {
                     var dir = Blank(p.Option("configDir")) ?? Blank(p.Env("CLAUDE_CONFIG_DIR")) ?? Path.Combine(p.UserHome, ".claude");
@@ -63,10 +63,10 @@ internal static class SourceCatalog
                 }
             case "steam":
                 return Blank(p.Option("apiKey")) is not null && Blank(p.Option("steamId64")) is not null
-                    ? [] : ["Faltam a chave da API e o SteamID64: defina as variáveis de ambiente ATALAIA_Plugins__steam__apiKey e ATALAIA_Plugins__steam__steamId64 (chaves nunca ficam em arquivo de configuração)."];
+                    ? [] : ["Faltam a chave da API e o SteamID64: use o botão Configurar (a chave fica criptografada neste PC) ou defina as variáveis de ambiente ATALAIA_Plugins__steam__apiKey e ATALAIA_Plugins__steam__steamId64."];
             case "discord":
                 return Blank(p.Option("clientId")) is not null && Blank(p.Option("clientSecret")) is not null
-                    ? [] : ["Faltam o clientId e o clientSecret do aplicativo do Discord: defina as variáveis de ambiente ATALAIA_Plugins__discord__clientId e ATALAIA_Plugins__discord__clientSecret."];
+                    ? [] : ["Faltam o clientId e o clientSecret do aplicativo do Discord: use o botão Configurar (o segredo fica criptografado neste PC) ou defina as variáveis de ambiente ATALAIA_Plugins__discord__clientId e ATALAIA_Plugins__discord__clientSecret."];
             default:
                 return [];
         }

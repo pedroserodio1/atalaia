@@ -53,6 +53,8 @@ internal static class Program
             ConfigureLog(console);
             if (HostConfig.SettingsQuarantined is { } bad)
                 Log.Warning("O settings.json estava inválido: foi guardado em {Path} e o agente começou com a configuração padrão.", bad);
+            if (HostConfig.SecretsQuarantined is { } unreadable)
+                Log.Warning("O cofre de segredos não pôde ser lido (outro usuário do Windows ou arquivo estragado): foi guardado em {Path} e as credenciais precisam ser digitadas de novo.", unreadable);
             runtime = new AgentRuntime(config, simulate, TokenStore.Load(config));
             Task.Run(runtime.StartAsync).GetAwaiter().GetResult();   // fora da thread da interface
 
@@ -115,7 +117,8 @@ internal static class Program
         return new StepServices(
             runtime,
             settings,
-            ApplyConfig: () => runtime.RestartAsync(HostConfig.Compose(AppContext.BaseDirectory, settings)),
+            SecretVault.Default,
+            ApplyConfig: () => runtime.RestartAsync(HostConfig.Compose(AppContext.BaseDirectory, settings, SecretVault.Default)),
             Firewall: new WindowsFirewall(),
             Adb: new AdbService(() => UsbOptions.From(runtime.Config).AdbPath, Environment.GetEnvironmentVariable, File.Exists, (exe, timeout) => new ProcessAdbRunner(exe, timeout)),
             Apk: () => ApkProviderFor(runtime, AppInfo.Version),

@@ -139,6 +139,11 @@ button { font: inherit; color: inherit; }
 .adapter { text-align: left; border: 1px solid var(--border); background: var(--panel-2); border-radius: 12px; padding: 9px 12px; font-size: 14px; color: var(--text-2); cursor: pointer; }
 .adapter.on { border-color: var(--mint); color: var(--text); background: var(--mint-bg); }
 .input { height: 40px; padding: 0 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 16px; min-width: 0; width: 120px; user-select: text; }
+.input.wide { width: 100%; box-sizing: border-box; }
+.cfg { padding: 4px 0 16px; border-bottom: 1px solid var(--border); }
+.frow { display: grid; gap: 6px; margin-bottom: 12px; }
+.flabel { font-weight: 700; font-size: 15px; }
+.input:disabled { opacity: .6; }
 .input.ro { flex: 1; width: auto; display: flex; align-items: center; font-size: 14px; color: var(--text-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .pathline { display: flex; gap: 10px; align-items: center; padding-top: 12px; }
 .btnrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }

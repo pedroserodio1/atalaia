@@ -22,7 +22,8 @@ namespace Atalaia.Agent.Host.Ui;
 internal sealed record StepServices(
     AgentRuntime Runtime,
     SettingsStore Settings,
-    Func<Task> ApplyConfig,                       // religa o agente com a configuração nova (RestartAsync)
+    SecretVault Vault,                            // segredos digitados na janela (DPAPI); o valor nunca volta para a página
+    Func<Task> ApplyConfig,                      // religa o agente com a configuração nova (RestartAsync)
     IFirewall Firewall,
     AdbService Adb,
     Func<ApkProvider?> Apk,                       // null = não dá para baixar (sem repositório válido)
@@ -74,6 +75,8 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
 
         r.Register("sources.get", _ => SourcesGet());
         r.Register("sources.set", a => SourcesSet(CommandRouter.Text(a, "id", 32), Bool(a, "enabled")));
+        r.Register("sources.configure", a => SourcesConfigure(CommandRouter.Text(a, "id", 32), FormValues(a)));
+        r.Register("sources.clearConfig", a => SourcesClearConfig(CommandRouter.Text(a, "id", 32)));
 
         r.Register("summary.get", _ => Summary());
         r.Register("startup.set", a => StartupSet(Bool(a, "enabled")));
@@ -354,15 +357,84 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         {
             var st = status.TryGetValue(info.Id, out var v) ? v : PluginStatus.Disabled;
             var needs = SourceCatalog.Missing(info.Id, s.Probe(info.Id));
-            list.Add(new JsonObject
+            var entry = new JsonObject
             {
                 ["id"] = info.Id, ["name"] = info.Name, ["description"] = info.Description,
                 ["enabled"] = st != PluginStatus.Disabled,
                 ["status"] = st.ToString().ToLowerInvariant(),
                 ["needs"] = new JsonArray([.. needs.Select(n => (JsonNode)JsonValue.Create(n)!)]),
-            });
+            };
+            var fields = SourceCredentials.For(info.Id);
+            if (fields.Count > 0) entry["fields"] = new JsonArray([.. fields.Select(f => FieldJson(info.Id, f))]);
+            list.Add(entry);
         }
         return new JsonObject { ["simulate"] = s.Runtime.Simulate, ["sources"] = list };
+    }
+
+    /// <summary>
+    /// Um campo do formulário. Segredo: só "configurada" (<c>configured</c>), <b>nunca</b> o valor. Não segredo: o valor atual, para preencher o campo.
+    /// <c>fromEnv</c> = uma variável de ambiente <c>ATALAIA_*</c> define o campo e manda sobre o que a janela grava.
+    /// </summary>
+    private JsonNode FieldJson(string sourceId, CredentialField f)
+    {
+        var current = s.Runtime.Config[f.Key(sourceId)];
+        var o = new JsonObject
+        {
+            ["name"] = f.Name, ["label"] = f.Label, ["secret"] = f.Secret,
+            ["configured"] = !string.IsNullOrWhiteSpace(current),
+            ["fromEnv"] = !string.IsNullOrWhiteSpace(s.Probe(sourceId).Env(f.EnvName(sourceId))),
+            ["envName"] = f.EnvName(sourceId),
+        };
+        if (!f.Secret) o["value"] = current ?? "";
+        return o;
+    }
+
+    /// <summary>Os valores do formulário (<c>values</c>: nome do campo → texto). Qualquer outra forma é recusada.</summary>
+    private static Dictionary<string, string?> FormValues(JsonElement a)
+    {
+        if (!a.TryGetProperty("values", out var v) || v.ValueKind != JsonValueKind.Object)
+            throw new CommandException("invalid_args", "Faltam os valores do formulário.");
+        var map = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var p in v.EnumerateObject())
+            map[p.Name] = p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString()
+                : p.Value.ValueKind == JsonValueKind.Null ? null : throw new CommandException("invalid_args", $"O valor de '{p.Name}' precisa ser texto.");
+        return map;
+    }
+
+    private async Task<JsonNode?> SourcesConfigure(string id, Dictionary<string, string?> submitted)
+    {
+        var fields = SourceCredentials.For(id);
+        if (fields.Count == 0) throw new CommandException("invalid_args", "Esta fonte não tem o que configurar pela janela.");
+        if (submitted.Keys.Any(k => fields.All(f => f.Name != k))) throw new CommandException("invalid_args", "Campo desconhecido.");
+
+        if (!SourceCredentials.TryValidateForm(id, submitted, f => !string.IsNullOrWhiteSpace(s.Runtime.Config[f.Key(id)]) || s.Vault.Has(f.Key(id)),
+                out var changes, out var errors))
+            throw new CommandException("invalid_fields", string.Join(" ", errors));
+
+        // Variável de ambiente manda: se define um dos campos, a janela não consegue mudá-lo (e diz qual variável remover).
+        var pinned = changes.Keys.Where(f => !string.IsNullOrWhiteSpace(s.Probe(id).Env(f.EnvName(id)))).ToList();
+        if (pinned.Count > 0)
+            throw new CommandException("overridden", $"Definido por variável de ambiente ({string.Join(", ", pinned.Select(f => f.EnvName(id)))}): remova-a para mudar por aqui.");
+
+        await ApplyAsync(
+            root => { foreach (var (f, v) in changes.Where(c => !c.Key.Secret)) SettingsStore.SetPath(root, f.Key(id), v); },
+            () => changes.All(c => s.Runtime.Config[c.Key.Key(id)] == c.Value),
+            "Uma variável de ambiente está mandando sobre este valor: remova-a para mudar por aqui.",
+            vault => { foreach (var (f, v) in changes.Where(c => c.Key.Secret)) vault[f.Key(id)] = v; });
+        return SourcesJson();
+    }
+
+    /// <summary>Remove tudo o que a janela guardou da fonte (campos comuns no <c>settings.json</c>, segredos no cofre). Ela fica sem configuração.</summary>
+    private async Task<JsonNode?> SourcesClearConfig(string id)
+    {
+        var fields = SourceCredentials.For(id);
+        if (fields.Count == 0) throw new CommandException("invalid_args", "Esta fonte não tem o que configurar pela janela.");
+        await ApplyAsync(
+            root => { foreach (var f in fields.Where(f => !f.Secret)) SettingsStore.SetPath(root, f.Key(id), null); },
+            () => fields.All(f => string.IsNullOrWhiteSpace(s.Runtime.Config[f.Key(id)])),
+            "Uma variável de ambiente ainda define esta fonte: remova-a para limpar por aqui.",
+            vault => { foreach (var f in fields.Where(f => f.Secret)) vault[f.Key(id)] = null; });
+        return SourcesJson();
     }
 
     private async Task<JsonNode?> SourcesSet(string id, bool enabled)
@@ -443,20 +515,24 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
     /// Grava a mudança no <c>settings.json</c>, religa o agente e confere que ela valeu (<paramref name="effective"/>). Se religar falha, ou se
     /// uma variável de ambiente manteve o valor antigo, <b>volta o arquivo</b> ao que era: o <c>settings.json</c> nunca fica com algo que não funciona.
     /// </summary>
-    private async Task ApplyAsync(Action<JsonObject> change, Func<bool> effective, string overriddenMessage)
+    private async Task ApplyAsync(Action<JsonObject> change, Func<bool> effective, string overriddenMessage, Action<Dictionary<string, string?>>? secretChange = null)
     {
         var before = s.Settings.Read();
+        var secretsBefore = s.Vault.Read();
         s.Settings.Update(change);
+        if (secretChange is not null) s.Vault.Update(secretChange);
         try { await s.ApplyConfig(); }
         catch (Exception ex)
         {
-            _log.LogWarning(ex, "Não foi possível aplicar a configuração; voltando ao que era.");
+            _log.LogWarning(ex, "Não foi possível aplicar a configuração; voltando ao que era.");   // o texto da exceção não carrega valores de configuração
             s.Settings.Replace(before);
+            if (secretChange is not null) s.Vault.Replace(secretsBefore);
             throw new CommandException("apply_failed", "O agente não conseguiu religar com essa mudança, então ela foi desfeita. A configuração anterior continua valendo.");
         }
         if (!effective())
         {
             s.Settings.Replace(before);
+            if (secretChange is not null) s.Vault.Replace(secretsBefore);
             await TryReapplyAsync();
             throw new CommandException("overridden", overriddenMessage);
         }

@@ -35,6 +35,15 @@ internal sealed class FakeFirewall : IFirewall
     }
 }
 
+/// <summary>Troca a DPAPI por uma cifra reversível trivial (inverte os bytes): o teste não depende do Windows e confere que o arquivo não guarda o texto puro.</summary>
+internal sealed class FakeProtector : ISecretProtector
+{
+    public bool FailOnRead;   // simula "outro usuário do Windows": Unprotect lança
+    public byte[] Protect(byte[] plain) => [.. plain.Reverse()];
+    public byte[] Unprotect(byte[] protectedBytes) =>
+        FailOnRead ? throw new CryptographicException("não é deste usuário") : [.. protectedBytes.Reverse()];
+}
+
 /// <summary>O agente de verdade (simulado, em loopback) com tudo o que toca o Windows trocado por versões falsas.</summary>
 internal sealed class StepHarness : IAsyncLifetime
 {
@@ -43,6 +52,9 @@ internal sealed class StepHarness : IAsyncLifetime
     public bool Simulate = true;
     public TempDir Dir = null!;
     public SettingsStore Settings = null!;
+    public SecretVault Vault = null!;
+    public FakeProtector Protector = new();
+    public Dictionary<string, string?> Env = [];            // variáveis de ambiente que a fonte "enxerga" (para os campos fixados por ATALAIA_*)
     public AgentRuntime Runtime = null!;
     public CommandRouter Router = new();
     public FakeFirewall Firewall = new();
@@ -76,7 +88,8 @@ internal sealed class StepHarness : IAsyncLifetime
         // Usb:AdbPath inexistente: se o teste ligar o módulo USB, ele nunca encontra o adb de verdade deste PC.
         File.WriteAllText(Dir.File("appsettings.json"), """{ "Agent": { "Port": 0, "MaxSilenceMs": 10000 }, "Usb": { "AdbPath": "C:\\nao\\existe\\adb.exe" } }""");
         Settings = new SettingsStore(Dir.File("dados/settings.json"));
-        Runtime = new AgentRuntime(HostConfig.Compose(Dir.Path, Settings), Simulate, new TokenStore.Result("482917", TokenCreated));
+        Vault = new SecretVault(Dir.File("dados/secrets.dat"), Protector);
+        Runtime = new AgentRuntime(HostConfig.Compose(Dir.Path, Settings, Vault), Simulate, new TokenStore.Result("482917", TokenCreated));
         await Runtime.StartAsync();
 
         Adb = new ScriptedAdb(line => line switch
@@ -90,14 +103,14 @@ internal sealed class StepHarness : IAsyncLifetime
         });
 
         var services = new StepServices(
-            Runtime, Settings,
-            ApplyConfig: () => ApplyOverride is { } o ? o() : Runtime.RestartAsync(HostConfig.Compose(Dir.Path, Settings)),
+            Runtime, Settings, Vault,
+            ApplyConfig: () => ApplyOverride is { } o ? o() : Runtime.RestartAsync(HostConfig.Compose(Dir.Path, Settings, Vault)),
             Firewall,
             new AdbService(() => @"C:\fake\adb.exe", _ => null, _ => true, (_, _) => Adb),
             Apk: () => Apk(),
             ReadAdapters: () => Adapters,
             IsPortFree: p => IsPortFree(p),
-            Probe: id => new SourceProbe(k => PluginOptions.GetValueOrDefault($"{id}:{k}"), _ => false, _ => false, _ => null, @"C:\fake\Roaming", @"C:\fake"),
+            Probe: id => new SourceProbe(k => PluginOptions.GetValueOrDefault($"{id}:{k}"), _ => false, _ => false, n => Env.GetValueOrDefault(n), @"C:\fake\Roaming", @"C:\fake"),
             Autostart: new AutostartService(new MemoryRunKey(RunKeyValues), () => ExePath),
             PickAdb: () => PickAdb(),
             PickApk: () => PickApk(),
@@ -182,7 +195,7 @@ public class StepCommandsContractTests : StepTestBase
         Assert.Equal(
             ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get",
              "network.firewallCreate", "network.get", "network.setAdapter", "network.setLan", "network.setPort", "network.verify",
-             "sources.get", "sources.set", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
+             "sources.clearConfig", "sources.configure", "sources.get", "sources.set", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
             H.Router.Commands.Order(StringComparer.Ordinal).ToArray());
     }
 }

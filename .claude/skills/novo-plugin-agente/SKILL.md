@@ -20,7 +20,7 @@ Pergunte e confirme, em português, antes de escrever código:
 - **Campos de `data`**: nome em camelCase, tipo e unidade. Campo sem leitura é `null`. Siga as unidades do protocolo.
 - **Intervalo padrão** (`DefaultIntervalMs`).
 - **Ações** (se houver): nome, `args` e efeito. Só ações de uma lista fixa; nunca comando livre.
-- **Precisa de credencial ou dado pessoal?** Se sim: nasce `enabled: false` e o segredo só entra por variável de ambiente.
+- **Precisa de credencial ou dado pessoal?** Se sim: nasce `enabled: false` e o segredo só entra por variável de ambiente ou pelo cofre da janela (campos em `SourceCredentials`; veja `.claude/rules/plugins-agente.md`).
 - **Dependência nova?** Só se for indispensável, com versão fixa e licença compatível com a GPL-3.0.
 - Lembre ao usuário: acrescentar uma fonte é um **acréscimo ao protocolo v1** e deve ser combinado com o mantenedor (issue).
 
