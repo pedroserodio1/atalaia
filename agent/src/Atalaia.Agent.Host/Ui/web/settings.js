@@ -199,6 +199,12 @@ function tabletUpdateCard() {
 
 const TAB_VIEWS = { connection: connectionView, sources: sourcesStep, games: gamesView, updates: updatesView };
 
+/** Abre o formulário de bug do repositório já com a versão preenchida (só a versão: nada pessoal vai na URL). */
+function reportBug() {
+  const url = `https://github.com/${state.repository}/issues/new?template=bug.yml&versao=${encodeURIComponent('v' + state.version)}`;
+  call('link.open', { url }).catch((e) => toast(e.message));
+}
+
 function settingsHome() {
   const o = state.onboarding;
   const tab = TABS.find((t) => t.key === currentTab) || TABS[0];
@@ -212,6 +218,7 @@ function settingsHome() {
       h('div', { class: 'agentline' }, pill('Rodando', 'ok'), h('span', { class: 'mono ver' }, 'v' + state.version)),
       items,
       h('div', { class: 'grow' }),
+      h('button', { class: 'link leave', onclick: reportBug }, 'Reportar um bug'),
       o.completed
         ? h('button', { class: 'link leave', onclick: () => act('onboarding.restart', {}, 'welcome') }, 'Refazer a primeira configuração')
         : h('button', { class: 'link leave', onclick: () => act('onboarding.go', { step: Math.max(1, o.current) }, 'steps') }, 'Retomar a primeira configuração'),

@@ -122,6 +122,7 @@ public class LinkPolicyTests
     [InlineData("https://github.com/pedroserodio1/atalaia/")]
     [InlineData("https://github.com/pedroserodio1/atalaia/releases/tag/v0.1.1-beta.1")]
     [InlineData("https://GitHub.com/PedroSerodio1/Atalaia/releases")]
+    [InlineData("https://github.com/pedroserodio1/atalaia/issues/new?template=bug.yml&versao=v0.1.1-beta.3")]   // botão "Reportar um bug"
     public void Endereco_do_repositorio_configurado_pode_abrir(string url) => Assert.True(LinkPolicy.IsAllowed(url, Repo));
 
     [Theory]
@@ -206,6 +207,7 @@ public class WindowCommandsTests : IAsyncLifetime
         var d = JsonDocument.Parse(json).RootElement.GetProperty("data");
         Assert.Equal(AppInfo.Version, d.GetProperty("version").GetString());
         Assert.Equal(_runtime.Address, d.GetProperty("address").GetString());
+        Assert.Equal("pedroserodio1/atalaia", d.GetProperty("repository").GetString());
         Assert.True(d.GetProperty("simulate").GetBoolean());
         Assert.False(d.GetProperty("listenOnLan").GetBoolean());
         Assert.Empty(d.GetProperty("clients").EnumerateArray());
