@@ -7,7 +7,7 @@ executa as ações; o **app do tablet** só desenha as telas e devolve os toques
 **Atalaia** é o posto de vigia de onde se enxerga ao longe: aqui, o tablet que fica de olho no seu PC. O projeto é de código
 aberto, sob a [GNU GPL, versão 3 ou posterior](LICENSE) (veja [Licença](#licença)).
 
-> **Estado:** em desenvolvimento. O agente está pronto para uso; o app do tablet já conecta, mostra dados ao vivo e
+> **Versão 0.0.1 (beta).** Em desenvolvimento. O agente está pronto para uso; o app do tablet já conecta, mostra dados ao vivo e
 > controla o PC, mas ainda faltam os testes com cabo desplugado e Wi-Fi reais (veja "Estado" mais abaixo).
 
 ## Como funciona

@@ -19,7 +19,7 @@ android {
         minSdk = 27        // Android 8.1: o tablet alvo (T68)
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "0.0.1-beta"
         resValue("string", "app_name", providers.gradleProperty("appName").get())
     }
 
