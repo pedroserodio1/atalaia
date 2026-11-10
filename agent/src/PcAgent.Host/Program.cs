@@ -37,7 +37,7 @@ internal static class Program
             if (console)   // o token só aparece aqui (e em "Copiar token"), nunca no arquivo de log
             {
                 Console.WriteLine($"Agente em ws://{runtime.Address}/ws{(simulate ? " (simulado)" : "")}");
-                Console.WriteLine($"Token: {runtime.Token}");
+                Console.WriteLine(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}   (novo a cada início)" : $"Token: {runtime.Token}");
             }
 
             Application.Run(new Tray(runtime));

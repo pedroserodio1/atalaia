@@ -15,7 +15,7 @@ public static class AgentEndpoints
         {
             if (!ctx.WebSockets.IsWebSocketRequest) { ctx.Response.StatusCode = StatusCodes.Status400BadRequest; return; }
             using var ws = await ctx.WebSockets.AcceptWebSocketAsync();
-            await hub.HandleAsync(ws, ctx.RequestAborted);
+            await hub.HandleAsync(ws, ctx.RequestAborted, ctx.Connection.RemoteIpAddress);
         });
 
         // CORS: uma página aberta de outro lugar (file://, por exemplo) precisa conseguir buscar a capa.
@@ -29,7 +29,11 @@ public static class AgentEndpoints
         app.MapGet("/cover/{hash}", (HttpContext ctx, string hash) =>
         {
             Cors(ctx);
-            if (!hub.ValidateToken(BearerToken(ctx.Request))) return Results.StatusCode(StatusCodes.Status401Unauthorized);
+            switch (hub.Authenticate(BearerToken(ctx.Request), ctx.Connection.RemoteIpAddress))
+            {
+                case AuthResult.Locked: return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+                case AuthResult.Wrong: return Results.StatusCode(StatusCodes.Status401Unauthorized);
+            }
             var bytes = blobs.Get(hash);
             if (bytes is null) return Results.NotFound();
             ctx.Response.Headers.CacheControl = "private, max-age=86400, immutable";

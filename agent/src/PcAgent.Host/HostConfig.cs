@@ -9,7 +9,6 @@ internal static class AppPaths
     public static string Dir { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PcAgent");
     public static string Logs { get; } = Path.Combine(Dir, "logs");
-    public static string TokenFile { get; } = Path.Combine(Dir, "agent.json");
 }
 
 internal static class HostConfig
@@ -60,32 +59,23 @@ internal static class HostConfig
     }
 }
 
-internal static class TokenStore
+public static class TokenStore
 {
+    /// <param name="Created"><c>true</c> se o código foi gerado agora (e por isso pode ser mostrado); <c>false</c> se veio de PCAGENT_TOKEN.</param>
     public sealed record Result(string Token, bool Created);
 
-    /// <summary>PCAGENT_TOKEN substitui o arquivo; sem ele, lê (ou gera na 1ª vez) %LOCALAPPDATA%\PcAgent\agent.json.</summary>
+    /// <summary>
+    /// PCAGENT_TOKEN fixa o token. Sem ele, o agente gera um <b>código de 6 dígitos novo a cada início</b>, só em memória: não
+    /// grava arquivo, então o tablet precisa do código novo sempre que o agente reinicia.
+    /// </summary>
     public static Result Load(IConfiguration config)
     {
         var fromEnv = config["TOKEN"]?.Trim();
         if (!string.IsNullOrEmpty(fromEnv)) return new Result(fromEnv, false);
-
-        if (File.Exists(AppPaths.TokenFile))
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(File.ReadAllText(AppPaths.TokenFile));
-                var token = doc.RootElement.GetProperty("token").GetString();
-                if (!string.IsNullOrWhiteSpace(token)) return new Result(token, false);
-            }
-            catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException) { }
-            throw new InvalidDataException($"O arquivo do token está inválido: {AppPaths.TokenFile}. Apague-o para gerar um novo (o tablet precisará do token novo).");
-        }
-
-        var bytes = RandomNumberGenerator.GetBytes(32);
-        var created = Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');   // base64url
-        Directory.CreateDirectory(AppPaths.Dir);
-        File.WriteAllText(AppPaths.TokenFile, JsonSerializer.Serialize(new { token = created }));
-        return new Result(created, true);
+        return new Result(NewCode(), true);
     }
+
+    /// <summary>Seis dígitos sorteados com gerador criptográfico, com zeros à esquerda (ex.: <c>042917</c>).</summary>
+    public static string NewCode() =>
+        RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", System.Globalization.CultureInfo.InvariantCulture);
 }

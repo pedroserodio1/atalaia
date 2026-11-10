@@ -27,7 +27,7 @@ dotnet run --project src/PcAgent.Host -- --console --simulate
 | `--console` | Abre um console com o endereço e o token e espelha o log nele. A bandeja continua. |
 
 Sem `--console` não há janela: use o ícone da bandeja (**Painel Agent**). O menu tem o endereço em uso,
-`Clientes conectados: N`, **Copiar token**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
+`Clientes conectados: N`, o **código de acesso** (6 dígitos), **Copiar código**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
 Se não conseguir subir (porta ocupada, por exemplo), aparece uma caixa de mensagem com o erro.
 
 Testes:
@@ -36,14 +36,20 @@ Testes:
 dotnet test
 ```
 
-## Token e pareamento
+## Código de acesso e pareamento
 
-- Na primeira execução o agente gera um token (32 bytes aleatórios, base64url) e grava em
-  `%LOCALAPPDATA%\PcAgent\agent.json`. Um balão avisa que ele foi criado (o balão não mostra o token).
-- Para parear o tablet ou a página de teste: bandeja → **Copiar token**, ou leia na saída do `--console`.
-- `PCAGENT_TOKEN` (variável de ambiente ou `.env`) substitui o do arquivo. Veja `.env.example`.
-- O token nunca vai para o arquivo de log. Para trocar o token, apague `agent.json` e reinicie (todos os
-  clientes precisarão do novo).
+- **A cada início**, o agente gera um **código de 6 dígitos** novo (sorteio criptográfico, só em memória: não grava arquivo).
+  Um balão avisa que há código novo (o balão não mostra o código).
+- Para parear o tablet ou a página de teste: o código aparece no menu do ícone da bandeja (**Código de acesso: 042917**) e
+  na saída do `--console`; **Copiar código** põe na área de transferência. **Ao reiniciar o agente o código muda** e o
+  tablet precisa do novo (o app avisa "Código inválido" e abre a configuração com um toque na faixa).
+- `PCAGENT_TOKEN` (variável de ambiente ou `.env`) **fixa** o token: nesse caso ele não muda a cada início, não aparece no
+  menu (só "Token fixo") e pode ter qualquer tamanho. Veja `.env.example`. O `agent.json` das versões anteriores não é mais usado.
+- **Limite de tentativas erradas** (porque 6 dígitos são só 1 milhão de combinações): quem vem pela rede tem 5 erros por endereço;
+  depois fica bloqueado 1 min, e cada novo bloqueio dobra a espera (até 15 min; o histórico só some depois de 1 h sem erros). Somando
+  todos os endereços, 20 erros em 10 min bloqueiam a rede inteira por 10 min. Bloqueado, o agente fecha com 4401 (`locked`) sem
+  nem avaliar o código, e o `GET /cover` responde 429. **Conexões de `127.0.0.1` (o USB, via `adb reverse`) não têm limite.**
+- O código nunca vai para o arquivo de log (o log só registra o bloqueio, com o endereço de quem errou).
 - Por padrão o agente escuta só em `127.0.0.1:8765`. Para o tablet alcançá-lo pela rede, ligue
   `Agent:ListenOnLan` (veja abaixo); o Firewall do Windows pode pedir permissão na primeira vez.
 

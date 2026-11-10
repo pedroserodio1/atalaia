@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,6 +13,8 @@ namespace PcAgent.Core;
 /// Hub WebSocket do protocolo v1. Opera sobre <see cref="WebSocket"/> para ser testável; quem hospeda
 /// (Kestrel) só entrega o socket a <see cref="HandleAsync"/>.
 /// </summary>
+public enum AuthResult { Ok, Wrong, Locked }
+
 public sealed class AgentHub
 {
     public const int MaxIncomingBytes = 64 * 1024;
@@ -26,11 +29,13 @@ public sealed class AgentHub
     private readonly ILogger _logger;
     private readonly HashSet<Connection> _connections = [];
     private readonly object _lock = new();
+    private readonly AuthThrottle _throttle;
 
     public TimeSpan HandshakeTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
-    public AgentHub(Scheduler scheduler, string token, string agentVersion = "0.1.0", ILogger? logger = null)
+    public AgentHub(Scheduler scheduler, string token, string agentVersion = "0.1.0", ILogger? logger = null, AuthThrottle? throttle = null)
     {
+        _throttle = throttle ?? new AuthThrottle();
         _scheduler = scheduler;
         _token = Encoding.UTF8.GetBytes(token);
         _agentVersion = agentVersion;
@@ -44,6 +49,24 @@ public sealed class AgentHub
     public bool ValidateToken(string? candidate) =>
         candidate is not null && CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(candidate), _token);
 
+    /// <summary>
+    /// Confere o token de quem vem de <paramref name="remote"/> e aplica o limite de tentativas erradas. Loopback (USB via
+    /// <c>adb reverse</c>, o próprio PC) e origem desconhecida (testes) não têm limite. Bloqueado nem chega a avaliar o token.
+    /// </summary>
+    public AuthResult Authenticate(string? candidate, IPAddress? remote)
+    {
+        if (remote is null || IPAddress.IsLoopback(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote))
+            return ValidateToken(candidate) ? AuthResult.Ok : AuthResult.Wrong;
+
+        var key = (remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote).ToString();
+        if (_throttle.IsLocked(key)) return AuthResult.Locked;
+        if (ValidateToken(candidate)) { _throttle.Success(key); return AuthResult.Ok; }
+
+        if (_throttle.Failure(key) is { } locked)
+            _logger.LogWarning("Muitas tentativas erradas de {Remote}: bloqueado por {Seconds} s.", key, (int)locked.TotalSeconds);
+        return AuthResult.Wrong;
+    }
+
     /// <summary>Entrega <c>update</c> / <c>event</c> às conexões que assinam a fonte. Nunca espera um cliente.</summary>
     public void Publish(OutMessage message)
     {
@@ -53,13 +76,13 @@ public sealed class AgentHub
             if (c.Wants(message.Source)) c.Enqueue(message);
     }
 
-    public async Task HandleAsync(WebSocket ws, CancellationToken ct)
+    public async Task HandleAsync(WebSocket ws, CancellationToken ct, IPAddress? remote = null)
     {
         var conn = new Connection(ws);
         conn.StartSender(ct);
         try
         {
-            if (!await HandshakeAsync(conn, ct)) return;
+            if (!await HandshakeAsync(conn, ct, remote)) return;
 
             lock (_lock) _connections.Add(conn);
             await ReceiveLoopAsync(conn, ct);
@@ -76,7 +99,7 @@ public sealed class AgentHub
     // ---------------------------------------------------------------- handshake
 
     /// <returns>true se o cliente autenticou; false se a conexão já foi encerrada aqui.</returns>
-    private async Task<bool> HandshakeAsync(Connection conn, CancellationToken ct)
+    private async Task<bool> HandshakeAsync(Connection conn, CancellationToken ct, IPAddress? remote)
     {
         Incoming first;
         try { first = await conn.ReadAsync(ct, HandshakeTimeout); }
@@ -108,9 +131,10 @@ public sealed class AgentHub
 
         var token = data.ValueKind == JsonValueKind.Object && data.TryGetProperty("token", out var t) && t.ValueKind == JsonValueKind.String
             ? t.GetString() : null;
-        if (!ValidateToken(token))
+        var auth = Authenticate(token, remote);
+        if (auth != AuthResult.Ok)
         {
-            await conn.CloseAsync(Unauthorized, "unauthorized");
+            await conn.CloseAsync(Unauthorized, auth == AuthResult.Locked ? "locked" : "unauthorized");
             return false;
         }
 
