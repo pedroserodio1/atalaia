@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Pedro Serôdio
 //
 // As telas de configuração (o que a janela mostra depois da primeira configuração): Conexão, Fontes de dados, Jogos e ações e
-// Atualizações. Reaproveitam as mesmas peças dos passos do onboarding, então mostram o mesmo estado real. O que o agente v1 ainda não
+// Atualizações. Reaproveitam as mesmas peças dos passos do onboarding, então mostram o mesmo estado real. Notas de release são texto de
+// fora: entram só por textContent (h() usa createTextNode), nunca como HTML. O que o agente v1 ainda não
 // tem (lista de tablets pareados, "Gerar novo", mDNS, Wake-on-LAN, cenas e ações por jogo) aparece desabilitado como "em breve",
 // nunca como se funcionasse.
 'use strict';
@@ -81,22 +82,114 @@ function gamesView() {
 
 // ---------------------------------------------------------------- Atualizações
 
+const clock = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+/** O texto do estado da checagem. Só diz "mais recente" quando é verdade: nunca quando a checagem falhou ou a versão foi dispensada. */
+function updateStatusLine(d) {
+  switch (d.state) {
+    case 'checking': return ['Verificando…', ''];
+    case 'current': return d.skipped ? [`Você escolheu lembrar depois da versão ${d.skipped}.`, ''] : ['Você está na versão mais recente.', 'ok'];
+    case 'available': return [`Há uma versão nova: ${d.available.version}.`, 'warn'];
+    case 'offline': return [d.message || 'Sem conexão com a internet.', 'warn'];
+    case 'rate_limited': return [(d.message || 'O GitHub limitou as consultas.') + (d.retryAt ? ` Volta por volta das ${clock(d.retryAt)}.` : ''), 'warn'];
+    case 'error': return [d.message || 'Não foi possível verificar.', 'warn'];
+    case 'downloading': case 'verifying': case 'installing': return [d.message || '', ''];
+    default: return [d.devBuild ? d.message : 'Ainda não verificado.', ''];
+  }
+}
+
+const PHASE_TEXT = { downloading: 'Baixando o instalador…', verifying: 'Conferindo o SHA-256…', installing: 'Instalando…' };
+
+function progressBar(pct) {
+  return h('div', { class: 'progress', role: 'progressbar', 'aria-valuenow': String(pct), 'aria-valuemin': '0', 'aria-valuemax': '100' },
+    h('div', { class: 'progress-fill p' + Math.floor(pct / 5) * 5 }));
+}
+
+function availableCard(v, d) {
+  const a = d.available;
+  const working = d.state === 'downloading' || d.state === 'verifying' || d.state === 'installing';
+  const pct = Math.round(d.progress * 100);
+  return h('div', { class: 'card update' },
+    h('div', { class: 'eyebrow' }, 'Atualização disponível'),
+    h('div', { class: 'row' },
+      h('div', { class: 'grow' }, h('div', { class: 'name' }, `Atalaia ${a.version}`), h('div', { class: 'hint' }, 'O agente e o app do tablet saem juntos, com o mesmo número')),
+      pill(a.prerelease ? 'Beta' : 'Estável', a.prerelease ? 'warn' : 'ok')),
+    a.notes ? h('pre', { class: 'notes', tabindex: '0', 'aria-label': 'Notas da versão' }, a.notes) : h('div', { class: 'hint' }, 'Esta release não tem notas.'),
+    d.installError ? h('div', { class: 'notice' }, d.installError + ' A versão atual continua valendo.') : null,
+    working ? h('div', { class: 'job' },
+      h('div', { class: 'name' }, PHASE_TEXT[d.state] + (d.state === 'downloading' ? ` ${pct}%` : '')),
+      d.state === 'installing' ? null : progressBar(d.state === 'verifying' ? 100 : pct),
+      d.state === 'installing' ? h('div', { class: 'notice' }, 'O Atalaia vai fechar e abrir de novo sozinho. Ao reiniciar o código de acesso muda: o tablet vai precisar do código novo (ele aparece no menu do ícone da bandeja e na tela Conexão).') : null) : null,
+    d.staged && !working ? h('div', { class: 'hint ok' }, '● Já baixada e conferida. Será instalada quando você fechar o Atalaia pelo menu da bandeja (Sair).') : null,
+    working ? null : h('div', { class: 'btnrow' },
+      h('button', { class: 'btn primary', onclick: () => v.run('Iniciando…', () => call('updates.install')) }, 'Baixar e instalar'),
+      h('button', { class: 'btn small', onclick: () => call('link.open', { url: a.url }).catch((e) => toast(e.message)) }, 'Ver no GitHub'),
+      h('button', { class: 'link', onclick: () => v.run('Gravando…', () => call('updates.skip')) }, 'Lembrar depois')),
+    working ? null : h('div', { class: 'hint' }, 'Depois de instalar, o agente reinicia e o código de acesso muda. O arquivo vem da release do GitHub e é conferido (SHA-256) antes de ser executado.'));
+}
+
+function channelPicker(v, d) {
+  const options = [['stable', 'Estável', 'só versões normais'], ['beta', 'Beta', 'inclui pré-lançamentos']];
+  return h('div', { class: 'adapters', role: 'radiogroup', 'aria-label': 'Canal de atualização' }, options.map(([key, name, hint]) => h('button', {
+    type: 'button', class: 'adapter' + (d.channel === key ? ' on' : ''), role: 'radio', 'aria-checked': d.channel === key ? 'true' : 'false', disabled: v.busy ? true : null,
+    onclick: () => { if (d.channel !== key) v.run('Gravando…', () => call('updates.setChannel', { channel: key })); },
+  }, name, h('span', { class: 'hint' }, hint))));
+}
+
 function updatesView() {
-  const view = stepView(() => call('summary.get'), (v) => {
+  const view = stepView(() => call('updates.get'), (v) => {
     const d = v.data;
+    const [text] = updateStatusLine(d);
+    const busy = ['checking', 'downloading', 'verifying', 'installing'].includes(d.state);
     return [
       card('Esta versão',
-        row('Atalaia (agente e app do tablet)', 'Os dois saem sempre juntos, com o mesmo número', pill(state.version, 'ok'))),
+        row(`Atalaia ${d.version}`, text || null, d.lastCheck ? h('span', { class: 'hint' }, `verificado ${since(d.lastCheck)}`) : null,
+          h('button', { class: 'btn small', disabled: busy || d.devBuild ? true : null, onclick: () => v.run('Verificando…', () => call('updates.check')) }, 'Verificar agora'))),
+      d.available ? availableCard(v, d) : null,
       card('Atualização automática',
-        row('Verificar automaticamente', 'Releases do GitHub, a cada 6 horas',
-          toggle('Verificar automaticamente', d.autoCheck, (on) => v.run('Gravando…', () => call('updates.setAuto', { enabled: on })), v.busy)),
-        soonRow('Canal (Estável ou Beta)', 'Escolher se pré-lançamentos entram'),
-        h('div', { class: 'row soon' }, h('div', { class: 'grow' }, h('div', { class: 'name' }, 'Verificar agora'), h('div', { class: 'hint' }, 'Procura uma versão mais nova e mostra as notas da release')),
-          soonPill(), h('button', { class: 'btn small', disabled: true }, 'Verificar agora'))),
-      h('div', { class: 'hint' }, 'A busca, o download conferido (SHA-256) e a instalação das atualizações chegam na próxima etapa da 0.1.1. A escolha de "Verificar automaticamente" já fica guardada.'),
+        row('Verificar automaticamente', `Releases do GitHub, a cada ${d.checkHours} horas`,
+          toggle('Verificar automaticamente', d.autoCheck, (on) => v.run('Gravando…', async () => { await call('updates.setAuto', { enabled: on }); return call('updates.get'); }), v.busy)),
+        row('Instalar sozinho', 'Baixa e confere em segundo plano e instala quando você fecha o Atalaia pelo menu da bandeja',
+          toggle('Instalar sozinho', d.autoInstall, (on) => v.run('Gravando…', () => call('updates.setAutoInstall', { enabled: on })), v.busy)),
+        row('Canal', 'Estável ou Beta'), channelPicker(v, d)),
       busyNote(v),
+      tabletUpdateCard(),
     ];
-  }, 6000);
+  }, 1500);
+  return view.box;
+}
+
+/** O app do tablet pode ficar para trás do agente: aqui ele é atualizado pelo cabo, com o APK da release conferido. */
+function tabletUpdateCard() {
+  let dismissed = false;   // "Cancelar" na confirmação de desinstalar
+  const view = stepView(() => call('updates.tablet'), (v) => {
+    const d = v.data;
+    const job = d.job;
+    const running = job.state === 'running';
+    if (running) dismissed = false;
+    const mismatch = job.state === 'error' && job.outcome === 'SignatureMismatch';
+    const pct = Math.round(job.progress * 100);
+    const status = !d.device ? 'Nenhum tablet pelo cabo agora.'
+      : d.installedVersion === null ? 'O app do Atalaia não está instalado no tablet (instale pelo passo "App no tablet" da primeira configuração).'
+      : d.canUpdate ? `No tablet: ${d.installedVersion} · a release traz ${d.targetVersion}`
+      : `No tablet: ${d.installedVersion}. Nada a atualizar.`;
+    return [card('App do tablet',
+      row('Atualizar por USB', status,
+        d.device ? pill(d.device.model || d.device.serial, 'ok') : pill('Sem tablet', ''),
+        h('button', { class: 'btn small primary', disabled: !d.canUpdate || running ? true : null, onclick: () => v.run('Iniciando…', () => call('updates.apkUpdate').then(() => undefined)) }, 'Atualizar por USB')),
+      running ? h('div', { class: 'job' },
+        h('div', { class: 'name' }, job.phase === 'download' ? `Baixando da release… ${pct}%` : 'Instalando no tablet…'),
+        progressBar(job.phase === 'download' ? pct : 100)) : null,
+      job.state === 'done' ? h('div', { class: 'job' }, pill('App atualizado no tablet', 'ok')) : null,
+      job.state === 'error' ? h('div', { class: 'job' }, h('div', { class: 'notice' }, job.message),
+        mismatch && !dismissed ? h('div', { class: 'confirm' },
+          h('div', { class: 'name' }, 'Desinstalar o app do tablet e instalar o novo?'),
+          h('div', { class: 'hint' }, 'Isso apaga a configuração do app no tablet (endereços e código de acesso): será preciso configurar de novo.'),
+          h('div', { class: 'btnrow' },
+            h('button', { class: 'btn small primary', onclick: () => v.run('Desinstalando e instalando…', () => call('updates.apkUpdate', { uninstallFirst: true, confirm: true }).then(() => undefined)) }, 'Desinstalar e instalar'),
+            h('button', { class: 'btn small', onclick: () => { dismissed = true; v.paint(); } }, 'Cancelar'))) : null) : null),
+      busyNote(v)];
+  }, 3000);
   return view.box;
 }
 

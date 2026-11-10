@@ -65,6 +65,26 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
 Quando uma mudança de configuração não pode ser aplicada (o agente não sobe com a porta nova, ou uma variável de ambiente `ATALAIA_*` mantém o valor
 antigo), a janela desfaz a gravação no `settings.json` e explica o porquê: o arquivo nunca fica com algo que não funciona.
 
+### Atualização automática
+
+O agente busca as releases do GitHub (`Updates:Repository`, só HTTPS e só esse repositório; o `User-Agent` leva apenas a versão do Atalaia) uns 30 s
+depois de abrir e depois a cada `Updates:CheckHours`, se `Updates:AutoCheck` está ligado. A consulta é condicional (`ETag`): quando nada mudou o GitHub
+responde 304 e isso nem gasta o limite da API. Sem internet ou com o limite da API estourado a tela mostra **o estado** (com a hora em que o limite volta),
+nunca um erro fatal. Regras (as mesmas de [`../docs/versionamento-e-releases.md`](../docs/versionamento-e-releases.md), seção 7):
+
+- **Estável** só considera releases normais; **Beta** considera também os pré-lançamentos. Só é oferecida a maior versão (pela precedência do SemVer) que seja
+  **estritamente maior** que a instalada: nunca há downgrade, e quem está no `0.1.1-beta.2` recebe a `0.1.1`. Release sem o `Atalaia-Agent-Setup-<versão>.exe`
+  ou sem o `SHA256SUMS.txt`, rascunho e tag fora do padrão são ignorados. **Lembrar depois** esconde aquela versão (uma mais nova volta a aparecer).
+- **Baixar e instalar:** o instalador vai para `%LOCALAPPDATA%\AtalaiaAgent\updates\<versão>\`, o SHA-256 é conferido contra o `SHA256SUMS.txt` **da mesma release**
+  e, só então, o instalador roda em modo silencioso (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /REABRIR=1`). O arquivo é conferido de novo
+  logo antes de ser executado. Falhou em qualquer etapa antes disso: nada muda e a versão atual continua. Depois o agente fecha e o instalador o reabre.
+  **O processo novo gera um código de acesso novo**: o tablet precisa dele.
+- **Sem assinatura de código** (decisão do projeto): a integridade depende só do SHA-256 da release, e o SmartScreen pode avisar ao instalar à mão.
+  Um build de desenvolvimento (`-dev`) nunca se atualiza sozinho.
+- **App do tablet:** se o app instalado no tablet (lido por `adb`) é mais antigo que a versão da release, a tela oferece **Atualizar por USB** (`adb install -r` com o APK
+  da release, também conferido). Se o tablet tem o app assinado com outra chave (como o de debug da 0.0.1), só desinstala com a sua confirmação, como no onboarding.
+- As **notas da release** são texto de fora: a tela as mostra como texto puro.
+
 Para testar sem mexer na sua configuração de verdade, aponte a pasta de dados para outro lugar com a variável **`ATALAIA_DATA_DIR`** (caminho completo):
 logs, `settings.json`, downloads e os dados do WebView2 passam a ficar nela.
 
@@ -127,6 +147,10 @@ Chaves principais (padrões em `appsettings.json`):
 | `Agent:ListenOnLan` | `false` = `127.0.0.1`; `true` = `0.0.0.0` |
 | `Agent:MaxSilenceMs` | Reenvia o dado a cada tanto tempo mesmo sem mudança (10000) |
 | `Updates:AutoCheck` | Buscar atualizações sozinho (`true` por padrão; gravado pela janela, usado pela atualização automática) |
+| `Updates:Channel` | `stable` ou `beta`. Sem escolha, quem instalou um beta fica em `beta` e o resto em `stable` |
+| `Updates:CheckHours` | De quantas em quantas horas buscar (6; de 1 a 168) |
+| `Updates:AutoInstall` | `true` baixa e confere a atualização em segundo plano e a instala quando você fecha o Atalaia pelo **Sair** da bandeja (`false` por padrão) |
+| `Updates:SkippedVersion` / `LastCheck` | "Lembrar depois" (a versão dispensada) e a hora da última checagem; gravados pela janela |
 | `Network:PreferredAdapter` | Placa de rede mostrada como "endereço do PC" quando há mais de uma (só muda o que a tela e o QR mostram) |
 | `Updates:Repository` | Repositório do GitHub (`dono/nome`) de onde a janela abre os links e, na atualização automática, as releases (`pedroserodio1/atalaia`) |
 | `Plugins:<id>:enabled` / `intervalMs` | Liga/desliga e intervalo de coleta de cada plugin |

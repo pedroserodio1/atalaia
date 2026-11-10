@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Pedro Serôdio
 
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Atalaia.Agent.Host.Adb;
 using Atalaia.Agent.Host.Install;
@@ -63,9 +64,16 @@ internal static class Program
 
             var onboarding = new OnboardingStore(SettingsStore.Default);
             var uiLog = new Serilog.Extensions.Logging.SerilogLoggerFactory(Log.Logger).CreateLogger("Janela");   // erros dos comandos da janela vão para o log (a página só recebe uma mensagem genérica)
-            var steps = new StepCommands(BuildStepServices(runtime), uiLog);
-            window = new WindowHost(runtime, onboarding, () => RepositoryFrom(config), uiLog, steps.Register);
-            var tray = new Tray(runtime, window);
+            var stepServices = BuildStepServices(runtime);
+            var steps = new StepCommands(stepServices, uiLog);
+            Tray? tray = null;
+            var updates = BuildUpdateService(runtime, () => window?.RunOnUi(() => tray?.Quit()));
+            var updateCommands = new UpdateCommands(new UpdateCommandServices(updates, stepServices.Adb, () => runtime.Port, () => RepositoryFrom(runtime.Config),
+                version => ApkProviderFor(runtime, version)), uiLog);
+            window = new WindowHost(runtime, onboarding, () => RepositoryFrom(config), uiLog, router => { steps.Register(router); updateCommands.Register(router); }, () => updates.Status);
+            tray = new Tray(runtime, window, beforeExit: () => updates.ApplyStagedOnExit());
+            var updateLoop = new CancellationTokenSource();
+            _ = Task.Run(() => updates.RunAsync(updateLoop.Token));
 
             // Outra instância pediu a janela: abre/traz para a frente (Show pode ser chamado de qualquer thread).
             var wait = ThreadPool.RegisterWaitForSingleObject(showWindow, (_, _) => window.Show(), null, Timeout.Infinite, executeOnlyOnce: false);
@@ -79,6 +87,7 @@ internal static class Program
             }
 
             Application.Run(tray);
+            updateLoop.Cancel();
             wait.Unregister(null);
             window.Dispose();
             Task.Run(runtime.DisposeAsync().AsTask).GetAwaiter().GetResult();
@@ -109,7 +118,7 @@ internal static class Program
             ApplyConfig: () => runtime.RestartAsync(HostConfig.Compose(AppContext.BaseDirectory, settings)),
             Firewall: new WindowsFirewall(),
             Adb: new AdbService(() => UsbOptions.From(runtime.Config).AdbPath, Environment.GetEnvironmentVariable, File.Exists, (exe, timeout) => new ProcessAdbRunner(exe, timeout)),
-            Apk: () => new ApkProvider(new GitHubReleaseClient(Http, new GitHubReleaseClient.Options(Repo(), AppInfo.Version)), Path.Combine(AppPaths.Dir, "downloads"), AppInfo.Version),
+            Apk: () => ApkProviderFor(runtime, AppInfo.Version),
             ReadAdapters: LanAddressProvider.Read,
             IsPortFree: PortValidator.IsFreeOnLoopback,
             Probe: id => new SourceProbe(k => runtime.Config[$"Plugins:{id}:{k}"], File.Exists, Directory.Exists, Environment.GetEnvironmentVariable,
@@ -120,6 +129,18 @@ internal static class Program
             CopyText: Clipboard.SetText,
             OpenExternal: MainWindow.OpenInBrowser);
     }
+
+    private static ApkProvider ApkProviderFor(AgentRuntime runtime, string version) =>
+        new(new GitHubReleaseClient(Http, new GitHubReleaseClient.Options(RepositoryFrom(runtime.Config), AppInfo.Version)), Path.Combine(AppPaths.Dir, "downloads"), version);
+
+    /// <summary>A atualização automática: lê as releases do repositório configurado e, a pedido, executa o instalador baixado (só um arquivo já conferido).</summary>
+    private static UpdateService BuildUpdateService(AgentRuntime runtime, Action exitApp) =>
+        new(SettingsStore.Default,
+            () => new GitHubReleaseClient(Http, new GitHubReleaseClient.Options(RepositoryFrom(runtime.Config), AppInfo.Version)),
+            AppInfo.Version,
+            new UpdateService.Hooks(Path.Combine(AppPaths.Dir, "updates"),
+                Launch: (path, args) => Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = false })?.Dispose(),
+                ExitApp: exitApp));
 
     private static string? Pick(string title, string filter)
     {
