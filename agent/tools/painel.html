@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do PC</title>
+<style>
+:root{
+  color-scheme: dark light;
+  --bg:#0d1117; --panel:#161b22; --panel2:#1d242d; --line:#2a323d; --text:#e6edf3; --muted:#8b98a5;
+  --accent:#4c9aff; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --radius:14px;
+}
+@media (prefers-color-scheme: light){
+  :root{ --bg:#f3f5f8; --panel:#fff; --panel2:#eef2f6; --line:#dbe2ea; --text:#17202a; --muted:#5d6b79;
+         --accent:#0b66e4; --ok:#1a7f37; --warn:#9a6700; --bad:#cf222e; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+h1{font-size:16px;margin:0 8px 0 0;font-weight:650}
+.conn{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1 1 420px}
+.conn input{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
+#url{flex:1 1 220px} #token{flex:1 1 160px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)} .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.on .dot{background:var(--ok)} .pill.wait .dot{background:var(--warn)} .pill.off .dot{background:var(--bad)}
+.meta{color:var(--muted);font-size:12px;display:flex;gap:12px;flex-wrap:wrap}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px;max-width:1700px;margin:0 auto}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;align-content:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;min-width:0;transition:opacity .3s}
+.card.wide{grid-column:span 2} @media (max-width:760px){.card.wide{grid-column:auto}}
+.card.stale{opacity:.55} .card.disabled{opacity:.4}
+.card h2{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.card h2 .age{margin-left:auto;font-weight:400;text-transform:none;letter-spacing:0;font-size:11px}
+.chip{font-size:11px;padding:1px 8px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);text-transform:none;letter-spacing:0}
+.chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.chip.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.empty{color:var(--muted);padding:6px 0}
+.row{display:flex;gap:14px;align-items:center}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1}
+.big{font-size:30px;font-weight:650;line-height:1.1;font-variant-numeric:tabular-nums}
+.big small{font-size:14px;font-weight:500;color:var(--muted);margin-left:3px}
+.sub{color:var(--muted);font-size:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
+.kv span:nth-child(odd){color:var(--muted)} .kv span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:7px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .4s}
+.bar>i.warn{background:var(--warn)} .bar>i.bad{background:var(--bad)} .bar>i.ok{background:var(--ok)}
+.barrow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;gap:8px}
+.barrow span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.barrow span:last-child{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+svg.spark{width:100%;height:34px;display:block}
+svg.spark polyline{fill:none;stroke:var(--accent);stroke-width:1.6;vector-effect:non-scaling-stroke}
+.ring{position:relative;width:86px;height:86px;flex:none}
+.ring svg{transform:rotate(-90deg)} .ring circle{fill:none;stroke-width:9}
+.ring .bg{stroke:var(--panel2)} .ring .fg{stroke:var(--ok);stroke-linecap:round;transition:stroke-dashoffset .4s,stroke .4s}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:19px;font-variant-numeric:tabular-nums}
+.cover{width:92px;height:92px;border-radius:10px;background:var(--panel2);object-fit:cover;flex:none;display:grid;place-items:center;color:var(--muted);font-size:30px}
+.title{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none}
+.list li{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.list li span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.member{display:flex;align-items:center;gap:8px}
+.member i{width:9px;height:9px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);flex:none}
+.member.speaking i{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 30%,transparent)}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--panel2);object-fit:cover;flex:none}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)} th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--accent)}
+side{display:flex;flex-direction:column;gap:14px;align-content:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.panel h2{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.events{max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.ev{border-left:3px solid var(--muted);padding:3px 0 3px 9px;font-size:13px}
+.ev.info{border-color:var(--ok)} .ev.warn{border-color:var(--warn)} .ev.critical{border-color:var(--bad)}
+.ev time{display:block;color:var(--muted);font-size:11px}
+.form{display:grid;gap:8px}
+.form select,.form textarea,.form input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+.log{height:240px;overflow:auto;background:var(--panel2);border-radius:8px;padding:8px;font:11.5px/1.4 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-all}
+.log .up{color:var(--accent)} .log .err{color:var(--bad)} .log .res{color:var(--ok)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-bottom:8px}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:10px 14px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:10}
+.toast.bad{border-left-color:var(--bad)} .toast.ok{border-left-color:var(--ok)}
+.mixrow{display:grid;grid-template-columns:minmax(70px,1fr) minmax(80px,1.4fr) 3.2ch auto;gap:8px;align-items:center;padding:4px 0}
+.mixrow .mn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px} .mixrow.idle .mn{color:var(--muted)}
+.mixrow .mv{font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.mixrow .btn{padding:3px 8px;min-width:0}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ctrl .btn{padding:6px 12px;min-width:42px;line-height:1.2}
+.btn.primary-round{background:var(--accent);border-color:var(--accent);color:#fff;border-radius:99px;padding:6px 18px;font-size:16px}
+.btn.tgl.off{background:color-mix(in srgb,var(--bad) 18%,var(--panel2));border-color:var(--bad);color:var(--bad)}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+.icon{background:none;border:0;cursor:pointer;color:var(--muted);font-size:15px;padding:0 4px;border-radius:6px;line-height:1}
+.icon:hover{color:var(--accent)} .icon[hidden]{display:none}
+.seek{padding:6px 0;margin:-6px 0;border-radius:6px}
+.seek.can{cursor:pointer} .seek.can:hover .bar>i{background:var(--ok)}
+.seek:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel do PC</h1>
+  <form class="conn" id="connForm" autocomplete="off">
+    <label class="sr" for="url">URL do agente</label>
+    <input id="url" value="ws://127.0.0.1:8765/ws" spellcheck="false">
+    <label class="sr" for="token">Token</label>
+    <input id="token" type="password" placeholder="token do agente" spellcheck="false">
+    <button class="btn primary" id="btnConn" type="submit">Conectar</button>
+  </form>
+  <span class="pill off" id="status" role="status" aria-live="polite"><span class="dot"></span><span id="statusText">Desconectado</span></span>
+  <span class="meta"><span id="host"></span><span id="stats"></span></span>
+</header>
+
+<div class="layout">
+  <main class="grid" id="grid"></main>
+  <aside style="display:flex;flex-direction:column;gap:14px;align-content:start">
+    <section class="panel"><h2>Eventos</h2><div class="events" id="events"><div class="empty">Nenhum evento ainda.</div></div></section>
+    <section class="panel">
+      <h2>Enviar ação</h2>
+      <form class="form" id="actForm">
+        <label class="sr" for="aPlugin">Plugin</label><select id="aPlugin"></select>
+        <label class="sr" for="aAction">Ação</label><select id="aAction"></select>
+        <label class="sr" for="aArgs">Argumentos (JSON)</label><textarea id="aArgs" rows="2" spellcheck="false">{}</textarea>
+        <button class="btn" type="submit">Enviar</button>
+      </form>
+    </section>
+    <section class="panel">
+      <details>
+        <summary>Mensagens brutas</summary>
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="btn" id="btnPause" type="button">Pausar</button>
+          <button class="btn" id="btnClear" type="button">Limpar</button>
+          <label class="sub" style="display:flex;align-items:center;gap:5px"><input type="checkbox" id="onlyImportant"> só eventos e erros</label>
+        </div>
+        <div class="log" id="log" role="log"></div>
+      </details>
+    </section>
+  </aside>
+</div>
+<div id="toastHost"></div>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = (v, d = 0) => v == null ? "–" : Number(v).toLocaleString("pt-BR", {maximumFractionDigits: d, minimumFractionDigits: d});
+const gb = mb => mb == null ? "–" : num(mb / 1024, 1) + " GB";
+const mbps = kbps => kbps == null ? "–" : kbps >= 1000 ? num(kbps / 1000, 1) + " Mb/s" : num(kbps) + " kb/s";
+const tok = n => n == null ? "–" : n >= 1e6 ? num(n / 1e6, 1) + " M" : n >= 1e3 ? num(n / 1e3, 1) + " k" : num(n);
+const mmss = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const tone = (p, warn = 70, bad = 90) => p == null ? "" : p >= bad ? "bad" : p >= warn ? "warn" : "ok";
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+function ago(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return s < 60 ? s + " s" : s < 3600 ? Math.floor(s / 60) + " min" : s < 86400 ? Math.floor(s / 3600) + " h" : Math.floor(s / 86400) + " d";
+}
+function until(iso) {
+  if (!iso) return "";
+  const s = (new Date(iso) - Date.now()) / 1000;
+  if (!isFinite(s)) return "";
+  if (s <= 0) return "agora";
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  return "em " + (h >= 24 ? Math.floor(h / 24) + " d " + (h % 24) + " h" : h ? h + " h " + String(m).padStart(2, "0") + " min" : m + " min");
+}
+const bar = (p, cls) => `<div class="bar"><i class="${cls ?? tone(p)}" style="width:${Math.min(100, Math.max(0, p || 0))}%"></i></div>`;
+const barRow = (label, right, p, cls) => `<div><div class="barrow"><span>${esc(label)}</span><span>${right}</span></div>${bar(p, cls)}</div>`;
+function ring(p, text) {
+  const r = 38, c = 2 * Math.PI * r, v = Math.min(100, Math.max(0, p || 0));
+  const color = {ok: "var(--ok)", warn: "var(--warn)", bad: "var(--bad)"}[tone(p, 60, 85)] || "var(--muted)";
+  return `<div class="ring"><svg viewBox="0 0 90 90" width="86" height="86"><circle class="bg" cx="45" cy="45" r="${r}"/>` +
+    `<circle class="fg" cx="45" cy="45" r="${r}" style="stroke:${color}" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - v / 100)}"/></svg><b>${text ?? num(p)}</b></div>`;
+}
+function spark(arr, max) {
+  if (arr.length < 2) return `<svg class="spark" viewBox="0 0 120 32"></svg>`;
+  const m = max ?? Math.max(1, ...arr), step = 120 / (HIST - 1), off = (HIST - arr.length) * step;
+  const pts = arr.map((v, i) => `${(off + i * step).toFixed(1)},${(30 - Math.min(1, v / m) * 28).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 120 32" preserveAspectRatio="none"><polyline points="${pts}"/></svg>`;
+}
+function toast(msg, kind) {
+  const el = document.createElement("div");
+  el.className = "toast " + (kind || ""); el.textContent = msg;
+  $("toastHost").appendChild(el); setTimeout(() => el.remove(), 5000);
+}
+
+/* ---------- estado ---------- */
+const HIST = 60;
+const S = {};                 // fonte -> {data, ts, at}
+const INFO = {};              // fonte -> {id,name,status,intervalMs,actions}
+const H = {cpu: [], rx: [], tx: [], gpu: []};
+const dirty = new Set();
+let ws = null, wantOpen = false, retry = 0, retryTimer = null, total = 0, lastTotal = 0, pingMs = null, paused = false, seq = 0;
+let pingTimer = null, httpBase = "", tokenValue = "";
+
+/* ---------- ações: só aparecem quando o agente as declara no hello ---------- */
+const can = (p, a) => INFO[p]?.status !== "disabled" && (INFO[p]?.actions || []).some(x => (typeof x === "string" ? x : x.name) === a);
+function btn(label, plugin, action, args = {}, title = "", cls = "", confirmMsg = "") {
+  if (!can(plugin, action)) return "";
+  return `<button class="btn ${cls}" type="button" data-p="${plugin}" data-a="${action}" data-args="${esc(JSON.stringify(args))}"` +
+    `${title ? ` title="${esc(title)}" aria-label="${esc(title)}"` : ""}${confirmMsg ? ` data-confirm="${esc(confirmMsg)}"` : ""}>${label}</button>`;
+}
+const relBtn = (label, delta, title) => can("media", "seek")
+  ? `<button class="btn" type="button" data-rel="${delta}" title="${title}" aria-label="${title}">${label}</button>` : "";
+const PENDING = {};
+const FRIENDLY = {unknown_session: "esse app não está mais no mixer.", no_session: "nenhuma mídia ativa.", not_supported: "o app não aceita esse controle agora.", not_connected: "Discord não está conectado.",
+  discord_recusou: "o Discord recusou o comando.", unknown_plugin: "plugin desligado ou inexistente.", unknown_action: "ação não suportada.",
+  invalid_args: "argumento inválido.", timeout: "a ação demorou demais."};
+function mediaPos() {
+  const s = S.media; if (!s) return 0;
+  const d = s.data; let p = d.positionSec || 0;
+  if (d.status === "playing") p += (Date.now() - s.at) / 1000;
+  return Math.min(p, d.durationSec || 0);
+}
+/** Mostra o efeito na hora; o update do agente confirma, e uma falha desfaz (ver action_result). */
+function optimistic(plugin, action, args) {
+  const s = S[plugin]; if (!s) return;
+  const d = s.data; let patch = null;
+  if (plugin === "media") {
+    if (action === "play_pause" || action === "play" || action === "pause") {
+      const playing = action === "play" ? true : action === "pause" ? false : d.status !== "playing";
+      patch = {status: playing ? "playing" : "paused", positionSec: Math.round(mediaPos())};
+    } else if (action === "seek") patch = {positionSec: args.positionSec};
+  } else if (plugin === "discord") {
+    if (action === "toggle_mute") patch = {mute: !d.mute};
+    else if (action === "toggle_deaf") patch = {deaf: !d.deaf};
+    else if (action === "set_input_volume") patch = {inputVolume: args.value};
+    else if (action === "set_output_volume") patch = {outputVolume: args.value};
+  } else if (plugin === "audio") {
+    if (action === "toggle_mute") patch = {muted: !d.muted};
+    else if (action === "set_volume") patch = {volume: args.value};
+    else if (action === "set_session_volume") patch = {sessions: (d.sessions || []).map(a => a.id === args.id ? {...a, volume: args.value} : a)};
+    else if (action === "toggle_session_mute") patch = {sessions: (d.sessions || []).map(a => a.id === args.id ? {...a, muted: !a.muted} : a)};
+  } else if (plugin === "notifications" && action === "clear_all") patch = {count: 0, apps: []};
+  if (!patch) return;
+  s.prev = d; s.data = {...d, ...patch}; s.at = Date.now();
+  dirty.add(plugin); schedule();
+}
+document.addEventListener("click", e => {
+  const bar = e.target.closest("#mBar");
+  if (bar && can("media", "seek")) {
+    const r = bar.getBoundingClientRect(), dur = S.media?.data.durationSec || 0;
+    if (dur) sendAction("media", "seek", {positionSec: Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * dur)});
+    return;
+  }
+  const b = e.target.closest("[data-a], [data-rel]"); if (!b) return;
+  if (b.dataset.rel) {
+    const dur = S.media?.data.durationSec || 0;
+    return sendAction("media", "seek", {positionSec: Math.round(Math.min(dur, Math.max(0, mediaPos() + Number(b.dataset.rel))))});
+  }
+  if (b.dataset.confirm && !confirm(b.dataset.confirm)) return;
+  sendAction(b.dataset.p, b.dataset.a, b.dataset.args ? JSON.parse(b.dataset.args) : {});
+});
+document.addEventListener("keydown", e => {   // barra de posição: setas ±5 s
+  if (e.target.id !== "mBar" || !can("media", "seek") || !["ArrowLeft", "ArrowRight"].includes(e.key)) return;
+  e.preventDefault();
+  const dur = S.media?.data.durationSec || 0;
+  sendAction("media", "seek", {positionSec: Math.round(Math.min(dur, Math.max(0, mediaPos() + (e.key === "ArrowLeft" ? -5 : 5))))});
+});
+
+/* ---------- cartões ---------- */
+const CARDS = [
+  {id: "system", title: "Sistema", render: rSystem},
+  {id: "gpu", title: "GPU", render: rGpu},
+  {id: "media", title: "Mídia", render: rMedia},
+  {id: "audio", title: "Áudio", render: rAudio},
+  {id: "activeWindow", title: "Janela ativa", render: rWindow},
+  {id: "ups", title: "Nobreak", render: rUps},
+  {id: "weather", title: "Clima", render: rWeather},
+  {id: "notifications", title: "Notificações", render: rNotif},
+  {id: "claude", title: "Claude", render: rClaude, wide: true},
+  {id: "steam", title: "Steam", render: rSteam},
+  {id: "discord", title: "Discord", render: rDiscord},
+];
+function ensureCard(def) {
+  let el = $("card-" + def.id);
+  if (el) return el;
+  el = document.createElement("section");
+  el.className = "card" + (def.wide ? " wide" : ""); el.id = "card-" + def.id;
+  el.innerHTML = `<h2><span>${esc(def.title)}</span><span class="chip" data-st></span><span class="age" data-age></span>` +
+    `<button class="icon" type="button" data-refresh data-p="${esc(def.id)}" data-a="refresh" title="Atualizar agora" aria-label="Atualizar ${esc(def.title)} agora" hidden>↻</button></h2>` +
+    `<div data-body><div class="empty">Aguardando dados…</div></div>`;
+  $("grid").appendChild(el);
+  return el;
+}
+CARDS.forEach(ensureCard);
+
+function rSystem(d) {
+  const cpu = d.cpu?.percent, ram = d.ram || {}, rp = ram.totalMb ? ram.usedMb / ram.totalMb * 100 : null;
+  return `<div class="row">${ring(cpu, num(cpu) + "%")}<div class="col"><div class="sub">CPU</div>${spark(H.cpu, 100)}</div></div>` +
+    `<div style="margin:12px 0">${barRow("Memória", gb(ram.usedMb) + " / " + gb(ram.totalMb), rp)}</div>` +
+    (d.disks || []).map(k => barRow("Disco " + k.name, num(k.usedGb, 0) + " / " + num(k.totalGb, 0) + " GB", k.totalGb ? k.usedGb / k.totalGb * 100 : 0, k.totalGb && k.usedGb / k.totalGb > .9 ? "bad" : "")).join("<div style='height:7px'></div>") +
+    `<div class="kv" style="margin-top:12px"><span>Rede ↓</span><span>${mbps(d.net?.rxKbps)}</span><span>Rede ↑</span><span>${mbps(d.net?.txKbps)}</span></div>` +
+    spark(H.rx);
+}
+function rGpu(d) {
+  return `<div class="row">${ring(d.utilPercent, num(d.utilPercent) + "%")}<div class="col"><div class="title">${esc(d.name)}</div>${spark(H.gpu, 100)}</div></div>` +
+    `<div style="margin:12px 0">${barRow("VRAM", gb(d.vramUsedMb) + " / " + gb(d.vramTotalMb), d.vramTotalMb ? d.vramUsedMb / d.vramTotalMb * 100 : null)}</div>` +
+    `<div class="kv"><span>Temperatura</span><span>${num(d.tempC)} °C</span><span>Potência</span><span>${num(d.powerW, 1)} W</span></div>`;
+}
+const coverCache = {};
+function coverUrl(hash) {
+  if (!hash || !httpBase) return null;
+  if (!(hash in coverCache)) {
+    coverCache[hash] = null;
+    fetch(httpBase + "/cover/" + encodeURIComponent(hash), {headers: {Authorization: "Bearer " + tokenValue}})
+      .then(r => r.ok ? r.blob() : Promise.reject(r.status))
+      .then(b => { coverCache[hash] = URL.createObjectURL(b); dirty.add("media"); schedule(); })
+      .catch(() => { coverCache[hash] = ""; });
+  }
+  return coverCache[hash] || null;
+}
+function rMedia(d) {
+  const url = coverUrl(d.coverHash), stopped = d.status === "stopped" && !d.title;
+  const body = $("card-media").querySelector("[data-body]");
+  // a posição muda a cada segundo e é animada por tickMedia: só redesenha (e recria os botões) se o resto mudou,
+  // senão um clique pode se perder no meio de uma atualização
+  const key = [stopped, d.app, d.title, d.artist, d.album, d.status, d.durationSec, !!url, can("media", "seek"), can("media", "play_pause")].join("|");
+  if (body.dataset.k === key && (stopped || body.querySelector("#mBar"))) return null;
+  body.dataset.k = key;
+  if (stopped) return `<div class="empty">Nada tocando.</div>`;
+  const chip = {playing: ["ok", "Tocando"], paused: ["warn", "Pausado"], stopped: ["", "Parado"]}[d.status] || ["", d.status];
+  return `<div class="row">${url ? `<img class="cover" alt="" src="${url}">` : `<div class="cover" aria-hidden="true">♪</div>`}` +
+    `<div class="col"><div class="title" title="${esc(d.title)}">${esc(d.title) || "—"}</div><div class="sub">${esc(d.artist)}${d.album ? " · " + esc(d.album) : ""}</div>` +
+    `<div><span class="chip">${esc(d.app)}</span> <span class="chip ${chip[0]}">${chip[1]}</span></div></div></div>` +
+    `<div style="margin-top:12px"><div class="seek ${can("media", "seek") ? "can" : ""}" id="mBar" role="slider" tabindex="${can("media", "seek") ? 0 : -1}" aria-label="Posição da faixa" aria-valuemin="0" aria-valuemax="${d.durationSec || 0}" aria-valuenow="0">` +
+    `<div class="bar"><i id="mProg" style="width:0%"></i></div></div><div class="barrow" style="margin:4px 0 0"><span id="mPos">0:00</span><span>${mmss(d.durationSec)}</span></div></div>` +
+    `<div class="ctrl" style="margin-top:10px;justify-content:center">${btn("⏮", "media", "previous", {}, "Faixa anterior")}${relBtn("−10 s", -10, "Voltar 10 segundos")}` +
+    `${btn(d.status === "playing" ? "⏸" : "▶", "media", "play_pause", {}, d.status === "playing" ? "Pausar" : "Tocar", "primary-round")}` +
+    `${relBtn("+10 s", 10, "Avançar 10 segundos")}${btn("⏭", "media", "next", {}, "Próxima faixa")}</div>`;
+}
+function tickMedia() {
+  const s = S.media; if (!s || !$("mProg")) return;
+  const d = s.data, dur = d.durationSec || 0;
+  let p = d.positionSec || 0;
+  if (d.status === "playing") p += (Date.now() - s.at) / 1000;
+  p = Math.min(p, dur);
+  $("mProg").style.width = (dur ? p / dur * 100 : 0) + "%"; $("mPos").textContent = mmss(p);
+  $("mBar").setAttribute("aria-valuenow", Math.round(p));
+}
+function rAudio(d) {
+  const body = $("card-audio").querySelector("[data-body]");
+  if (!body.querySelector("#vol")) {
+    body.innerHTML = `<div data-keep><div class="sub" id="aOut"></div><div class="row" style="margin:10px 0"><input id="vol" type="range" min="0" max="100" aria-label="Volume">` +
+      `<b id="aVal" style="min-width:3ch;text-align:right"></b></div><button class="btn tgl" id="aMute" type="button" data-p="audio" data-a="toggle_mute"></button>` +
+      `<div id="aMixBox" hidden><div class="sub" style="margin:14px 0 4px">Mixer por aplicativo</div><div id="aMix"></div></div></div>`;
+    slider($("vol"), v => { $("aVal").textContent = v; sendAction("audio", "set_volume", {value: v}); }, v => { $("aVal").textContent = v; });
+  }
+  $("aOut").textContent = d.output;
+  $("vol").disabled = !can("audio", "set_volume"); $("aMute").hidden = !can("audio", "toggle_mute");
+  if (document.activeElement !== $("vol")) { $("vol").value = d.volume; $("aVal").textContent = d.volume; }
+  $("aMute").textContent = d.muted ? "🔇 Mudo (clique para ativar o som)" : "🔊 Silenciar";
+  $("aMute").classList.toggle("off", d.muted);
+  renderMixer(d.sessions || []);
+  return null;   // já atualizado no lugar
+}
+/** Mixer por app: uma linha por aplicativo, atualizada no lugar (um slider em arrasto não pode ser recriado). */
+function renderMixer(list) {
+  const box = $("aMix"), canVol = can("audio", "set_session_volume"), canMute = can("audio", "toggle_session_mute");
+  $("aMixBox").hidden = !list.length || (!canVol && !canMute);
+  const ids = new Set(list.map(a => a.id));
+  for (const row of [...box.children]) if (!ids.has(row.dataset.id)) row.remove();
+  list.forEach((a, i) => {
+    let row = box.querySelector(`[data-id="${CSS.escape(a.id)}"]`);
+    if (!row) {
+      row = document.createElement("div"); row.className = "mixrow"; row.dataset.id = a.id;
+      row.innerHTML = `<span class="mn"></span><input type="range" min="0" max="100"><b class="mv"></b><button class="btn tgl mm" type="button"></button>`;
+      const rng = row.querySelector("input"), label = row.querySelector(".mv");
+      rng.setAttribute("aria-label", "Volume de " + a.name);
+      slider(rng, v => sendAction("audio", "set_session_volume", {id: a.id, value: v}), v => { label.textContent = v; });
+      row.querySelector(".mm").addEventListener("click", () => sendAction("audio", "toggle_session_mute", {id: a.id}));
+      box.appendChild(row);
+    }
+    if (box.children[i] !== row) box.insertBefore(row, box.children[i]);
+    row.classList.toggle("idle", !a.active);
+    const mn = row.querySelector(".mn"); mn.textContent = a.name; mn.title = a.process || a.name;
+    const rng = row.querySelector("input"); rng.disabled = !canVol;
+    if (document.activeElement !== rng) { rng.value = a.volume; row.querySelector(".mv").textContent = a.volume; }
+    const mm = row.querySelector(".mm"); mm.hidden = !canMute; mm.textContent = a.muted ? "🔇" : "🔊";
+    mm.classList.toggle("off", a.muted); mm.title = (a.muted ? "Ativar o som de " : "Silenciar ") + a.name;
+    mm.setAttribute("aria-label", mm.title);
+  });
+}
+/** Slider que manda o valor no máximo a cada 120 ms; o cartão não é redesenhado enquanto ele tem o foco. */
+function slider(el, onSend, onLive) {
+  let t = null;
+  el.addEventListener("input", e => { const v = +e.target.value; onLive(v); clearTimeout(t); t = setTimeout(() => onSend(v), 120); });
+}
+function rWindow(d) {
+  return `<div class="title">${esc(d.process) || "—"}</div><div class="sub" style="margin-top:4px;word-break:break-word">${d.title ? esc(d.title) : "<i>título não enviado</i>"}</div>`;
+}
+function rUps(d) {
+  const old = d.updatedAt ? Date.now() - new Date(d.updatedAt) : 0, stale = old > 10 * 60 * 1000;
+  return `<div class="row"><div class="col"><div class="big">${num(d.batteryPercent)}<small>%</small></div>${bar(d.batteryPercent, d.batteryPercent < 30 ? "bad" : d.batteryPercent < 60 ? "warn" : "ok")}</div>` +
+    `<div class="col" style="flex:none;align-items:flex-end"><span class="chip ${d.onBattery ? "bad" : "ok"}">${d.onBattery ? "Na bateria" : "Rede elétrica"}</span>${stale ? `<span class="chip warn">dado de há ${ago(old)}</span>` : ""}</div></div>` +
+    `<div class="kv" style="margin-top:12px"><span>Entrada</span><span>${num(d.inputV, 1)} V</span><span>Saída</span><span>${num(d.outputV, 1)} V</span>` +
+    `<span>Carga</span><span>${num(d.loadPercent)}%</span><span>Frequência</span><span>${num(d.freqHz, 1)} Hz</span>` +
+    `<span>Bateria</span><span>${num(d.batteryV, 1)} V</span><span>Temperatura</span><span>${num(d.tempC)} °C</span></div>`;
+}
+function rWeather(d) {
+  return `<div class="row"><div class="big">${num(d.tempC)}<small>°C</small></div><div class="col"><div class="title">${esc(d.condition)}</div></div></div>` +
+    `<div class="kv" style="margin-top:12px"><span>Umidade</span><span>${num(d.humidityPercent)}%</span><span>Vento</span><span>${num(d.windKmh)} km/h</span></div>`;
+}
+function rNotif(d) {
+  return `<div class="big">${num(d.count)}<small>notificações</small></div>` +
+    ((d.apps || []).length ? `<ul class="list" style="margin-top:10px">${d.apps.map(a => `<li><span>${esc(a.name)}</span><span>${num(a.count)}</span></li>`).join("")}</ul>` : `<div class="empty">Nenhuma pendente.</div>`) +
+    (d.count > 0 ? `<div class="ctrl" style="margin-top:10px">${btn("Limpar tudo", "notifications", "clear_all", {}, "Descartar todas as notificações", "danger", "Descartar TODAS as notificações do Windows? Isso não pode ser desfeito.")}</div>` : "");
+}
+function rClaude(d) {
+  const w = (l, k) => `<tr><td>${l}</td><td>${num(k.responses)}</td><td>${tok(k.outputTokens)}</td><td>${tok(k.inputTokens)}</td><td>${tok(k.cacheReadTokens)}</td></tr>`;
+  const p = d.plan;
+  return (p ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">` +
+      barRow("Limite de 5 h", (p.fiveHourPercent == null ? "–" : p.fiveHourPercent + "%") + (p.fiveHourResetsAt ? " · " + until(p.fiveHourResetsAt) : ""), p.fiveHourPercent) +
+      barRow("Limite de 7 dias", (p.sevenDayPercent == null ? "–" : p.sevenDayPercent + "%") + (p.sevenDayResetsAt ? " · " + until(p.sevenDayResetsAt) : ""), p.sevenDayPercent) +
+    `</div><div class="sub" style="margin-bottom:10px">Limites ${p.source === "live" ? "ao vivo" : "do cache do Claude Code"} · de ${ago(Date.now() - new Date(p.fetchedAt))} atrás</div>`
+    : `<div class="sub" style="margin-bottom:10px">Sem dados de limite do plano.</div>`) +
+    `<table><tr><th></th><th>respostas</th><th>saída</th><th>entrada</th><th>cache lido</th></tr>${w("5 h", d.last5h)}${w("24 h", d.last24h)}${w("7 dias", d.last7d)}</table>` +
+    ((d.models || []).length ? `<ul class="list" style="margin-top:10px">${d.models.map(m => `<li><span>${esc(m.model)}</span><span>${tok(m.outputTokens)} saída</span></li>`).join("")}</ul>` : "") +
+    (d.lastActivityAt ? `<div class="sub" style="margin-top:8px">Última atividade há ${ago(Date.now() - new Date(d.lastActivityAt))}</div>` : "");
+}
+const STEAM = {online: "Online", offline: "Offline", busy: "Ocupado", away: "Ausente", snooze: "Soneca", looking_to_trade: "Quer trocar", looking_to_play: "Quer jogar"};
+function rSteam(d) {
+  return `<div class="row">${d.avatarUrl ? `<img class="avatar" alt="" src="${esc(d.avatarUrl)}" referrerpolicy="no-referrer">` : ""}` +
+    `<div class="col"><div class="title">${esc(d.name)}</div><div><span class="chip ${d.state === "offline" ? "" : "ok"}">${STEAM[d.state] || esc(d.state)}</span>${d.level != null ? ` <span class="chip">nível ${num(d.level)}</span>` : ""}</div></div></div>` +
+    (d.game ? `<div style="margin:12px 0"><div class="sub">Jogando agora</div><div class="title">${esc(d.game.name)}</div></div>` : "") +
+    `<div class="kv" style="margin-top:10px">${d.library ? `<span>Biblioteca</span><span>${num(d.library.games)} jogos · ${num(d.library.hours)} h</span>` : ""}` +
+    `${d.friends ? `<span>Amigos</span><span>${num(d.friends.online)} online de ${num(d.friends.total)} · ${num(d.friends.playing)} jogando</span>` : ""}</div>` +
+    ((d.recent || []).length ? `<ul class="list" style="margin-top:10px">${d.recent.map(g => `<li><span>${esc(g.name)}</span><span>${num(g.hours2w, 1)} h / 2 sem</span></li>`).join("")}</ul>` : "");
+}
+function rDiscord(d) {
+  const body = $("card-discord").querySelector("[data-body]");
+  if (!body.querySelector("#dOn")) {   // esqueleto fixo: os sliders não podem ser recriados no meio do arrasto
+    body.innerHTML = `<div data-keep id="dOff" class="empty">Discord fechado ou sem conexão.</div><div data-keep id="dOn" hidden>` +
+      `<div class="title" id="dUser"></div>` +
+      `<div class="ctrl" style="margin:8px 0"><button class="btn tgl" id="dMute" type="button" data-p="discord" data-a="toggle_mute"></button>` +
+      `<button class="btn tgl" id="dDeaf" type="button" data-p="discord" data-a="toggle_deaf"></button></div>` +
+      `<div id="dInBox"><div class="barrow"><span>Volume do microfone</span><span id="dInV"></span></div><input id="dIn" type="range" min="0" max="100" aria-label="Volume do microfone"></div>` +
+      `<div id="dOutBox" style="margin-top:8px"><div class="barrow"><span>Volume de saída</span><span id="dOutV"></span></div><input id="dOut" type="range" min="0" max="200" aria-label="Volume de saída"></div>` +
+      `<div id="dChan" style="margin-top:12px"></div></div>`;
+    slider($("dIn"), v => sendAction("discord", "set_input_volume", {value: v}), v => { $("dInV").textContent = v + "%"; });
+    slider($("dOut"), v => sendAction("discord", "set_output_volume", {value: v}), v => { $("dOutV").textContent = v + "%"; });
+  }
+  $("dOff").hidden = d.connected; $("dOn").hidden = !d.connected;
+  if (!d.connected) return null;
+  $("dUser").textContent = d.user;
+  $("dMute").hidden = !can("discord", "toggle_mute"); $("dDeaf").hidden = !can("discord", "toggle_deaf");
+  $("dMute").textContent = d.mute ? "🎙️ Microfone mudo" : "🎙️ Microfone ligado"; $("dMute").classList.toggle("off", d.mute);
+  $("dDeaf").textContent = d.deaf ? "🔇 Sem áudio" : "🔊 Áudio ligado"; $("dDeaf").classList.toggle("off", d.deaf);
+  $("dInBox").hidden = !can("discord", "set_input_volume"); $("dOutBox").hidden = !can("discord", "set_output_volume");
+  if (document.activeElement !== $("dIn")) { $("dIn").value = d.inputVolume; $("dInV").textContent = d.inputVolume + "%"; }
+  if (document.activeElement !== $("dOut")) { $("dOut").value = d.outputVolume; $("dOutV").textContent = d.outputVolume + "%"; }
+  const ch = d.channel;
+  $("dChan").innerHTML = ch ? `<div class="sub">Canal de voz</div><div class="title">${esc(ch.name)}</div><div class="sub" style="margin-bottom:8px">${esc(ch.guild) || "Conversa direta"}</div>` +
+      `<ul class="list">${(ch.members || []).map(m => `<li><span class="member ${m.speaking ? "speaking" : ""}"><i></i>${esc(m.name)}</span><span>${m.deafened ? "🔇 sem áudio" : m.muted ? "🎙 mudo" : ""}</span></li>`).join("")}</ul>`
+    : `<div class="empty">Fora de canais de voz.</div>`;
+  return null;
+}
+function rGeneric(d) { return `<pre style="margin:0;font-size:12px;white-space:pre-wrap;word-break:break-all">${esc(JSON.stringify(d, null, 1))}</pre>`; }
+
+/* ---------- renderização ---------- */
+let scheduled = false;
+function schedule() { if (!scheduled) { scheduled = true; requestAnimationFrame(flush); } }
+function flush() {
+  scheduled = false;
+  for (const id of dirty) renderCard(id);
+  dirty.clear(); tickMedia();
+}
+function renderCard(id) {
+  const def = CARDS.find(c => c.id === id) || {id, title: INFO[id]?.name || id, render: rGeneric};
+  const el = ensureCard(def), s = S[id], info = INFO[id];
+  el.classList.toggle("disabled", info?.status === "disabled");
+  const chip = el.querySelector("[data-st]");
+  const st = info?.status; chip.textContent = st === "disabled" ? "desligado" : st === "error" ? "erro" : "";
+  chip.className = "chip " + (st === "error" ? "bad" : ""); chip.hidden = !chip.textContent;
+  el.querySelector("[data-refresh]").hidden = !can(id, "refresh");
+  const body = el.querySelector("[data-body]");
+  if (!s) {
+    if (!body.querySelector("[data-keep]")) body.innerHTML = `<div class="empty">${st === "disabled" ? "Plugin desligado na configuração do agente." : st === "error" ? "O plugin está com erro; o agente tenta de novo sozinho." : "Aguardando dados…"}</div>`;
+    return;
+  }
+  const html = def.render(s.data);
+  if (html != null) body.innerHTML = html;
+}
+setInterval(() => {   // idade do dado e barra de progresso
+  const now = Date.now();
+  for (const id in S) {
+    const el = $("card-" + id); if (!el) continue;
+    const age = now - S[id].ts;
+    el.classList.toggle("stale", age > 15000);
+    el.querySelector("[data-age]").textContent = age > 3000 ? "há " + ago(age) : "";
+  }
+  $("stats").textContent = ws && ws.readyState === 1 ? (total - lastTotal) + " msg/s" + (pingMs != null ? " · ping " + pingMs + " ms" : "") : "";
+  lastTotal = total;
+}, 1000);
+setInterval(tickMedia, 250);
+
+/* ---------- eventos e log ---------- */
+function addEvent(m) {
+  const box = $("events"); if (box.querySelector(".empty")) box.innerHTML = "";
+  const d = m.data, el = document.createElement("div");
+  el.className = "ev " + (d.severity || "");
+  el.innerHTML = `<b>${esc(m.source || "")}</b> · ${esc(d.kind)}<div>${esc(d.message)}</div><time>${new Date(m.ts).toLocaleTimeString("pt-BR")}</time>`;
+  box.prepend(el); while (box.children.length > 50) box.lastChild.remove();
+  if (d.severity === "critical") toast(`${m.source}: ${d.message}`, "bad");
+}
+function log(kind, text, important) {
+  if (paused || ($("onlyImportant").checked && !important)) return;
+  const el = $("log"), line = document.createElement("div");
+  line.className = kind; line.textContent = new Date().toLocaleTimeString("pt-BR") + " " + text;
+  el.appendChild(line); while (el.children.length > 250) el.firstChild.remove();
+  el.scrollTop = el.scrollHeight;
+}
+$("btnPause").onclick = e => { paused = !paused; e.target.textContent = paused ? "Retomar" : "Pausar"; };
+$("btnClear").onclick = () => { $("log").textContent = ""; };
+
+/* ---------- conexão ---------- */
+function setStatus(kind, text) {
+  $("status").className = "pill " + kind; $("statusText").textContent = text;
+  $("btnConn").textContent = kind === "off" ? "Conectar" : "Desconectar";
+}
+const CLOSE = {4401: "Token recusado (ou hello ausente).", 4400: "Versão de protocolo não suportada.", 1009: "Mensagem grande demais."};
+function send(type, data) {
+  if (!ws || ws.readyState !== 1) return false;
+  const m = JSON.stringify({v: 1, type, data}); ws.send(m); log("up", "→ " + m, type !== "ping");
+  return true;
+}
+function sendAction(plugin, action, args) {
+  const id = Math.random().toString(36).slice(2, 8);
+  if (!send("action", {id, plugin, action, args})) { toast("Sem conexão com o agente.", "bad"); return; }
+  PENDING[id] = {plugin, action};
+  optimistic(plugin, action, args);
+}
+function connect() {
+  clearTimeout(retryTimer); wantOpen = true;
+  const url = $("url").value.trim(); tokenValue = $("token").value.trim();
+  if (!tokenValue) { setStatus("off", "Informe o token"); wantOpen = false; $("token").focus(); return; }
+  try { httpBase = new URL(url.replace(/^ws/i, "http")).origin; } catch { setStatus("off", "URL inválida"); wantOpen = false; return; }
+  store.set("painel.url", url);
+  setStatus("wait", retry ? "Reconectando…" : "Conectando…");
+  try { ws = new WebSocket(url); } catch (e) { setStatus("off", "URL inválida"); wantOpen = false; return; }
+  const sock = ws;
+  sock.onopen = () => send("hello", {client: "web-test", version: "painel-1", token: tokenValue});
+  sock.onmessage = ev => { if (sock === ws) onMessage(ev.data); };
+  sock.onclose = ev => {
+    if (sock !== ws) return;
+    clearInterval(pingTimer); ws = null; pingMs = null;
+    const reason = CLOSE[ev.code];
+    if (reason) { wantOpen = false; setStatus("off", reason); return; }
+    if (wantOpen) { retry++; setStatus("wait", "Reconectando…"); retryTimer = setTimeout(connect, Math.min(10000, 500 * 2 ** Math.min(retry, 5))); }
+    else setStatus("off", "Desconectado");
+  };
+}
+function disconnect() { wantOpen = false; clearTimeout(retryTimer); clearInterval(pingTimer); if (ws) ws.close(1000); setStatus("off", "Desconectado"); }
+$("connForm").addEventListener("submit", e => { e.preventDefault(); (wantOpen || ws) ? disconnect() : (retry = 0, connect()); });
+
+function onMessage(text) {
+  total++;
+  let m; try { m = JSON.parse(text); } catch { log("err", "← (JSON inválido) " + text.slice(0, 200), true); return; }
+  if (m.seq != null) seq = m.seq;
+  const important = !["update", "snapshot", "pong"].includes(m.type);
+  log(m.type === "error" ? "err" : m.type === "action_result" ? "res" : "", "← " + text.slice(0, 600), important);
+  switch (m.type) {
+    case "hello": {
+      retry = 0; setStatus("on", "Conectado");
+      $("host").textContent = m.data.host + " · agente " + m.data.version;
+      for (const k in INFO) delete INFO[k];
+      (m.data.plugins || []).forEach(p => { INFO[p.id] = p; dirty.add(p.id); });
+      CARDS.forEach(c => dirty.add(c.id));
+      fillActions(); send("subscribe", {sources: ["*"]});
+      clearInterval(pingTimer);
+      pingTimer = setInterval(() => send("ping", {t: Date.now()}), 5000);
+      schedule(); break;
+    }
+    case "snapshot": case "update": {
+      const id = m.source; S[id] = {data: m.data, ts: m.ts, at: Date.now()};
+      if (id === "system") {
+        push(H.cpu, m.data.cpu?.percent); push(H.rx, m.data.net?.rxKbps); push(H.tx, m.data.net?.txKbps);
+      } else if (id === "gpu") push(H.gpu, m.data.utilPercent);
+      dirty.add(id); schedule(); break;
+    }
+    case "event": addEvent(m); break;
+    case "pong": pingMs = Date.now() - m.data.t; break;
+    case "action_result": {
+      const p = PENDING[m.data.id]; delete PENDING[m.data.id];
+      if (m.data.ok) break;
+      if (p && S[p.plugin]?.prev) { S[p.plugin].data = S[p.plugin].prev; dirty.add(p.plugin); schedule(); }   // desfaz o efeito otimista
+      toast(`${p ? p.plugin + "." + p.action : "Ação"}: ${FRIENDLY[m.data.error] || m.data.error}`, "bad");
+      break;
+    }
+    case "error": toast(m.data.code + ": " + m.data.message, "bad"); break;
+  }
+}
+function push(a, v) { if (v == null) return; a.push(v); while (a.length > HIST) a.shift(); }
+
+/* ---------- painel de ações ---------- */
+function fillActions() {
+  const plugins = Object.values(INFO).filter(p => p.status !== "disabled" && (p.actions || []).length);
+  const sel = $("aPlugin"); sel.innerHTML = plugins.map(p => `<option value="${esc(p.id)}">${esc(p.id)}</option>`).join("");
+  fillActionNames();
+}
+function fillActionNames() {
+  const p = INFO[$("aPlugin").value];
+  $("aAction").innerHTML = (p?.actions || []).map(a => { const n = typeof a === "string" ? a : a.name; return `<option>${esc(n)}</option>`; }).join("");
+  $("aArgs").value = $("aAction").value === "set_volume" ? '{"value": 40}' : "{}";
+}
+$("aPlugin").onchange = fillActionNames; $("aAction").onchange = () => { $("aArgs").value = $("aAction").value === "set_volume" ? '{"value": 40}' : "{}"; };
+$("actForm").addEventListener("submit", e => {
+  e.preventDefault();
+  let args; try { args = JSON.parse($("aArgs").value || "{}"); } catch { toast("Argumentos não são um JSON válido.", "bad"); return; }
+  sendAction($("aPlugin").value, $("aAction").value, args);
+});
+
+/* ---------- início ---------- */
+const q = new URLSearchParams(location.search);
+$("url").value = q.get("url") || store.get("painel.url") || $("url").value;
+</script>
+</body>
+</html>

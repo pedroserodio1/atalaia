@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teste do agente do PC</title>
+<style>
+  :root{--bg:#0B0D10;--panel:#14171C;--line:#232831;--fg:#E6E9EE;--mut:#8A93A3;--ok:#6EE7B7;--bad:#FF8A6B;--warn:#FBD38D}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif}
+  header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:2}
+  input,select,textarea,button{background:#0B0D10;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
+  button{cursor:pointer}button:hover{border-color:var(--ok)}
+  input[type=text],input[type=password]{width:220px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block}
+  .dot.on{background:var(--ok)}
+  .mut{color:var(--mut)}
+  main{display:grid;grid-template-columns:2fr 1fr;gap:12px;padding:12px 16px}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .card h3{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+  .card h3 span{color:var(--mut);font-weight:400;font-size:12px}
+  .card.stale{opacity:.5}
+  table{width:100%;border-collapse:collapse;font:12px ui-monospace,Menlo,Consolas,monospace}
+  td{padding:1px 0;vertical-align:top}td:first-child{color:var(--mut);padding-right:8px;word-break:break-all}
+  td:last-child{text-align:right;word-break:break-all}
+  h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 8px}
+  #log{height:300px;overflow:auto;font:11px ui-monospace,Menlo,Consolas,monospace;background:#0B0D10;border:1px solid var(--line);border-radius:6px;padding:6px;white-space:pre-wrap;word-break:break-all}
+  .up{color:var(--warn)}.down{color:var(--ok)}.err{color:var(--bad)}
+  .ev{padding:4px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .sev-warn{color:var(--warn)}.sev-critical{color:var(--bad)}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="dot"></span><strong id="st">Desconectado</strong>
+  <input type="text" id="url" value="ws://127.0.0.1:8765/ws" title="URL do agente">
+  <input type="password" id="token" placeholder="token de pareamento">
+  <button id="btnConn">Conectar</button>
+  <label class="mut"><input type="checkbox" id="auto" checked> reconectar</label>
+  <label class="mut"><input type="checkbox" id="simBox"> simulador local</label>
+  <span class="mut" id="stats"></span>
+</header>
+<main>
+  <section>
+    <h2>Fontes</h2>
+    <div class="grid" id="sources"><div class="mut">Nenhum dado ainda.</div></div>
+    <h2 style="margin-top:16px">Plugins informados pelo agente</h2>
+    <div id="plugins" class="mut">—</div>
+  </section>
+  <aside>
+    <h2>Enviar ação</h2>
+    <div class="row">
+      <input type="text" id="aPlugin" placeholder="plugin" value="audio" style="width:90px">
+      <input type="text" id="aAction" placeholder="ação" value="set_volume" style="width:120px">
+    </div>
+    <textarea id="aArgs" rows="2" style="width:100%">{"value":40}</textarea>
+    <div class="row" style="margin-top:6px"><button id="btnAct">Enviar ação</button><button id="btnPing">Ping</button><button id="btnSub">Re-subscribe</button></div>
+    <h2 style="margin-top:16px">Eventos</h2>
+    <div id="events" class="mut">—</div>
+    <h2 style="margin-top:16px">Log <button id="btnPause" style="float:right;font-size:11px">pausar</button></h2>
+    <div id="log"></div>
+  </aside>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const state = {};      // source -> {data, ts, count}
+let ws = null, seq = 0, retry = null, wantOpen = false, paused = false, sim = null, pingT = null;
+let total = 0, lastTotal = 0, lastPing = null;
+const logLines = [];
+
+function log(cls, text){
+  if(paused) return;
+  logLines.push({cls, text}); if(logLines.length > 200) logLines.shift();
+  const el = $('log');
+  el.innerHTML = logLines.map(l => `<div class="${l.cls}">${esc(l.text.length>400 ? l.text.slice(0,400)+'…' : l.text)}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function setStatus(on, text){ $('dot').className = 'dot' + (on ? ' on' : ''); $('st').textContent = text; $('btnConn').textContent = (on || wantOpen) ? 'Desconectar' : 'Conectar'; }
+
+function flat(o, p = ''){
+  let r = [];
+  for(const [k, v] of Object.entries(o)){
+    const key = p ? p + '.' + k : k;
+    if(v && typeof v === 'object') r = r.concat(flat(v, key)); else r.push([key, v]);
+  }
+  return r;
+}
+
+function send(type, data){
+  const msg = {v: 1, type, seq: ++seq, ts: Date.now(), data};
+  const text = JSON.stringify(msg);
+  log('up', '↑ ' + text);
+  if(sim){ simHandle(msg); return; }
+  if(ws && ws.readyState === 1) ws.send(text); else log('err', 'não conectado');
+}
+
+function connect(){
+  wantOpen = true; setStatus(false, 'Conectando…');
+  try { ws = new WebSocket($('url').value.trim()); } catch(e){ log('err', 'URL inválida: ' + e.message); wantOpen = false; setStatus(false, 'Desconectado'); return; }
+  ws.onopen = () => {
+    setStatus(true, 'Conectado');
+    send('hello', {client: 'web-test', version: '1', token: $('token').value});
+    send('subscribe', {sources: ['*']});
+    clearInterval(pingT); pingT = setInterval(() => send('ping', {t: Date.now()}), 5000);
+  };
+  ws.onmessage = e => { log('down', '↓ ' + e.data); try { handle(JSON.parse(e.data)); } catch(err){ log('err', 'JSON inválido: ' + err.message); } };
+  ws.onerror = () => log('err', 'erro de conexão (agente rodando? URL/porta? token?)');
+  ws.onclose = ev => {
+    clearInterval(pingT); setStatus(false, 'Desconectado (código ' + ev.code + (ev.code === 4401 ? ': token inválido' : ev.code === 4400 ? ': protocolo incompatível' : '') + ')');
+    ws = null;
+    if(wantOpen && $('auto').checked && ev.code !== 4401 && ev.code !== 4400){ retry = setTimeout(connect, 2000); }
+    else wantOpen = false;
+  };
+}
+function disconnect(){ wantOpen = false; clearTimeout(retry); clearInterval(pingT); if(ws) ws.close(1000); setStatus(false, 'Desconectado'); }
+
+function handle(m){
+  total++;
+  if(m.v !== 1) log('err', 'versão de protocolo inesperada: ' + m.v);
+  switch(m.type){
+    case 'hello': renderPlugins(m.data); break;
+    case 'snapshot':
+    case 'update': {
+      const s = state[m.source] || (state[m.source] = {count: 0});
+      s.data = m.data; s.ts = m.ts; s.recv = Date.now(); s.count++; s.kind = m.type; renderSources(); break;
+    }
+    case 'event': addEvent(m); break;
+    case 'action_result': log(m.data.ok ? 'down' : 'err', 'ação ' + m.data.id + (m.data.ok ? ' ok' : ' falhou: ' + m.data.error)); break;
+    case 'pong': lastPing = Date.now() - m.data.t; break;
+    case 'error': log('err', 'erro do agente: ' + m.data.code + ' ' + m.data.message); break;
+    default: log('err', 'tipo desconhecido: ' + m.type);
+  }
+}
+
+function renderSources(){
+  const names = Object.keys(state).sort();
+  if(!names.length){ $('sources').innerHTML = '<div class="mut">Nenhum dado ainda.</div>'; return; }
+  $('sources').innerHTML = names.map(n => {
+    const s = state[n]; const age = ((Date.now() - s.recv) / 1000).toFixed(1);
+    const lag = s.ts ? Date.now() - s.ts : null;
+    const rows = flat(s.data || {}).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(typeof v === 'number' ? Math.round(v*100)/100 : v)}</td></tr>`).join('');
+    return `<div class="card ${age > 15 ? 'stale' : ''}"><h3>${esc(n)}<span>${s.kind} · #${s.count} · há ${age}s${lag !== null ? ' · atraso ' + lag + 'ms' : ''}</span></h3><table>${rows}</table></div>`;
+  }).join('');
+}
+function renderPlugins(d){
+  if(!d || !d.plugins){ return; }
+  $('plugins').innerHTML = `<div class="mut">${esc(d.agent)} v${esc(d.version)} · protocolo ${d.protocol} · ${esc(d.host)}</div>` +
+    d.plugins.map(p => `<div>${esc(p.id)} — ${esc(p.name)} <span class="mut">[${esc(p.status)} · ${p.intervalMs}ms · ações: ${(p.actions||[]).map(a => esc(a.name || a)).join(', ') || '—'}]</span></div>`).join('');
+}
+function addEvent(m){
+  const d = m.data, el = $('events');
+  if(el.classList.contains('mut')){ el.classList.remove('mut'); el.innerHTML = ''; }
+  const div = document.createElement('div');
+  div.className = 'ev sev-' + d.severity;
+  div.textContent = new Date(m.ts).toLocaleTimeString() + ' [' + m.source + '] ' + d.kind + ': ' + d.message;
+  el.prepend(div); while(el.children.length > 30) el.lastChild.remove();
+}
+
+/* ---------- simulador local (mesmos formatos do protocolo v1) ---------- */
+const r = (a, b) => a + Math.random() * (b - a);
+const walk = (v, step, lo, hi) => Math.min(hi, Math.max(lo, v + r(-step, step)));
+const S = {cpu: 20, gpuT: 50, gpuU: 30, ram: 12000, bat: 100, onBat: false, vol: 40, pos: 0};
+function simFrames(){
+  S.cpu = walk(S.cpu, 10, 2, 95); S.gpuT = walk(S.gpuT, 2, 35, 82); S.gpuU = walk(S.gpuU, 12, 0, 100);
+  S.ram = walk(S.ram, 300, 6000, 28000); S.pos = (S.pos + 1) % 240;
+  if(Math.random() < 0.03) S.onBat = !S.onBat;
+  S.bat = S.onBat ? Math.max(20, S.bat - 1) : Math.min(100, S.bat + 1);
+  return {
+    system: {cpu: {percent: Math.round(S.cpu)}, ram: {usedMb: Math.round(S.ram), totalMb: 32768},
+      disks: [{name: 'C:', usedGb: 412, totalGb: 931}, {name: 'D:', usedGb: 1210, totalGb: 1863}], net: {rxKbps: Math.round(r(0, 9000)), txKbps: Math.round(r(0, 800))}},
+    gpu: {name: 'NVIDIA GeForce RTX 5060 Ti', tempC: Math.round(S.gpuT), utilPercent: Math.round(S.gpuU), vramUsedMb: Math.round(r(2000, 9000)), vramTotalMb: 16384, powerW: Math.round(r(30, 180))},
+    media: {app: 'Spotify', title: 'Faixa de teste', artist: 'Artista', album: 'Álbum', status: 'playing', positionSec: S.pos, durationSec: 240},
+    ups: {inputV: S.onBat ? 0 : Math.round(r(212, 224)), outputV: 220, loadPercent: Math.round(r(11, 44)), freqHz: S.onBat ? 0 : 60, batteryPercent: S.bat, batteryV: +r(26, 28).toFixed(1), tempC: Math.round(r(28, 34)), status: 8, onBattery: S.onBat, updatedAt: new Date().toISOString()},
+    audio: {output: 'Alto-falantes (simulado)', volume: S.vol, muted: false},
+    activeWindow: {title: 'Teste — Página de teste', process: 'chrome.exe'}
+  };
+}
+let prevBat = false;
+function simHandle(msg){
+  const reply = (type, data, source) => setTimeout(() => { const m = {v: 1, type, seq: ++seq, ts: Date.now(), data}; if(source) m.source = source; log('down', '↓ ' + JSON.stringify(m)); handle(m); }, 30);
+  if(msg.type === 'hello') reply('hello', {agent: 'pc-agent (simulado)', version: '0.0', protocol: 1, host: 'SIMULADOR',
+    plugins: ['system','gpu','media','ups','audio','activeWindow'].map(id => ({id, name: id, intervalMs: 1000, status: 'ok', actions: id === 'audio' ? ['set_volume','toggle_mute'] : []}))});
+  if(msg.type === 'subscribe'){ const f = simFrames(); Object.entries(f).forEach(([k, v]) => reply('snapshot', v, k)); }
+  if(msg.type === 'ping') reply('pong', {t: msg.data.t});
+  if(msg.type === 'action'){
+    const d = msg.data; if(d.plugin === 'audio' && d.action === 'set_volume') S.vol = d.args.value;
+    reply('action_result', {id: d.id, ok: d.plugin === 'audio', error: d.plugin === 'audio' ? null : 'plugin desconhecido'});
+  }
+}
+function simStart(){
+  sim = setInterval(() => {
+    const f = simFrames();
+    Object.entries(f).forEach(([k, v]) => { const m = {v: 1, type: 'update', source: k, seq: ++seq, ts: Date.now(), data: v}; log('down', '↓ ' + JSON.stringify(m)); handle(m); });
+    if(S.onBat !== prevBat){ prevBat = S.onBat; handle({v: 1, type: 'event', source: 'ups', ts: Date.now(), data: S.onBat ? {kind: 'power_fail', severity: 'critical', message: 'Falha na rede elétrica'} : {kind: 'power_restored', severity: 'info', message: 'Rede elétrica reestabelecida'}}); }
+  }, 1000);
+  setStatus(true, 'Simulador local'); simHandle({type: 'hello'}); simHandle({type: 'subscribe'});
+  pingT = setInterval(() => simHandle({type: 'ping', data: {t: Date.now()}}), 5000);
+}
+function simStop(){ clearInterval(sim); clearInterval(pingT); sim = null; setStatus(false, 'Desconectado'); }
+
+/* ---------- UI ---------- */
+$('btnConn').onclick = () => { (wantOpen || ws) ? disconnect() : connect(); };
+$('simBox').onchange = e => { if(e.target.checked){ disconnect(); for(const k in state) delete state[k]; simStart(); } else simStop(); };
+$('btnPing').onclick = () => send('ping', {t: Date.now()});
+$('btnSub').onclick = () => send('subscribe', {sources: ['*']});
+$('btnPause').onclick = e => { paused = !paused; e.target.textContent = paused ? 'retomar' : 'pausar'; };
+$('btnAct').onclick = () => {
+  let args; try { args = JSON.parse($('aArgs').value || '{}'); } catch(e){ log('err', 'args não é JSON válido'); return; }
+  send('action', {id: Math.random().toString(36).slice(2, 8), plugin: $('aPlugin').value, action: $('aAction').value, args});
+};
+setInterval(() => {
+  $('stats').textContent = (total - lastTotal) + ' msg/s' + (lastPing !== null ? ' · ping ' + lastPing + 'ms' : '');
+  lastTotal = total; renderSources();
+}, 1000);
+</script>
+</body>
+</html>
