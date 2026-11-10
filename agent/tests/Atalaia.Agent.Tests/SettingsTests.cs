@@ -309,3 +309,17 @@ public class OnboardingStateTests
         Assert.Equal("done", steps["network"]!.GetValue<string>());
     }
 }
+
+public class AppPathsTests
+{
+    [Theory]
+    [InlineData(null, @"C:\Users\fake\AppData\Local\AtalaiaAgent")]
+    [InlineData("", @"C:\Users\fake\AppData\Local\AtalaiaAgent")]
+    [InlineData("   ", @"C:\Users\fake\AppData\Local\AtalaiaAgent")]
+    [InlineData(@"D:\teste\dados", @"D:\teste\dados")]
+    [InlineData(@"  D:\teste\dados  ", @"D:\teste\dados")]
+    [InlineData(@"dados\relativo", @"C:\Users\fake\AppData\Local\AtalaiaAgent")]   // caminho relativo não vale: cairia numa pasta imprevisível
+    [InlineData(@"D:\a\..\b", @"D:\b")]
+    public void Pasta_de_dados_e_a_do_usuario_ou_a_da_variavel_se_for_caminho_completo(string? env, string expected) =>
+        Assert.Equal(expected, AppPaths.Resolve(env, @"C:\Users\fake\AppData\Local"));
+}

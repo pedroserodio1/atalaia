@@ -20,11 +20,12 @@ internal sealed class WindowHost : IDisposable
     private MainWindow? _window;
     private bool _disposed;
 
-    public WindowHost(AgentRuntime runtime, OnboardingStore onboarding, Func<string> repository, ILogger? logger = null)
+    public WindowHost(AgentRuntime runtime, OnboardingStore onboarding, Func<string> repository, ILogger? logger = null, Action<CommandRouter>? registerMore = null)
     {
         _runtime = runtime;
         _router = new CommandRouter(logger);
         new WindowCommands(runtime, onboarding, repository, closeWindow: CloseWindow, openExternal: MainWindow.OpenInBrowser).Register(_router);
+        registerMore?.Invoke(_router);   // os comandos dos passos do onboarding
         _marshal.CreateControl();
         _ = _marshal.Handle;   // cria o handle agora, na thread da interface
         runtime.ClientsChanged += OnClientsChanged;

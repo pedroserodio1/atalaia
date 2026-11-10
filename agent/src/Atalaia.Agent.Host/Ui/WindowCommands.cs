@@ -47,7 +47,7 @@ internal sealed class WindowCommands(
     public static string ChannelOf(string remote) =>
         IPAddress.TryParse(remote, out var ip) && IPAddress.IsLoopback(ip) ? "usb" : "wifi";
 
-    private static JsonNode ClientJson(ClientInfo c) => new JsonObject
+    internal static JsonNode ClientJson(ClientInfo c) => new JsonObject
     {
         ["remote"] = c.Remote,
         ["channel"] = ChannelOf(c.Remote),

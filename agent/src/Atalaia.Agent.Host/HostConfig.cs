@@ -11,8 +11,17 @@ namespace Atalaia.Agent.Host;
 
 internal static class AppPaths
 {
-    public static string Dir { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AtalaiaAgent");
+    /// <summary>
+    /// Onde o agente guarda logs, <c>settings.json</c>, downloads e os dados do WebView2: <c>%LOCALAPPDATA%\AtalaiaAgent</c>, ou a pasta de
+    /// <c>ATALAIA_DATA_DIR</c> (caminho completo), para testar sem mexer na configuração de verdade (VM, outro usuário, pasta descartável).
+    /// </summary>
+    public static string Dir { get; } = Resolve(Environment.GetEnvironmentVariable("ATALAIA_DATA_DIR"),
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+
+    internal static string Resolve(string? overrideDir, string localAppData) =>
+        !string.IsNullOrWhiteSpace(overrideDir) && Path.IsPathFullyQualified(overrideDir.Trim())
+            ? Path.GetFullPath(overrideDir.Trim())
+            : Path.Combine(localAppData, "AtalaiaAgent");
     public static string Logs { get; } = Path.Combine(Dir, "logs");
     /// <summary>Pasta de dados do WebView2 (cache, cookies). Fica fora da pasta de instalação, que não é gravável.</summary>
     public static string WebView2Data { get; } = Path.Combine(Dir, "webview2");

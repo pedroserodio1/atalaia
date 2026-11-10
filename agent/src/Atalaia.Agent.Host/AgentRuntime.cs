@@ -29,6 +29,8 @@ internal sealed class AgentRuntime(IConfiguration config, bool simulate, TokenSt
     private CancellationTokenSource? _usbCts;
     private Task? _usbTask;
 
+    /// <summary>A configuração em uso (a da última subida).</summary>
+    public IConfiguration Config => _config;
     public string Token => token.Token;
     public bool TokenCreated => token.Created;
     public bool Simulate => simulate;

@@ -37,6 +37,37 @@ A janela é uma página local (HTML) mostrada pelo **WebView2** da Microsoft, qu
 (o programa avisa e o agente continua na bandeja). A página só enxerga o agente por uma lista fixa de comandos, não abre outros sites nem
 arquivos, e **só abre no próprio PC**: o tablet nunca altera a configuração. Ela nunca mostra o código de acesso fora da tela própria dele.
 
+### Primeira configuração (onboarding)
+
+Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todos podem ser pulados e retomados depois:
+
+1. **Rede e Firewall:** o endereço do PC na rede local (se há mais de uma placa, você escolhe), liga e desliga o Wi-Fi (`Agent:ListenOnLan`), muda
+   a porta e libera o Firewall. A regra é criada por um processo elevado (`AtalaiaAgent.exe --firewall-rule <porta>`, que pede a permissão do
+   Windows na hora): uma regra de entrada **TCP só para a porta do agente, só no perfil Privado e só para a sub-rede local**, chamada `Atalaia-Agente`
+   (trocar a porta troca a regra, sem deixar sobras). O botão **Verificar** confere o que dá para garantir do PC: que o agente escuta na rede, que há
+   regra para a porta e o tipo da rede. Ele **não** prova que o tablet entra (chamar o próprio IP não passa pelo Firewall): isso só fica provado
+   quando o tablet conecta, no passo 4.
+2. **USB e adb:** acha o `adb` (caminho configurado, PATH, `ANDROID_HOME`), lista o tablet com o estado de verdade (autorizado, aguardando você tocar
+   em Permitir, offline), liga o módulo USB (`Usb:Enabled`) e mostra se o túnel `adb reverse` está ativo. O Atalaia **não baixa** o platform-tools:
+   só abre a página oficial do Google.
+3. **App no tablet:** instala o APK por `adb install -r`. O APK vem **da release da mesma versão do agente**, baixado do GitHub e conferido contra o
+   `SHA256SUMS.txt` da release antes de qualquer uso (somas ausentes, divergentes ou ambíguas recusam). Se o app do tablet foi assinado com outra chave
+   (como o `0.0.1`, de debug), o Android recusa a atualização por cima: a janela explica e só desinstala com a sua confirmação, avisando que isso apaga a
+   configuração do app. Em build de desenvolvimento (`-dev`) não há release: você escolhe um APK do seu computador. O QR leva à página da release,
+   para instalar sem cabo.
+4. **Código de pareamento:** mostra o código de 6 dígitos (só aqui e no menu da bandeja), copia, e conclui sozinho quando um tablet conecta (USB ou Wi-Fi).
+5. **Fontes de dados:** as onze fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
+   banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`, Claude sem a pasta). Chaves de API **nunca** são gravadas por aqui: a janela só diz
+   qual variável de ambiente definir.
+6. **Pronto:** resumo real de cada item, **Iniciar com o Windows** (valor `Atalaia` na chave `HKCU\...\Run`, só para o `AtalaiaAgent.exe` instalado) e
+   **Buscar atualizações sozinho** (`Updates:AutoCheck`).
+
+Quando uma mudança de configuração não pode ser aplicada (o agente não sobe com a porta nova, ou uma variável de ambiente `ATALAIA_*` mantém o valor
+antigo), a janela desfaz a gravação no `settings.json` e explica o porquê: o arquivo nunca fica com algo que não funciona.
+
+Para testar sem mexer na sua configuração de verdade, aponte a pasta de dados para outro lugar com a variável **`ATALAIA_DATA_DIR`** (caminho completo):
+logs, `settings.json`, downloads e os dados do WebView2 passam a ficar nela.
+
 O menu da bandeja tem o endereço em uso,
 `Clientes conectados: N`, o **código de acesso** (6 dígitos), **Copiar código**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
 Se não conseguir subir (porta ocupada, por exemplo), aparece uma caixa de mensagem com o erro.
@@ -95,6 +126,8 @@ Chaves principais (padrões em `appsettings.json`):
 | `Agent:Port` | Porta do WebSocket e do HTTP da capa (8765) |
 | `Agent:ListenOnLan` | `false` = `127.0.0.1`; `true` = `0.0.0.0` |
 | `Agent:MaxSilenceMs` | Reenvia o dado a cada tanto tempo mesmo sem mudança (10000) |
+| `Updates:AutoCheck` | Buscar atualizações sozinho (`true` por padrão; gravado pela janela, usado pela atualização automática) |
+| `Network:PreferredAdapter` | Placa de rede mostrada como "endereço do PC" quando há mais de uma (só muda o que a tela e o QR mostram) |
 | `Updates:Repository` | Repositório do GitHub (`dono/nome`) de onde a janela abre os links e, na atualização automática, as releases (`pedroserodio1/atalaia`) |
 | `Plugins:<id>:enabled` / `intervalMs` | Liga/desliga e intervalo de coleta de cada plugin |
 | `Plugins:system:netInterface` | Nome da placa de rede; vazio = a primeira ativa com gateway IPv4 |

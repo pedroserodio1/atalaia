@@ -2,8 +2,15 @@
 // Copyright (C) 2026 Pedro Serôdio
 
 using System.Runtime.InteropServices;
+using Atalaia.Agent.Host.Adb;
+using Atalaia.Agent.Host.Install;
+using Atalaia.Agent.Host.Network;
 using Atalaia.Agent.Host.Settings;
+using Atalaia.Agent.Host.Sources;
+using Atalaia.Agent.Host.Startup;
 using Atalaia.Agent.Host.Ui;
+using Atalaia.Agent.Host.Updates;
+using Atalaia.Agent.Host.Usb;
 using Serilog;
 using Serilog.Events;
 
@@ -17,6 +24,8 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Contains(FirewallHelper.Flag)) return FirewallHelper.Run(args);   // processo elevado (UAC): só cria a regra do Firewall e sai
+
         var simulate = args.Contains("--simulate");
         var console = args.Contains("--console");
         if (console) AllocConsole();
@@ -53,7 +62,9 @@ internal static class Program
             }
 
             var onboarding = new OnboardingStore(SettingsStore.Default);
-            window = new WindowHost(runtime, onboarding, () => RepositoryFrom(config));
+            var uiLog = new Serilog.Extensions.Logging.SerilogLoggerFactory(Log.Logger).CreateLogger("Janela");   // erros dos comandos da janela vão para o log (a página só recebe uma mensagem genérica)
+            var steps = new StepCommands(BuildStepServices(runtime), uiLog);
+            window = new WindowHost(runtime, onboarding, () => RepositoryFrom(config), uiLog, steps.Register);
             var tray = new Tray(runtime, window);
 
             // Outra instância pediu a janela: abre/traz para a frente (Show pode ser chamado de qualquer thread).
@@ -83,6 +94,37 @@ internal static class Program
         {
             Log.CloseAndFlush();
         }
+    }
+
+    private static readonly HttpClient Http = new() { Timeout = Timeout.InfiniteTimeSpan };   // o prazo de cada chamada é do GitHubReleaseClient
+
+    /// <summary>Liga os comandos dos passos ao Windows de verdade: Firewall, adb, GitHub, registro, caixas de arquivo e área de transferência.</summary>
+    private static StepServices BuildStepServices(AgentRuntime runtime)
+    {
+        var settings = SettingsStore.Default;
+        string Repo() => RepositoryFrom(runtime.Config);
+        return new StepServices(
+            runtime,
+            settings,
+            ApplyConfig: () => runtime.RestartAsync(HostConfig.Compose(AppContext.BaseDirectory, settings)),
+            Firewall: new WindowsFirewall(),
+            Adb: new AdbService(() => UsbOptions.From(runtime.Config).AdbPath, Environment.GetEnvironmentVariable, File.Exists, (exe, timeout) => new ProcessAdbRunner(exe, timeout)),
+            Apk: () => new ApkProvider(new GitHubReleaseClient(Http, new GitHubReleaseClient.Options(Repo(), AppInfo.Version)), Path.Combine(AppPaths.Dir, "downloads"), AppInfo.Version),
+            ReadAdapters: LanAddressProvider.Read,
+            IsPortFree: PortValidator.IsFreeOnLoopback,
+            Probe: id => new SourceProbe(k => runtime.Config[$"Plugins:{id}:{k}"], File.Exists, Directory.Exists, Environment.GetEnvironmentVariable,
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            Autostart: new AutostartService(new RegistryRunKey(), () => Environment.ProcessPath),
+            PickAdb: () => Pick("Escolha o adb.exe (pasta platform-tools do Android)", "adb.exe|adb.exe"),
+            PickApk: () => Pick("Escolha o APK do Atalaia para o tablet", "APK do Android (*.apk)|*.apk"),
+            CopyText: Clipboard.SetText,
+            OpenExternal: MainWindow.OpenInBrowser);
+    }
+
+    private static string? Pick(string title, string filter)
+    {
+        using var dialog = new OpenFileDialog { Title = title, Filter = filter, CheckFileExists = true, Multiselect = false };
+        return dialog.ShowDialog() == DialogResult.OK ? dialog.FileName : null;
     }
 
     /// <summary>O repositório do GitHub (dono/nome) de <c>Updates:Repository</c>; valor ausente ou inválido volta ao padrão.</summary>
