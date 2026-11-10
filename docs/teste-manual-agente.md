@@ -63,7 +63,7 @@ Jogos e ações e Atualizações. Para abrir: menu da bandeja > **Abrir Atalaia*
 | 1 | **Conexão** | Código de acesso (o mesmo da bandeja), tablets conectados agora (USB ou Wi-Fi, atualiza sozinho), e embaixo as mesmas telas de Rede e Firewall e de USB e adb do onboarding, com o estado real |
 | 2 | **"Em breve"** na Conexão | "Gerar novo", "Cancelar", "Revogar", mDNS e Wake-on-LAN aparecem **desabilitados** e marcados "em breve": nada deles responde ao clique |
 | 3 | **Iniciar com o Windows** | Liga e desliga como no passo 6 do onboarding (valor `Atalaia` na chave Run) |
-| 4 | **Fontes de dados** | A mesma lista do onboarding; ligar e desligar uma fonte religa o agente sem mudar o código de acesso |
+| 4 | **Fontes de dados** | A mesma lista do onboarding; ligar e desligar uma fonte religa o agente sem mudar o código de acesso. Clima, Steam e Discord têm o botão **Configurar** (veja a seção abaixo) |
 | 5 | **Jogos e ações** | Só texto explicando o que vem: cenas por jogo e ações extras, tudo "em breve" e desabilitado |
 | 6 | **Atualizações** | A versão real e a busca de atualizações (veja a Fase 4 abaixo) |
 | 7 | **Refazer a primeira configuração** (rodapé da barra lateral) | Volta à Boas-vindas com o onboarding do zero; se o onboarding não foi concluído, o botão é "Retomar" e leva ao passo em que parou |
@@ -99,3 +99,27 @@ Se for um problema na prática, a correção é reabrir o agente por outro camin
 `SHA256SUMS.txt` e instalador trocado entre a conferência e a execução.
 
 **O que este roteiro não cobre ainda:** a instalação limpa pelo `Atalaia-Agent-Setup` numa VM e o onboarding de ponta a ponta com o tablet real (Fase 5).
+
+## Credenciais das fontes pela janela (0.1.2)
+
+Depende do Windows de verdade (DPAPI) e das contas reais. Use uma pasta de dados à parte (`ATALAIA_DATA_DIR`) se não quiser mexer na configuração do dia a dia, e
+rode **sem** `--simulate` (no modo simulado todas as fontes ficam ligadas com dados falsos e o resultado não prova nada). **Nunca cole chave, `clientSecret` ou
+coordenada de verdade em issue, PR ou log.**
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | **Fontes de dados**, fonte **Clima**, botão **Configurar** | Abre o formulário com Latitude e Longitude; a consulta periódica não apaga o que você digita |
+| 2 | Latitude `-23,55` (vírgula), `91`, `abc`, vazio; Longitude `181` | Mensagens em português (ponto decimal, intervalo −90 a 90 e −180 a 180, "preencha"); nada é gravado e o formulário continua aberto |
+| 3 | Latitude e Longitude válidas com ponto, **Salvar**, ligar o Clima | O agente religa (o código de acesso é o mesmo), o formulário fecha, a fonte sai de "faltam a latitude e a longitude" e o tablet mostra o clima. O `settings.json` tem os dois valores; não existe `secrets.dat` ainda |
+| 4 | **Steam**: chave vazia, `steamId64` com 16 ou 18 dígitos ou com letra | Recusado com mensagem em português; nada gravado |
+| 5 | **Steam** com chave e `steamId64` (17 dígitos) válidos | Salva e religa. O campo da chave passa a mostrar **Configurada**, nunca o valor (confira também no DevTools/rede: a resposta de `sources.get` não traz a chave). Existe `%LOCALAPPDATA%\AtalaiaAgent\secrets.dat`; abri-lo no Bloco de Notas mostra bytes ilegíveis; a chave **não** está no `settings.json` nem no log |
+| 6 | Reabrir a janela e **Configurar** de novo, deixar a chave em branco, trocar só o `steamId64` | A chave continua valendo (o plugin segue sem erro); trocar a chave por outra a substitui |
+| 7 | **Remover** na Steam (dois toques: o primeiro pede confirmação) | Apaga o `steamId64` do `settings.json` e a chave do cofre; a fonte volta a pedir configuração |
+| 8 | **Discord**: `clientId` e `clientSecret` do aplicativo criado no portal de desenvolvedores | Salva; ligar o Discord com o Discord aberto: **na primeira vez** o Discord mostra um pop-up pedindo autorização (aceite). O `discord.json` aparece em `%LOCALAPPDATA%\AtalaiaAgent\` e o cartão mostra a chamada de voz |
+| 9 | **Variável de ambiente manda:** definir `ATALAIA_Plugins__steam__apiKey` (ou pôr no `.env`), reiniciar o agente | O campo da chave aparece travado com o nome da variável e "ela manda sobre este campo"; o plugin usa o valor do ambiente, não o do cofre. Remover a variável e reiniciar: volta a valer o cofre |
+| 10 | **Desfazer em falha:** com a janela aberta, ocupar a porta do agente por outro programa e salvar uma fonte | Se o agente não subir, a mudança é desfeita (o valor anterior continua; confira o `settings.json` e que a chave antiga ainda funciona) e a janela explica |
+| 11 | **Outra conta do Windows** (ou copiar o `secrets.dat` para outro PC) | O agente sobe normalmente sem as credenciais; o log avisa que o cofre estava ilegível, o arquivo é guardado como `secrets.dat.ilegivel-<data>` e as fontes pedem a configuração de novo |
+| 12 | **Zoom do Windows em 125% e 150%** | O formulário cabe e não corta texto |
+
+**O que é coberto só por teste automático:** a validação campo a campo, a precedência (ambiente acima do cofre acima do `settings.json`), o desfazer em falha de religar e
+em valor sobreposto e o cofre com uma cifra falsa no lugar da DPAPI (a ida e volta da DPAPI de verdade também é testada, no Windows de quem roda).

@@ -289,18 +289,70 @@ function codeStep() {
 
 // ---------------------------------------------------------------- 5 · Fontes de dados
 
+let editingSource = null;   // id da fonte com o formulário aberto: enquanto houver, a consulta periódica não redesenha (apagaria o que foi digitado)
+
+/**
+ * Formulário de uma fonte com credencial ou dado pessoal (clima, Steam, Discord). Segredo nunca volta do agente: o campo só diz "configurada" e
+ * em branco significa manter. O erro de validação (em português, vindo do agente) aparece aqui mesmo, sem fechar o formulário.
+ */
+function configForm(v, s) {
+  const inputs = {};
+  const error = h('div', { class: 'hint warn', role: 'alert' });
+  const fields = s.fields.map((f) => {
+    const input = h('input', {
+      type: f.secret ? 'password' : 'text', class: 'input wide', autocomplete: 'off', spellcheck: 'false', maxlength: '256',
+      'aria-label': f.label, value: f.secret ? null : f.value, disabled: f.fromEnv ? true : null,
+      placeholder: f.secret && f.configured ? 'configurada · digite para trocar' : null,
+    });
+    inputs[f.name] = input;
+    return h('div', { class: 'frow' },
+      h('label', { class: 'flabel' }, f.label), input,
+      f.fromEnv ? h('div', { class: 'hint' }, `Definida pela variável de ambiente ${f.envName}: ela manda sobre este campo.`)
+        : f.secret && f.configured ? h('div', { class: 'hint ok' }, '● Configurada. O valor nunca é mostrado; deixe em branco para manter.') : null);
+  });
+  const save = h('button', { type: 'button', class: 'btn small primary' }, 'Salvar');
+  const cancel = h('button', { type: 'button', class: 'btn small' }, 'Cancelar');
+  const configured = s.fields.some((f) => f.configured && !f.fromEnv);
+  const remove = configured ? h('button', { type: 'button', class: 'btn small' }, 'Remover') : null;
+
+  const lock = (on) => { for (const b of [save, cancel, remove]) if (b) b.disabled = on; };
+  save.addEventListener('click', async () => {
+    const values = {};
+    for (const f of s.fields) if (!f.fromEnv) values[f.name] = inputs[f.name].value;
+    error.textContent = ''; lock(true); save.textContent = 'Salvando…';
+    try { const data = await call('sources.configure', { id: s.id, values }); editingSource = null; v.set(data); }
+    catch (err) { error.textContent = err.message; lock(false); save.textContent = 'Salvar'; }
+  });
+  cancel.addEventListener('click', () => { editingSource = null; v.paint(); });
+  if (remove) {
+    let armed = false;   // dois toques: o primeiro só pede a confirmação
+    remove.addEventListener('click', async () => {
+      if (!armed) { armed = true; remove.textContent = 'Confirmar remoção'; return; }
+      error.textContent = ''; lock(true);
+      try { const data = await call('sources.clearConfig', { id: s.id }); editingSource = null; v.set(data); }
+      catch (err) { error.textContent = err.message; lock(false); armed = false; remove.textContent = 'Remover'; }
+    });
+  }
+  return h('div', { class: 'cfg' }, fields, error,
+    h('div', { class: 'hint' }, 'Só sai deste PC o que a própria fonte precisa. Segredos ficam criptografados com a sua conta do Windows, fora do arquivo de configuração.'),
+    h('div', { class: 'btnrow' }, save, cancel, remove));
+}
+
 function sourcesStep() {
-  const view = stepView(() => call('sources.get'), (v) => {
+  editingSource = null;
+  const view = stepView(() => (editingSource ? Promise.reject(new Error('editando')) : call('sources.get')), (v) => {
     const d = v.data;
     return [
       d.simulate ? h('div', { class: 'notice' }, 'Modo simulado: todas as fontes ficam ligadas, com dados falsos, seja qual for a configuração.') : null,
-      h('div', { class: 'card' }, d.sources.map((s) => h('div', { class: 'row' },
+      h('div', { class: 'card' }, d.sources.flatMap((s) => [h('div', { class: 'row' },
         h('div', { class: 'grow' },
           h('div', { class: 'name' }, s.name),
           h('div', { class: 'hint' }, s.description),
           s.enabled ? s.needs.map((n) => h('div', { class: 'hint warn' }, '● ' + n)) : null,
           s.enabled && s.status === 'error' ? h('div', { class: 'hint warn' }, '● A fonte está com erro agora (o agente tenta de novo sozinho).') : null),
-        toggle(s.name, s.enabled, (on) => v.run(on ? `Ligando ${s.name}…` : `Desligando ${s.name}…`, () => call('sources.set', { id: s.id, enabled: on })), v.busy)))),
+        s.fields && editingSource !== s.id ? h('button', { type: 'button', class: 'btn small', disabled: v.busy ? true : null, onclick: () => { editingSource = s.id; v.paint(); } }, 'Configurar') : null,
+        toggle(s.name, s.enabled, (on) => v.run(on ? `Ligando ${s.name}…` : `Desligando ${s.name}…`, () => call('sources.set', { id: s.id, enabled: on })), v.busy)),
+        s.fields && editingSource === s.id ? configForm(v, s) : null])),
       h('div', { class: 'hint' }, 'Dá para mudar tudo isso depois em Fontes de dados.'),
       busyNote(v),
     ];

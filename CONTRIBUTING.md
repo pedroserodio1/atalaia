@@ -48,8 +48,9 @@ O caminho completo, em ordem:
 1. **Abra uma issue** descrevendo a fonte: qual dado, de onde vem, que campos, se há ações e se precisa de credencial.
 2. **Crie o projeto** `agent/src/Atalaia.Agent.Plugins.<Nome>/` com a classe do plugin (use o `Weather` como modelo).
 3. **Registre**: `Atalaia.Agent.sln`, `ProjectReference` no `Atalaia.Agent.Host.csproj` e a linha em `PluginRegistry.cs`.
-4. **Configure**: a entrada em `agent/appsettings.json` (`enabled` e `intervalMs`). Segredos ficam só em variáveis de ambiente
-   (`ATALAIA_Plugins__<id>__<chave>`), documentadas em `agent/.env.example`, nunca no `appsettings.json`.
+4. **Configure**: a entrada em `agent/appsettings.json` (`enabled` e `intervalMs`). Segredos entram por variáveis de ambiente
+   (`ATALAIA_Plugins__<id>__<chave>`, documentadas em `agent/.env.example`) ou pelo formulário da janela, que os guarda no cofre
+   criptografado do usuário (campos declarados em `SourceCredentials`); nunca no `appsettings.json` nem no `settings.json`.
 5. **Simule**: um plugin simulado com o mesmo `id` e o mesmo formato, em `Atalaia.Agent.Plugins.Simulator`, para que todos
    possam ver a fonte sem o hardware dela.
 6. **Teste**: a lógica de leitura/conversão como um método puro e estático, com testes xUnit que não dependem de rede,
