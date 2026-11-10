@@ -127,6 +127,16 @@ Detalhes das etapas pendentes:
     assim depois de reiniciar o app); tocar na faixa abre a configuração; token certo → conectou por USB; toque longo no
     relógio abre; `8.8.8.8` é recusado com a explicação. **Release** (R8, ~1,5 MB) rodou com as seis abas, sem falha, PSS ~38 MB.
     **Não conferido:** reordenar com mais de um endereço no tablet, o botão Colar, e o desempenho final com todas as telas.
+- **Código de acesso de 6 dígitos (10/11, pedido do Pedro):** o agente deixou de gerar e gravar um token de 43 caracteres em
+  `agent.json`. A cada início gera **6 dígitos novos** (`TokenStore.NewCode`, sorteio criptográfico, só em memória); aparece no
+  menu da bandeja ("Código de acesso: NNNNNN") e no console; `PCAGENT_TOKEN` continua podendo fixar um token qualquer. O
+  protocolo v1 **não mudou** (o token continua sendo um texto no `hello`). Como 6 dígitos são 1 milhão de combinações, entrou
+  junto um **limite de tentativas erradas** (`AuthThrottle`): 5 erros por endereço de rede e bloqueio de 1 min, dobrando até 15
+  min (histórico some após 1 h); 20 erros em 10 min somando todos bloqueiam a rede por 10 min; 4401 com motivo `locked`, e 429
+  no `GET /cover`; **loopback (USB) não tem limite**. Consequência para o uso: o código muda toda vez que o agente reinicia e
+  o tablet precisa do novo (o app mostra "Código inválido (muda a cada início do agente)" e a faixa abre a configuração).
+  Conferido de ponta a ponta com o agente real: pela rede 5 erradas dão `unauthorized` e a 6ª em diante `locked`; por
+  `127.0.0.1` 8 erradas nunca bloqueiam. Testes: 14 novos no agente (132 no total).
 - **Alerta de queda de energia (revisto em 10/11):** a faixa coral de 48 dp no topo foi **removida** (tomava espaço e empurrava o
   layout quando ligava e desligava; durante a conferência da 6c fez um toque cair fora). Agora o **cartão do relógio**, que já
   fica na coluna "agora" de todas as abas, vira coral cheio com texto escuro: "Sem energia da rede · NN%" no lugar da linha do

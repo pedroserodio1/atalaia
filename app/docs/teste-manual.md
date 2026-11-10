@@ -6,8 +6,8 @@ Se você só vai fazer um teste, faça este. Prova que o app conecta pelo cabo e
 
 1. **Suba o agente** no PC, com dados falsos e o módulo USB ligado (a partir de `agent/`):
    `$env:PCAGENT_Usb__Enabled="true"; dotnet run --project src/PcAgent.Host -- --console --simulate`
-   O console mostra o **token**; guarde-o.
-2. **Abra o app no tablet** (cabo ligado). Na primeira vez ele pede o token: digite ou cole e toque em **Salvar**.
+   O console mostra o **código de acesso** de 6 dígitos (também no menu do ícone da bandeja); guarde-o.
+2. **Abra o app no tablet** (cabo ligado). Na primeira vez ele pede o código: digite os 6 dígitos e toque em **Salvar**.
    **Deve aparecer:** **USB** com bolinha verde no canto de cima da coluna da esquerda, e os números mudando.
 3. **Puxe o cabo USB do tablet.**
    **Deve aparecer:** "sem conexão" no lugar de USB e uma faixa "PC desligado ou inalcançável".
@@ -38,7 +38,7 @@ Cada cenário diz o **esperado** e o que **anotar**. Marque `[x]` ao passar e es
   ```
 
   (No PowerShell: `$env:PCAGENT_Usb__Enabled="true"; dotnet run --project src/PcAgent.Host -- --console --simulate`.)
-  O console mostra o token. Com `--simulate` as 11 fontes ficam ligadas e o nobreak alterna entre rede e bateria sozinho.
+  O console mostra o código de 6 dígitos (e o menu da bandeja). Ele **muda a cada início do agente**. Com `--simulate` as 11 fontes ficam ligadas e o nobreak alterna entre rede e bateria sozinho.
 - [ ] **Wi-Fi (só para os cenários 4 a 7):** ligue `Agent:ListenOnLan` em `agent/appsettings.Local.json`
   (`{ "Agent": { "ListenOnLan": true }, "Usb": { "Enabled": true } }`), reinicie o agente e **permita** o aviso do Firewall do
   Windows para rede privada. Descubra o IP do PC (`ipconfig`, o IPv4 da placa que o tablet alcança) e confirme que o tablet
@@ -52,10 +52,10 @@ dado sem `update` por mais de 15 s aparece como "velho".
 ## 1. Primeira configuração
 
 1. Abra o app. **Esperado:** a tela de configuração abre sozinha, com `127.0.0.1:8765` na lista.
-2. Adicione `<IP-DO-PC>` (aparece como Wi-Fi, na posição 2). Digite ou cole o token e toque em **Salvar**.
+2. Adicione `<IP-DO-PC>` (aparece como Wi-Fi, na posição 2). Digite o código e toque em **Salvar**.
 3. **Esperado:** o painel abre e o canto da coluna "agora" mostra **USB**; os cartões enchem em poucos segundos.
 4. Recuse de propósito: tente adicionar `8.8.8.8`. **Esperado:** mensagem "Só aceito endereços da rede local…".
-5. Feche e abra o app. **Esperado:** mantém a configuração e reconecta sozinho; o token nunca aparece na tela.
+5. Feche e abra o app. **Esperado:** mantém a configuração e reconecta sozinho; o código nunca aparece na tela.
 
 ## 2. USB normal
 
@@ -114,14 +114,16 @@ O app nunca reenvia uma ação sozinho. Teste com uma ação que dê para perceb
    o agente subir (lembre: o agente ainda não inicia com o Windows).
 4. Anote: o tablet ficou aceso a noite toda? A bateria se manteve (carregador ligado)?
 
-## 9. Token e configuração
+## 9. Código de acesso e configuração
 
-1. Em **Configuração**, salve um token errado. **Esperado:** em poucos segundos a faixa vira "Token inválido…" e o app para de
+1. Em **Configuração**, salve um token errado. **Esperado:** em poucos segundos a faixa vira "Código inválido…" e o app para de
    insistir; tocar na faixa abre a configuração.
-2. Salve o token certo. **Esperado:** conecta na hora, sem reiniciar o app.
+2. Salve o código certo. **Esperado:** conecta na hora, sem reiniciar o app.
 3. Toque longo no relógio abre a configuração. Reordene os endereços com ▲ ▼. **Esperado:** a prioridade muda e vale na
    próxima conexão.
-4. **Colar:** copie o token no PC, envie por algum canal ao tablet, copie lá e use **Colar**. **Esperado:** o campo é preenchido.
+4. **Reiniciar o agente:** feche e suba o agente de novo. **Esperado:** o código muda; o app mostra "Código inválido" e, com o código novo na configuração, volta a conectar. (Pelo USB isso vale igual: o código é sempre conferido.)
+5. **Limite de tentativas (só pelo Wi-Fi):** erre o código 5 vezes seguidas pelo Wi-Fi. **Esperado:** a partir daí o agente recusa tudo desse endereço por 1 min, até com o código certo; o USB continua funcionando.
+6. **Colar:** copie o código no PC, envie por algum canal ao tablet, copie lá e use **Colar**. **Esperado:** o campo é preenchido.
 
 ## 10. Alerta de queda de energia
 
@@ -162,7 +164,7 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
 | 6 Queda silenciosa do Wi-Fi | | |
 | 7 Ação na troca | | |
 | 8 PC e agente fora do ar | | |
-| 9 Token e configuração | | |
+| 9 Código e configuração | | |
 | 10 Queda de energia | | |
 | 11 Dados reais | | |
 | 12 Desempenho | | |

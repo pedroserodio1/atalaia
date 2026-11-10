@@ -55,7 +55,7 @@ derrubar o app no tablet.
 1. Suba o agente (`../agent`; `--simulate` para dados falsos). Por USB, ligue `Usb:Enabled` no agente para ele manter o
    `adb reverse` sozinho (ou faça `adb reverse tcp:8765 tcp:8765` à mão). Por Wi-Fi, ligue `Agent:ListenOnLan` e libere o
    Firewall do Windows.
-2. Abra o app: a configuração abre sozinha. Informe os endereços e o token (no PC: bandeja, "Copiar token").
+2. Abra o app: a configuração abre sozinha. Informe os endereços e o código de 6 dígitos do agente (no PC: menu do ícone da bandeja; ele muda toda vez que o agente reinicia).
 3. Em build de debug, dá para configurar por `adb`:
    `adb shell am start -n org.pcpanel.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "..."`
    (ignorado em release).

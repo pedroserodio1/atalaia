@@ -55,8 +55,8 @@ dotnet run --project src/PcAgent.Host -- --console --simulate   # dados falsos, 
 dotnet run --project src/PcAgent.Host -- --console              # dados reais
 ```
 
-O token fica em `%LOCALAPPDATA%\PcAgent\agent.json` (e no menu da bandeja, "Copiar token"). Para o tablet alcançar o
-agente pela rede, ligue `Agent:ListenOnLan` (veja o [README do agente](agent/README.md)).
+A cada início o agente gera um **código de 6 dígitos novo**, que aparece no menu do ícone da bandeja e no console. Para o
+tablet alcançar o agente pela rede, ligue `Agent:ListenOnLan` (veja o [README do agente](agent/README.md)).
 
 **2. App.** A partir de `app/` (informe o SDK em `ANDROID_HOME` ou em `local.properties`):
 
@@ -68,11 +68,11 @@ adb install -r tablet/build/outputs/apk/debug/tablet-debug.apk
 **3. Ligar os dois.** Por USB, o tablet alcança o agente com `adb reverse tcp:8765 tcp:8765`, que o próprio agente mantém
 se você ligar `Usb:Enabled` (veja o [README do agente](agent/README.md)); ou faça à mão. Na primeira vez o app abre
 a tela de configuração sozinho: informe os endereços do PC em ordem de prioridade (`127.0.0.1` é o USB; o IP do PC é o
-Wi-Fi) e o token (no PC: bandeja, "Copiar token"). Depois, a configuração abre com toque longo no relógio, ou tocando
+Wi-Fi) e o código de 6 dígitos (no PC: menu do ícone da bandeja). Depois, a configuração abre com toque longo no relógio, ou tocando
 na faixa de erro de conexão. Para automatizar em build de debug:
 
 ```bash
-adb shell am start -n org.pcpanel.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "SEU_TOKEN"
+adb shell am start -n org.pcpanel.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "CODIGO"
 ```
 
 (`hosts` é a lista de endereços em ordem de prioridade; o token fica guardado cifrado no Keystore do aparelho.)
