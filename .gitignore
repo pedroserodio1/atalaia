@@ -1,0 +1,25 @@
+# Segredos e configuração pessoal: nunca entram no git
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+local.properties
+*.keystore
+*.jks
+
+# Saída de build (cada projeto tem o seu .gitignore; isto cobre o que não tem, como a sondagem antiga)
+bin/
+obj/
+build/
+.gradle/
+.kotlin/
+.vs/
+.idea/
+*.user
+TestResults/
+*.apk
+*.aab
+
+# Sistema
+Thumbs.db
+.DS_Store
