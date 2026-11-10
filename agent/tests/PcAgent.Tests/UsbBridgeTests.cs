@@ -230,9 +230,9 @@ public class UsbBridgeTests
     public void Le_a_lista_de_aparelhos_com_CRLF_cabecalho_e_avisos_do_servidor()
     {
         const string output = "* daemon not running; starting now at tcp:5037\r\n* daemon started successfully\r\n"
-            + "List of devices attached\r\nJP6825092000453\tdevice\r\nXYZ\tunauthorized\r\nemulator-5554\toffline\r\n\r\n";
+            + "List of devices attached\r\nFAKESERIAL0123456\tdevice\r\nXYZ\tunauthorized\r\nemulator-5554\toffline\r\n\r\n";
         Assert.Equal(
-            [("JP6825092000453", "device"), ("XYZ", "unauthorized"), ("emulator-5554", "offline")],
+            [("FAKESERIAL0123456", "device"), ("XYZ", "unauthorized"), ("emulator-5554", "offline")],
             AdbBridge.ParseDevices(output));
         Assert.Empty(AdbBridge.ParseDevices("List of devices attached\r\n\r\n"));
         Assert.Empty(AdbBridge.ParseDevices(""));
