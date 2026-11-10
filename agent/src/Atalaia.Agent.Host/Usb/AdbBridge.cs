@@ -79,23 +79,27 @@ public sealed record UsbOptions(bool Enabled, string AdbPath, int PollSeconds, s
 public static class AdbLocator
 {
     /// <returns>O caminho (ou nome) a executar; <c>null</c> se não achou em lugar nenhum.</returns>
-    public static string? Resolve(string configured, Func<string, string?> env, Func<string, bool> fileExists)
+    public static string? Resolve(string configured, Func<string, string?> env, Func<string, bool> fileExists) =>
+        ResolveWithSource(configured, env, fileExists).Path;
+
+    /// <summary>Como <see cref="Resolve"/>, dizendo de onde veio: <c>config</c>, <c>path</c>, <c>android_home</c> ou <c>none</c>.</summary>
+    public static (string? Path, string Source) ResolveWithSource(string configured, Func<string, string?> env, Func<string, bool> fileExists)
     {
-        if (!string.IsNullOrWhiteSpace(configured)) return configured;
+        if (!string.IsNullOrWhiteSpace(configured)) return (configured, "config");
 
         foreach (var dir in (env("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             var candidate = Path.Combine(dir.Trim('"'), "adb.exe");
-            if (fileExists(candidate)) return candidate;
+            if (fileExists(candidate)) return (candidate, "path");
         }
         foreach (var variable in new[] { "ANDROID_HOME", "ANDROID_SDK_ROOT" })
         {
             var root = env(variable);
             if (string.IsNullOrWhiteSpace(root)) continue;
             var candidate = Path.Combine(root, "platform-tools", "adb.exe");
-            if (fileExists(candidate)) return candidate;
+            if (fileExists(candidate)) return (candidate, "android_home");
         }
-        return null;
+        return (null, "none");
     }
 }
 

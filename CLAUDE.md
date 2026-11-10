@@ -8,3 +8,8 @@
 - `probe_tests/` é a sondagem antiga (PcProbe): somente leitura, não edite. Não leia nem imprima `.env`.
 - Dúvida ou conflito entre os documentos e o código que funciona: pergunte antes de decidir.
 - Commits só quando pedido, em Conventional Commits, sem linhas de atribuição.
+- Ramos, versões e releases: leia `docs/versionamento-e-releases.md`. Resumo: `main` = estável (tag `vX.Y.Z`), `development` = beta
+  (tag `vX.Y.Z-beta.N`), trabalho em `beta/X.Y.Z` e sub-ramos (`feat/`, `fix/`, `docs/`, `chore/`), tudo por PR com CI verde. Merge:
+  squash para `beta/X.Y.Z`, merge commit para `development` e `main`. Versão: SemVer (patch = correção compatível, minor = recurso
+  novo compatível, major = quebra; antes da 1.0 o minor pode quebrar, com aviso). O `X.Y.Z` fica no arquivo `VERSION`. Tag só o mantenedor
+  cria; nunca mova nem apague uma tag.

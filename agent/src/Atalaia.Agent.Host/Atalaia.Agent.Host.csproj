@@ -3,10 +3,14 @@
     <OutputType>WinExe</OutputType>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>AtalaiaAgent</AssemblyName>
+    <ApplicationIcon>Assets\atalaia.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\..\appsettings.json" Link="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\appsettings.Local.json" Link="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\appsettings.Local.json')" />
+    <Content Include="..\..\appsettings.Local.json" Link="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" Condition="Exists('..\..\appsettings.Local.json')" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Atalaia.Agent.Tests" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -18,6 +22,15 @@
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Audio\Atalaia.Agent.Plugins.Audio.csproj" />
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Ups\Atalaia.Agent.Plugins.Ups.csproj" />
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Simulator\Atalaia.Agent.Plugins.Simulator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Janela do agente: HTML/CSS local num WebView2 (o runtime Evergreen já vem no Windows 11). BSD-3-Clause. -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <!-- QR do link da release no passo "App no tablet" (gera SVG; MIT). -->
+    <PackageReference Include="QRCoder" Version="1.8.1" />
+    <EmbeddedResource Include="Assets\atalaia.ico" LogicalName="atalaia.ico" />
+    <None Remove="Ui\web\**" />
+    <Content Include="Ui\web\**" Link="ui\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />

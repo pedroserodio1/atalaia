@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Pedro Serôdio
+#
+# CI: testes e build do agente, do app e dos scripts. Os três jobs (agente, app, scripts) são os checks obrigatórios
+# das proteções de main e development (docs/versionamento-e-releases.md, seção 10).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, development, 'beta/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  agente:
+    name: agente
+    runs-on: windows-latest   # o agente tem alvo net10.0-windows (WinForms, WinRT, NAudio)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Testes
+        run: dotnet test agent/Atalaia.sln --configuration Release
+
+  app:
+    name: app
+    runs-on: ubuntu-latest   # o app é Kotlin/Android: não precisa de Windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK (aceita as licenças; o AGP baixa a plataforma 37 e as build-tools que faltarem)
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Testes do núcleo e build de debug
+        working-directory: app
+        run: |
+          chmod +x gradlew
+          ./gradlew :core:test :tablet:assembleDebug
+      - name: Versão do app confere com scripts/versao.ps1
+        run: |
+          core=$(tr -d '\r\n' < VERSION)
+          for pre in beta.1 beta.98 stable; do
+            if [ "$pre" = stable ]; then tag="v$core"; else tag="v$core-$pre"; fi
+            esperado=$(pwsh -NoProfile -File scripts/versao.ps1 -Acao calcular -Tag "$tag" | grep '^versionCode=')
+            atual=$(cd app && ./gradlew -q :tablet:printVersion -PappPre="$pre" | grep '^versionCode=')
+            if [ "$esperado" != "$atual" ]; then
+              echo "::error::versionCode de $tag difere: script '$esperado', Gradle '$atual'"
+              exit 1
+            fi
+          done
+
+  scripts:
+    name: scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Testes dos scripts
+        run: pwsh -NoProfile -File scripts/tests/run.ps1

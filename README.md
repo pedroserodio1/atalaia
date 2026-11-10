@@ -1,5 +1,7 @@
 # Atalaia
 
+<p align="center"><img src="assets/brand/social-preview.png" alt="Atalaia: o painel do seu PC, no tablet" width="640"></p>
+
 Um tablet Android usado vira o painel dedicado do PC: mostra o uso do sistema, a música que está tocando, o Discord e o
 uso do Claude, e controla volume, mídia e microfone. Um programa em segundo plano no PC (o **agente**) lê os dados e
 executa as ações; o **app do tablet** só desenha as telas e devolve os toques.
@@ -104,6 +106,8 @@ Copyright (C) 2026 Pedro Serôdio. O Atalaia é software livre: você pode redis
 General Public License, na versão 3 da Licença ou (a seu critério) qualquer versão posterior. Ele é distribuído na esperança de ser
 útil, mas **sem nenhuma garantia**. O texto completo está em [`LICENSE`](LICENSE) e o aviso padrão em [`NOTICE`](NOTICE).
 Cada arquivo de código traz o identificador `SPDX-License-Identifier: GPL-3.0-or-later`.
+A logo e o ícone (`assets/brand/`) são do projeto e seguem a mesma licença; os textos da logo são contornos das fontes
+Manrope e IBM Plex Mono (SIL OFL 1.1).
 
 As bibliotecas e fontes de terceiros, com as suas licenças, estão em [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
 Contribuições enviadas ao projeto passam a valer sob essa mesma licença.

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Torre do Atalaia (a mesma de assets/brand/simbolo.svg), na área segura do ícone adaptativo (o Android recorta a borda de 108 dp). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="1.2"
+        android:scaleY="1.2"
+        android:translateX="15.6"
+        android:translateY="15.6">
+        <path
+            android:fillColor="#6EE7B7"
+            android:pathData="M17,19 L32,9 L47,19 Z" />
+        <path
+            android:fillColor="#EEF1F5"
+            android:pathData="M21.5,19 H42.5 A2.5,2.5 0 0 1 45,21.5 V27.5 A2.5,2.5 0 0 1 42.5,30 H21.5 A2.5,2.5 0 0 1 19,27.5 V21.5 A2.5,2.5 0 0 1 21.5,19 Z" />
+        <path
+            android:fillColor="#0B0D10"
+            android:pathData="M29.4,24.5 A2.6,2.6 0 1 0 34.6,24.5 A2.6,2.6 0 1 0 29.4,24.5 Z" />
+        <path
+            android:fillColor="#EEF1F5"
+            android:pathData="M25,30 L39,30 L43,55 L21,55 Z" />
+        <path
+            android:fillColor="#0B0D10"
+            android:pathData="M29,55 V47 A3,3 0 0 1 35,47 V55 Z" />
+    </group>
+</vector>
