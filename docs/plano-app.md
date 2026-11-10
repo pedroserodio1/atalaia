@@ -76,9 +76,9 @@ agent/src/PcAgent.Host/Usb/AdbBridge.cs      (a fazer, etapa 7)
 | 6b | Mídia + Mixer e Discord | **Pronta** (09/11), conferida no tablet real com o agente `--simulate` por USB. 159 testes de `:core` verdes. Ver "6b, o que ficou decidido" |
 | 6c | Jogo (Steam) e Claude | **Pronta** (10/11), conferida no tablet real com o agente `--simulate` por USB. 161 testes de `:core` verdes. Ver "6c, o que ficou decidido" |
 | 6d | Configuração: endereços e token | **Pronta** (10/11), conferida no tablet real (debug e release) com o agente `--simulate` por USB. 168 testes de `:core` verdes. Ver "6d, o que ficou decidido" |
-| — | Medir de novo com as telas finais | A fazer (novo) |
+| — | Medir de novo com as telas finais | **Parcial** (10/11): 2 min válidos com o release e as seis abas; o resto da corrida foi interrompido pelo teste do cabo. Ver seção 11 |
 | 7 | Módulo USB no agente (`adb reverse`) | **Pronta** (10/11): `Usb/AdbBridge.cs`, desligado por padrão; 114 testes do agente verdes (18 novos, com `adb` falso); conferida com o `adb` e o tablet reais. Ver "7, o que ficou decidido" |
-| 8 | Roteiro de teste manual, README final, relatório do que foi e não foi verificado | A fazer |
+| 8 | Roteiro de teste manual, README final, relatório do que foi e não foi verificado | **Pronta** (10/11): `app/docs/teste-manual.md` (começa pelo teste rápido de 4 passos), README do app e seção 11 deste documento. O teste do cabo foi feito pelo Pedro e passou |
 
 Detalhes das etapas pendentes:
 
@@ -127,6 +127,11 @@ Detalhes das etapas pendentes:
     assim depois de reiniciar o app); tocar na faixa abre a configuração; token certo → conectou por USB; toque longo no
     relógio abre; `8.8.8.8` é recusado com a explicação. **Release** (R8, ~1,5 MB) rodou com as seis abas, sem falha, PSS ~38 MB.
     **Não conferido:** reordenar com mais de um endereço no tablet, o botão Colar, e o desempenho final com todas as telas.
+- **Alerta de queda de energia (revisto em 10/11):** a faixa coral de 48 dp no topo foi **removida** (tomava espaço e empurrava o
+  layout quando ligava e desligava; durante a conferência da 6c fez um toque cair fora). Agora o **cartão do relógio**, que já
+  fica na coluna "agora" de todas as abas, vira coral cheio com texto escuro: "Sem energia da rede · NN%" no lugar da linha do
+  jogo, e a data e o canal em escuro. Nada se mexe. Fica valendo no lugar do que está escrito nos itens 6a, 6b e 6c abaixo
+  sobre "faixa coral" e "cabem ~3 linhas com a faixa". Conferido no tablet (release) com o nobreak simulado.
 - **6c, o que ficou decidido na implementação:**
   - **Abas:** agora são seis (Início, Sistema, Mídia, Discord, Jogo, Claude), 6 × 88 + 5 × 4 = 548 dp: cabem no tablet
     (a borda direita da última fica a ~20 px do limite da tela). Uma sétima já não cabe (ver seção 7).
@@ -320,3 +325,59 @@ O PC é desligado por volta das 22h, o que afeta o plano:
 - **Manual:** `app/docs/teste-manual.md` (a escrever) contra `dotnet run --project src/PcAgent.Host -- --console --simulate`,
   incluindo desplugar o cabo, desligar o Wi-Fi do tablet, trocar de canal com ação em andamento, queda do `ups` e o ciclo de
   desligar e ligar o PC.
+
+## 11. Relatório de verificação (10/11/2026)
+
+O que foi **verificado**, com o quê, e o que **não** foi. Nada aqui foi inventado: cada item diz como foi conferido.
+
+### Verificado por testes automáticos
+- **`:core` (Kotlin/JVM): 168 testes verdes.** Parsing de todas as mensagens e das 11 fontes (inclusive 149 mensagens reais do
+  agente `--simulate`); conexão com servidor falso e com OkHttp real contra servidor local (fechamentos 4400/4401, capa com o
+  token no cabeçalho); correlação de ações; failover (queda do canal ativo, queda silenciosa por falta de `pong`, volta ao
+  preferido, ação em andamento na troca); estado, idade do dado e alerta do nobreak; regras da configuração.
+- **Agente (.NET): 118 testes verdes**, 22 deles do módulo USB (`adb` falso, e o runner real contra processos que travam ou
+  deixam um filho segurando a saída).
+- Limite dos testes: o failover foi provado com **rede falsa**; só o teste do cabo abaixo o exercitou de verdade.
+
+### Verificado no tablet real (T68, Android 8.1) e no PC
+| O quê | Como | Resultado |
+|---|---|---|
+| App abre em tela cheia, 862 × 505 dp, as seis abas cabem | release e debug | ok |
+| Seis abas com dados ao vivo do agente `--simulate` | USB (`adb reverse`) | ok |
+| Controles: mídia, barra de posição, mixer, mudo, Discord (mic e volumes) | toque no tablet, efeito visto no agente | ok |
+| Agente desligado e religado com o app aberto | parar e subir o agente | "sem conexão", cartões "velho" em 15 s, volta sozinho |
+| Configuração: primeira execução, token errado, token certo, toque longo, endereço recusado | toque no tablet | ok |
+| Release (R8) com todas as telas | instalado e usado | sem falha; PSS ~35–40 MB |
+| Módulo USB: cria a regra, refaz se removida à mão, refaz após `adb kill-server` | `adb` e tablet reais | ok (refeita em ~2 a 6 s) |
+| **Cabo desplugado e replugado** | feito pelo Pedro, agente real do módulo | **ok**: o `adb` perdeu o aparelho às 10:24:15 e voltou 6 s depois; a regra foi recriada na hora e o app voltou |
+| Alerta de queda de energia como cartão coral (sem faixa) | nobreak simulado | ok, nada se mexe |
+
+### Medição final de desempenho (release, agente simulado, USB)
+- **Válida só em parte.** A corrida de 5 minutos foi interrompida aos ~2,5 min pelo teste do cabo (o app foi reaberto e as
+  amostras seguintes não valem). Os dados dos 2 primeiros minutos: partida a frio **~1,2 s** (3 medidas: 1165, 1158, 1166 ms),
+  PSS **~39–40 MB**, CPU **~2,5–3,6%** dos 4 núcleos. Com as seis telas o PSS ficou um pouco acima do protótipo (~35 MB) e a
+  partida a frio acima dos ~0,8 s dele, ambos muito dentro do orçamento (memória < 200 MB).
+- **Quadros:** continuam fora do critério antigo (quase todos acima de 17,7 ms), como no protótipo; o critério foi trocado por
+  "toque e arrasto respondem bem", e o toque e o arrasto responderam bem em todo o uso no tablet. Não há medição de quadros durante
+  arrasto.
+
+### NÃO verificado (e como verificar)
+- **Wi-Fi de verdade** e o **failover USB → Wi-Fi → USB com os dois canais vivos**: exigem `ListenOnLan` e liberar o Firewall do
+  Windows. Roteiro: cenários 4 a 7 de `app/docs/teste-manual.md`.
+- **Queda silenciosa do Wi-Fi** (desligar o Wi-Fi do tablet) e a **ação em andamento durante uma troca real** de canal.
+- **Teste de memória de 8 h**: nunca rodou (a corrida de 30 min falhou por um bug do meu script no dia 09/11, e a rotina de
+  desligar o PC às 22h impede de atravessar a noite). A maior corrida válida foi de ~8 min, sem crescimento visível.
+- **Dados reais** (sem `--simulate`): nada do app foi conferido contra os valores do Windows, nobreak real, Steam, Discord e
+  clima reais. O agente em si foi validado no marco 1; o app só viu dados simulados.
+- Perfil Steam oculto, plano do Claude nulo, mais de 4 membros numa call, mais de um endereço reordenado no tablet, botão Colar,
+  vários tablets ao mesmo tempo.
+- **Por que o primeiro teste do cabo falhou** (09/11, 10:09): o módulo USB não recriou a regra e a causa exata **não foi provada**
+  (a evidência se perdeu ao reiniciar o agente). Foram corrigidas duas fraquezas encontradas na investigação (o runner esperava
+  o fim da saída que o servidor do `adb` herda, e não havia log quando o `adb` ficava sem aparelho); o teste seguinte, com o
+  código novo, passou. Se voltar a acontecer, o log do agente agora diz se o `adb` ficou sem aparelho. Saída conhecida, não
+  implementada por interromper outras ferramentas que usam o `adb`: rodar `adb kill-server` quando o aparelho some e não volta.
+
+### Fora do escopo desta base (não é pendência)
+Deck, Mixer por jogo, Servidores, Rede (ping e perda), telas de jogo FFXIV e LoL, pareamento por código, Wake-on-LAN, janela de
+configurações no PC, modo kiosk travado, APK de release assinado, o agente iniciar com o Windows e o nobreak real fora do
+`--simulate`.
