@@ -4,8 +4,8 @@ Um tablet Android usado vira o painel dedicado do PC: mostra o uso do sistema, a
 uso do Claude, e controla volume, mídia e microfone. Um programa em segundo plano no PC (o **agente**) lê os dados e
 executa as ações; o **app do tablet** só desenha as telas e devolve os toques.
 
-`pc-panel` é um nome provisório. O projeto é de código aberto (a intenção é GPL-3.0; o arquivo `LICENSE` ainda não foi
-criado).
+`pc-panel` é um nome provisório. O projeto é de código aberto, sob a licença [GPL-3.0](LICENSE). As fontes do app (Manrope e
+IBM Plex Mono) são OFL e ficam em [`app/third-party/`](app/third-party/).
 
 > **Estado:** em desenvolvimento. O agente está pronto para uso; o app do tablet já conecta, mostra dados ao vivo e
 > controla o PC, mas ainda faltam os testes com cabo desplugado e Wi-Fi reais (veja "Estado" mais abaixo).

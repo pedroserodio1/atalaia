@@ -12,7 +12,7 @@ Se você só vai fazer um teste, faça este. Prova que o app conecta pelo cabo e
 3. **Puxe o cabo USB do tablet.**
    **Deve aparecer:** "sem conexão" no lugar de USB e uma faixa "PC desligado ou inalcançável".
 4. **Recoloque o cabo.**
-   **Deve acontecer:** em alguns segundos (até ~18 s) volta sozinho para **USB**, sem você tocar em nada.
+   **Deve acontecer:** em alguns segundos (até ~8 s) volta sozinho para **USB**, sem você tocar em nada.
 
 Passou nos 4? A parte principal está provada. Se algo diferente aconteceu, anote o que viu e o que esperava.
 
@@ -46,7 +46,7 @@ Cada cenário diz o **esperado** e o que **anotar**. Marque `[x]` ao passar e es
 - [ ] Anote o modelo do tablet, se o Wi-Fi dele é 2,4 ou 5 GHz, e se o PC está no cabo ou no Wi-Fi.
 
 Tempos de referência (do projeto): `ping` a cada 2 s; sem `pong` por 5 s derruba a conexão; backoff entre voltas de 1, 2, 4,
-8 e 15 s; o app testa o canal preferido (USB) a cada 15 s enquanto está no Wi-Fi; o agente confere o `adb reverse` a cada 3 s;
+8 e 15 s; o app testa o canal preferido (USB) a cada 5 s enquanto está no Wi-Fi; o agente confere o `adb reverse` a cada 3 s;
 dado sem `update` por mais de 15 s aparece como "velho".
 
 ## 1. Primeira configuração
@@ -72,7 +72,7 @@ Tire o Wi-Fi da lista (deixe só `127.0.0.1:8765`) para ver o estado sem alterna
 1. Desconecte o cabo. **Esperado:** em poucos segundos o canal vira "sem conexão" e a faixa mostra "PC desligado ou
    inalcançável. Tentando de novo…". Depois de 15 s sem `update`, os cartões ficam "velho" e o jogo some da coluna.
 2. Reconecte o cabo. **Esperado:** volta a **USB** sozinho, sem tocar em nada: em ~3 a 6 s se o cabo ficou fora pouco tempo, e
-   em até ~18 s se ficou fora por mais de um minuto (3 s do agente refazer o reverse mais o backoff, que chega a 15 s).
+   em até ~18 s se ficou fora por mais de um minuto e o app estava sem nenhum canal (3 s do agente refazer o reverse mais o backoff, que chega a 15 s).
 3. Anote: quantos segundos levou a perda e a volta (com o cabo fora por pouco e por muito tempo).
 
 ## 4. Failover USB para Wi-Fi (USB e Wi-Fi configurados)
@@ -84,7 +84,7 @@ Tire o Wi-Fi da lista (deixe só `127.0.0.1:8765`) para ver o estado sem alterna
 
 ## 5. Volta ao USB
 
-1. Estando no Wi-Fi do cenário 4, reconecte o cabo. **Esperado:** em até ~18 s (3 s do agente + sonda de 15 s) o canal volta
+1. Estando no Wi-Fi do cenário 4, reconecte o cabo. **Esperado:** em até ~8 s (3 s do agente + sonda de 5 s) o canal volta
    para **USB**, e a conexão do Wi-Fi é fechada (o agente mostra "Clientes conectados: 1" na bandeja).
 2. Repita desplugando e plugando várias vezes seguidas. **Esperado:** sem tela travada nem loop de trocas; se o cabo
    oscilar, a sonda espera mais (até 2 min).

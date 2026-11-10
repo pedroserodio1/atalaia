@@ -37,7 +37,7 @@ Orçamento: sem animação contínua, blur nem sombras pesadas; UI limitada a 2 
 | Jogo atual | `steam` ok e `game != null`: nome com "● jogando". Senão, `activeWindow` (processo sem `.exe`) rotulado "em foco". Sem tempo de jogo (o v1 não tem) |
 | Vários clientes | O hub aceita N conexões e não expulsa a antiga; quem fecha a que sai é o app. Sem mudança no agente |
 | Prioridade | A ordem da lista é a prioridade (USB primeiro, editável) |
-| Tempos | `ping` a cada 2 s; prazo de `pong` 5 s; handshake até 5 s; depois de uma volta completa sem sucesso, backoff 1, 2, 4, 8 e 15 s; sonda do preferido a cada 15 s; anti-oscilação: se o preferido cair em menos de 60 s depois da volta, a sonda dobra até 2 min |
+| Tempos | `ping` a cada 2 s; prazo de `pong` 5 s; handshake até 5 s; depois de uma volta completa sem sucesso, backoff 1, 2, 4, 8 e 15 s; sonda do preferido a cada 5 s (15 s até 10/11); anti-oscilação: se o preferido cair em menos de 60 s depois da volta, a sonda dobra até 2 min |
 | "Conexão pronta" | Enviar `subscribe` e logo depois `ping`; pronta ao receber o `pong` (o agente processa em ordem, então os snapshots já vieram). Não esperar um snapshot, que pode não existir se o agente acabou de subir |
 | `subscribe` | Só as fontes que a UI usa; fonte desconhecida é ignorada |
 | Fechamentos | 4401 = "token inválido" e para de reconectar até a configuração mudar (uma tentativa extra antes de declarar, por causa do `hello_timeout`); 4400 = "versão incompatível", também para |
@@ -202,10 +202,10 @@ Detalhes das etapas pendentes:
 - **4, o que ficou decidido na implementação:** o canal é deduzido do endereço (loopback = USB; o resto = Wi-Fi;
   `ConnectionState.activeChannel` dá USB, Wi-Fi ou nenhum). Uma "volta" tenta todos os endereços em ordem; o que acabou de
   cair vai por último. O backoff conta voltas inteiras sem sucesso (`Unreachable(attempts)`, sem endereço). Num endereço
-  de menor prioridade, a sonda abre uma conexão nova ao preferido a cada 15 s; as mensagens dela ficam guardadas e só
+  de menor prioridade, a sonda abre uma conexão nova ao preferido a cada 5 s (era 15 s; reduzida em 10/11 porque a volta ao USB parecia lenta: a sonda sem cabo falha na hora e custa quase nada); as mensagens dela ficam guardadas e só
   chegam ao app na troca, que só acontece quando ela está pronta. A conexão antiga é fechada (1000) depois. Ação pendente
   na troca ou na queda vira "sem confirmação" e não é reenviada. Anti-oscilação: preferido que cai em menos de 60 s depois
-  de ativo dobra o intervalo da sonda (até 2 min); 5 min estável volta a 15 s. Token errado nos dois canais conta como
+  de ativo dobra o intervalo da sonda (até 2 min); 5 min estável volta ao intervalo normal. Token errado nos dois canais conta como
   dois 4401 e vira "token inválido" na mesma volta.
 - **5, o que ficou decidido na implementação:** o `hello` agora também sai no fluxo de mensagens da conexão (antes dos
   snapshots), porque o `ts` dele é a referência do relógio do agente (`ClockAnchor`); a idade de um dado é "agora do agente

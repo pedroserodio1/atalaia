@@ -67,7 +67,9 @@ sealed interface ActionOutcome {
 
 data class FailoverConfig(
     /** De quanto em quanto tempo, num endereço de menor prioridade, testar os preferidos. */
-    val probeIntervalMs: Long = 15_000,
+    // 5 s: a sonda ao USB falha na hora quando não há cabo (a porta local do tablet nem existe), então custa quase nada, e
+    // assim a volta ao USB leva no máximo ~8 s (3 s do agente refazer o `adb reverse` + esta sonda).
+    val probeIntervalMs: Long = 5_000,
     val maxProbeIntervalMs: Long = 120_000,
     /** Se o preferido cair em menos que isto depois de ficar ativo, a sonda espera o dobro (anti-oscilação). */
     val flapWindowMs: Long = 60_000,

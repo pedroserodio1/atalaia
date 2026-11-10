@@ -12,7 +12,7 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
   controles e uso do Claude.
 - **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord, Jogo (Steam) e Claude.
 - **Conexão:** lista de endereços em ordem de prioridade (padrão: USB em `127.0.0.1`, depois o IP do PC no Wi-Fi). Uma conexão
-  por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 15 s e volta quando ele fica pronto.
+  por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 5 s e volta quando ele fica pronto.
 - **Segurança:** só aceita endereços de loopback e rede local; o token fica cifrado no Keystore e não é exibido de volta.
   Uma ação que ficou sem resposta por queda de conexão nunca é reenviada sozinha.
 - **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; "velho", "desligado" ou "erro" em vez de número desatualizado.

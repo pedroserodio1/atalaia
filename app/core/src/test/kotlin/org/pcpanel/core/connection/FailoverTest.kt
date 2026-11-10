@@ -32,7 +32,8 @@ class FailoverTest {
 
     private fun TestScope.ctx(): Ctx {
         val t = FakeTransport { testScheduler.currentTime }
-        return Ctx(t, AgentConnection(backgroundScope, t, virtualClock()))
+        // Os cenários de anti-oscilação abaixo foram escritos para sondas de 15 s; o padrão de produção (5 s) tem teste próprio.
+        return Ctx(t, AgentConnection(backgroundScope, t, virtualClock(), failover = FailoverConfig(probeIntervalMs = 15_000)))
     }
 
     private fun TestScope.startBoth(x: Ctx) {
@@ -183,6 +184,20 @@ class FailoverTest {
         x.usbSockets.last().serverFail()      // o cabo caiu de novo
         runCurrent()
         assertEquals(ChannelKind.WIFI, x.state.activeChannel)
+    }
+
+    @Test
+    fun com_o_padrao_de_producao_o_usb_volta_em_no_maximo_5_segundos_depois_de_disponivel() = runTest {
+        val t = FakeTransport { testScheduler.currentTime }
+        val x = Ctx(t, AgentConnection(backgroundScope, t, virtualClock()))   // FailoverConfig padrão
+        x.t.failHosts += "127.0.0.1"
+        startBoth(x)
+        assertEquals(ChannelKind.WIFI, x.state.activeChannel)
+        advanceTimeBy(12_000)                    // o cabo continua fora: sondas falham, o Wi-Fi segue ativo
+        assertEquals(ChannelKind.WIFI, x.state.activeChannel)
+        x.t.failHosts.clear()                    // o cabo voltou
+        advanceTimeBy(5_001)
+        assertEquals(ChannelKind.USB, x.state.activeChannel)
     }
 
     // ---------------------------------------------------------------- ação na troca
