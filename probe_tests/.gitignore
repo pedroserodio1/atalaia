@@ -1,0 +1,6 @@
+.env
+.env.*
+resultado.txt
+bin/
+obj/
+.claude/statusline-capture.json
