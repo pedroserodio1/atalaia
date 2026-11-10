@@ -176,4 +176,27 @@ class NowModelsTest {
         assertNull(Pt.percent(5, 0))
         assertEquals(100, Pt.percent(50, 10))
     }
+
+    @Test
+    fun tempo_ate_o_reinicio_pelo_relogio_do_agente() {
+        val now = java.time.OffsetDateTime.parse("2026-11-09T20:00:00-03:00").toInstant().toEpochMilli()
+        assertEquals("reinicia em 42 min", Pt.untilReset("2026-11-09T20:42:30-03:00", now))
+        assertEquals("reinicia em 2h05", Pt.untilReset("2026-11-09T22:05:00-03:00", now))
+        assertEquals("reinicia em 2d 3h", Pt.untilReset("2026-11-11T23:00:00-03:00", now))
+        assertEquals("reinicia em 2h05", Pt.untilReset("2026-11-10T01:05:00+00:00", now))   // outro offset, mesmo instante
+        assertEquals("reiniciando", Pt.untilReset("2026-11-09T19:00:00-03:00", now))
+        assertNull(Pt.untilReset(null, now))
+        assertNull(Pt.untilReset("ontem", now))
+        assertNull(Pt.untilReset("2026-11-09T22:05:00-03:00", null))
+    }
+
+    @Test
+    fun tokens_e_horas_curtos() {
+        assertEquals("950", Pt.tokens(950))
+        assertEquals("44,0 mil", Pt.tokens(43_983))
+        assertEquals("1,3 mi", Pt.tokens(1_266_710))
+        assertEquals("—", Pt.tokens(null))
+        assertEquals("12,5 h", Pt.hours(12.5))
+        assertEquals("—", Pt.hours(null))
+    }
 }

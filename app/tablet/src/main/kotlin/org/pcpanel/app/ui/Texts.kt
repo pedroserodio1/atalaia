@@ -9,6 +9,8 @@ object Texts {
     const val TAB_SYSTEM = "Sistema"
     const val TAB_MEDIA = "Mídia"
     const val TAB_DISCORD = "Discord"
+    const val TAB_GAME = "Jogo"
+    const val TAB_CLAUDE = "Claude"
 
     const val TAG_STALE = "velho"
     const val TAG_DISABLED = "desligado"
@@ -61,6 +63,38 @@ object Texts {
     const val SPEAKING = "falando"
     const val MUTED_TAG = "mudo"
     const val DEAF_TAG = "surdo"
+
+    const val STEAM = "Steam"
+    const val NOT_PLAYING = "Não está jogando"
+    const val PLAYING_NOW = "Jogando agora"
+    const val LEVEL = "nível"
+    const val LIBRARY = "Biblioteca"
+    const val GAMES = "jogos"
+    const val FRIENDS = "Amigos"
+    const val FRIENDS_ONLINE = "online"
+    const val FRIENDS_PLAYING = "jogando"
+    const val RECENT = "Últimas 2 semanas"
+    const val HIDDEN = "oculto no perfil"
+    const val CLAUDE_USAGE = "Uso do plano"
+    const val CLAUDE_LOCAL = "Neste PC"
+    const val CLAUDE_MODELS = "Modelos · 7 dias"
+    const val WINDOW_5H = "5 h"
+    const val WINDOW_24H = "24 h"
+    const val WINDOW_7D = "7 d"
+    const val RESPONSES = "respostas"
+    const val OUTPUT = "saída"
+    const val NO_PLAN = "Plano sem dados (só há o uso local)"
+
+    fun steamState(s: String) = when (s) {
+        "online" -> "online"
+        "offline" -> "offline"
+        "busy" -> "ocupado"
+        "away" -> "ausente"
+        "snooze" -> "soneca"
+        "looking_to_trade" -> "quer trocar"
+        "looking_to_play" -> "quer jogar"
+        else -> s
+    }
 
     const val POWER_ALERT_TITLE = "Sem energia da rede"
 

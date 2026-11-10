@@ -74,7 +74,7 @@ agent/src/PcAgent.Host/Usb/AdbBridge.cs      (a fazer, etapa 7)
 | 5b | Modelos e testes das demais fontes (`audio`, `weather`, `notifications`, `discord`, `steam` completo, `claude` com modelos) | **Pronta** (09/11): as 11 fontes do agente têm modelo; 138 testes de `:core` verdes (10 novos); a captura real do `--simulate` decodifica as 11 |
 | 6a | Casca (coluna "agora" + abas), Início, Sistema, indicador de canal, alerta do `ups` | **Pronta** (09/11), conferida no tablet real com o agente `--simulate` por USB (`adb reverse`). Spike removido. 155 testes de `:core` verdes. Ver "6a, o que ficou decidido" |
 | 6b | Mídia + Mixer e Discord | **Pronta** (09/11), conferida no tablet real com o agente `--simulate` por USB. 159 testes de `:core` verdes. Ver "6b, o que ficou decidido" |
-| 6c | Jogo (Steam) e Claude | A fazer (novo) |
+| 6c | Jogo (Steam) e Claude | **Pronta** (10/11), conferida no tablet real com o agente `--simulate` por USB. 161 testes de `:core` verdes. Ver "6c, o que ficou decidido" |
 | 6d | Configuração: endereços e token | A fazer |
 | — | Medir de novo com as telas finais | A fazer (novo) |
 | 7 | Módulo USB no agente (`adb reverse`) | A fazer (só após aprovação já dada ao plano; toca só `PcAgent.Host`, `appsettings.json` e o README do agente) |
@@ -92,6 +92,23 @@ Detalhes das etapas pendentes:
   backoff. Capa: hash só hexadecimal (até 64), limite de 8 MB, cache de 4 MB por hash (o `Bitmap` decodificado fica no
   `:tablet`, na etapa 6). Aprendizado de teste: o `hostName` do MockWebServer deu um nome de máquina nesta máquina, então os
   testes usam `127.0.0.1`.
+- **6c, o que ficou decidido na implementação:**
+  - **Abas:** agora são seis (Início, Sistema, Mídia, Discord, Jogo, Claude), 6 × 88 + 5 × 4 = 548 dp: cabem no tablet
+    (a borda direita da última fica a ~20 px do limite da tela). Uma sétima já não cabe (ver seção 7).
+  - **Jogo:** Steam (estado, nível, jogo atual em destaque, ou "Não está jogando" com a janela em foco e o título dela),
+    biblioteca (jogos e horas), amigos (online, jogando, total) e os recentes das últimas 2 semanas (lista rolável).
+    `library` e `friends` nulos mostram "oculto no perfil", não zero. A regra de qual fonte manda é a mesma da coluna
+    "agora" (`gameLine`).
+  - **Claude:** dois anéis (sessão de 5 h e semana) com "reinicia em 1h59" / "2d 23h", calculado pelo relógio do agente
+    (`Pt.untilReset`, com testes); abaixo, o uso local neste PC (respostas e tokens de saída em 5 h, 24 h e 7 d) e os
+    modelos da janela de 7 dias. Plano ausente mostra "Plano sem dados (só há o uso local)".
+  - **Build:** `kotlin.jvm.target.validation.mode=warning` em `gradle.properties`: a trava `-Xjdk-release=8` do `:core`
+    (6b) passou a ser recusada pelo Gradle assim que o Kotlin recompilou, por o Java estar em 17; não há código Java
+    no `:core`, então a checagem de alvo vira só aviso.
+  - **Conferido no tablet** (debug, agente `--simulate`): as duas abas desenharam com os dados simulados. **Não
+    conferido:** perfil Steam oculto, plano do Claude nulo, release e desempenho com 6 abas.
+  - **Ponto de atenção (repetido):** a faixa de queda de energia empurra o layout 48 dp quando liga e desliga; durante a
+    conferência um toque na barra de abas caiu fora por causa disso.
 - **6b, o que ficou decidido na implementação:**
   - **Abas:** agora são quatro (Início, Sistema, Mídia, Discord; 88 × 56 dp cada). O `subscribe` passou a pedir `audio` e
     `discord`.
