@@ -1,0 +1,41 @@
+# Configuração do git-cliff para o CHANGELOG.md (só nas estáveis) e as notas de release. Em português.
+# Notas de release: cliff-notas.toml (mesmos grupos, sem título de versão). Regras: docs/versionamento-e-releases.md, seção 5.
+
+[changelog]
+header = """
+# Changelog
+
+Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
+O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
+
+"""
+body = """
+{% if version %}\
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## [não lançado]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{% if commit.breaking %}**QUEBRA:** {% endif %}{{ commit.message | split(pat="\n") | first | upper_first | trim }}\
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+"
+sort_commits = "oldest"
+topo_order = false
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Novidades" },
+  { message = "^fix", group = "<!-- 1 -->Correções" },
+  { message = "^(docs|refactor|perf|test|build|ci|chore|style|revert)", group = "<!-- 2 -->Outros" },
+]

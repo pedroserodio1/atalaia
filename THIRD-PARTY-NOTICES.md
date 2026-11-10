@@ -48,3 +48,17 @@ As fontes ficam em [`app/third-party/`](app/third-party/) com as licenças origi
 - **IBM Plex Mono** (peso Medium, sem modificação), Copyright © 2017 IBM Corp., com o Nome de Fonte Reservado "Plex".
 
 A OFL permite usar, estudar, modificar e redistribuir as fontes junto com software, mas não vendê-las isoladamente.
+
+A logo e as imagens de `assets/brand/` (geradas por `scripts/marca/gerar-svgs.py`) trazem o texto como **contornos** de Manrope 800/700 e IBM Plex Mono
+Medium, sem embutir a fonte: a OFL permite usar os contornos em arte, e a licença original acompanha as fontes em `app/third-party/`.
+
+## Ferramentas de build e release (não fazem parte do código do programa)
+
+Rodam só na esteira (`.github/workflows/`) ou na máquina de quem constrói a release. Nenhuma delas é redistribuída como biblioteca,
+com exceção do módulo de instalação do Inno Setup, que acompanha o instalador gerado.
+
+| Ferramenta | Versão | Licença | Uso |
+|---|---|---|---|
+| [Inno Setup](https://jrsoftware.org/isinfo.php) | 6.x (a do runner) | Licença do Inno Setup (livre, permite uso e redistribuição do instalador gerado, inclusive em software livre) | Gera `Atalaia-Agent-Setup-<versão>.exe`; o instalador inclui o módulo de instalação do Inno |
+| [git-cliff](https://github.com/orhun/git-cliff) | 2.14.2 (fixada por soma em `scripts/requisitos-cliff.txt`) | MIT ou Apache-2.0 | Gera as notas de release e o `CHANGELOG.md` a partir dos Conventional Commits |
+| GitHub Actions oficiais (`actions/checkout`, `setup-dotnet`, `setup-java`, `setup-python`, `upload-artifact`, `download-artifact`) | v4/v5 | MIT | Esteira de CI e release |
