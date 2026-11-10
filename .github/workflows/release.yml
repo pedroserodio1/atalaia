@@ -165,7 +165,8 @@ jobs:
         run: |
           set -euo pipefail
           apk=app/tablet/build/outputs/apk/release/tablet-release.apk
-          atual=$(cd app && ./gradlew -q :tablet:printVersion -PappPre="${{ needs.validar.outputs.pre }}" | grep '^versionCode=')
+          # Sem ATALAIA_KEYSTORE_PATH: só lê a versão, não cria a assinatura (que exigiria as senhas, e este passo não as recebe).
+          atual=$(cd app && env -u ATALAIA_KEYSTORE_PATH ./gradlew -q :tablet:printVersion -PappPre="${{ needs.validar.outputs.pre }}" | grep '^versionCode=')
           if [ "$atual" != "versionCode=${{ needs.validar.outputs.versioncode }}" ]; then
             echo "::error::versionCode do Gradle ($atual) difere do calculado (${{ needs.validar.outputs.versioncode }})"; exit 1
           fi
