@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    O agente fala ws:// e http:// sem TLS (protocolo v1): por USB em 127.0.0.1 e por Wi-Fi no IP do PC.
+    O Android não aceita faixa de IP aqui e o IP é do usuário, então o cleartext é liberado no app inteiro.
+    A restrição real (só loopback e rede privada) é feita no código, ao salvar o endereço e antes de conectar.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

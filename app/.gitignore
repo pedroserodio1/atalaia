@@ -1,0 +1,17 @@
+# Pessoal da máquina (caminho do SDK etc.)
+local.properties
+
+# Build e caches
+build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+*.hprof
+
+# IDE
+.idea/
+*.iml
+
+# Saída das medições
+tools/out/

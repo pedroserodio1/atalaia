@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fundo grafite desde o primeiro quadro, para não piscar branco ao abrir. -->
+    <style name="Theme.Panel" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/graphite</item>
+        <item name="android:statusBarColor">@color/graphite</item>
+        <item name="android:navigationBarColor">@color/graphite</item>
+    </style>
+
+    <color name="graphite">#0B0D10</color>
+</resources>
