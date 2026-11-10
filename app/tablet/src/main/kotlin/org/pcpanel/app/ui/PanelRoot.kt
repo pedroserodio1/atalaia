@@ -85,7 +85,6 @@ fun PanelRoot(app: PanelApp) {
     }
 
     Column(Modifier.fillMaxSize().background(Palette.Graphite)) {
-        state.upsAlert?.let { PowerAlert(state) }
         Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             LeftColumn(
                 state, now, feedback,
@@ -154,19 +153,4 @@ private fun ConnectionBanner(c: ConnectionState, onConfigure: () -> Unit) {
             .clickable(enabled = fixable, onClick = onConfigure).padding(horizontal = 14.dp),
         contentAlignment = Alignment.CenterStart,
     ) { BodyText(if (fixable) "$text ${Texts.CONFIG_TAP}" else text, if (problem) Palette.Coral else Palette.TextMuted, 14) }
-}
-
-/** Queda de energia: faixa coral no topo, em qualquer aba, enquanto durar. */
-@Composable
-private fun PowerAlert(state: AppState) {
-    val battery = state.dataOf<UpsData>("ups")?.batteryPercent
-    Box(Modifier.fillMaxWidth().height(48.dp).background(Palette.Coral).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterStart) {
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            BigText(Texts.POWER_ALERT_TITLE, 20, Palette.OnCoral)
-            BodyText(buildString {
-                append("Nobreak na bateria")
-                if (battery != null) append(" · $battery%")
-            }, Palette.OnCoral, 16)
-        }
-    }
 }

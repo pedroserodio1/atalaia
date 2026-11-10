@@ -32,6 +32,7 @@ import org.pcpanel.core.panel.Pt
 import org.pcpanel.core.panel.claudeLine
 import org.pcpanel.core.panel.gameLine
 import org.pcpanel.core.panel.mediaLine
+import org.pcpanel.core.protocol.UpsData
 import org.pcpanel.core.state.AppState
 import org.pcpanel.core.state.Freshness
 import java.time.LocalDateTime
@@ -65,30 +66,47 @@ fun LeftColumn(
 @Composable
 private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
     val time by rememberLocalDateTime()
+    // Queda de energia: o próprio cartão do relógio vira coral cheio. Fica na coluna que aparece em todas as abas, não ocupa
+    // espaço novo e nada se mexe quando liga ou desliga (a faixa de antes tomava 48 dp e empurrava o layout).
+    val power = state.upsAlert
+    val alert = power != null
+    val fg = if (alert) Palette.OnCoral else Palette.Text
+    val muted = if (alert) Palette.OnCoral else Palette.TextMuted
     // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel).
-    PanelCard(Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }) }) {
+    PanelCard(
+        Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }) },
+        container = if (alert) Palette.Coral else Palette.Panel,
+        line = if (alert) Palette.Coral else Palette.Border,
+    ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            MonoText(Pt.date(time.toLocalDate()))
-            ChannelPill(state.connection)
+            MonoText(Pt.date(time.toLocalDate()), muted)
+            ChannelPill(state.connection, alert)
         }
-        BigText(Pt.clock(time.toLocalTime()), 56)
-        val line = gameLine(state, now)
+        BigText(Pt.clock(time.toLocalTime()), 56, fg)
         Row(Modifier.height(22.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            when (line) {
-                is GameLine.Playing -> { BodyText(Texts.PLAYING_TAG, Palette.Mint, 13); BodyText(line.name, sp = 15) }
-                is GameLine.InFocus -> { MonoText(Texts.IN_FOCUS_TAG, Palette.Mint); BodyText(line.process, sp = 15) }
-                null -> MonoText(Texts.NO_ACTIVITY)
+            if (alert) {
+                // O aviso toma o lugar da linha do jogo enquanto durar: é o que mais importa nessa hora.
+                val battery = state.dataOf<UpsData>("ups")?.batteryPercent
+                BodyText(Texts.POWER_ALERT_TITLE + (battery?.let { " · $it%" } ?: ""), Palette.OnCoral, 15)
+            } else {
+                when (val line = gameLine(state, now)) {
+                    is GameLine.Playing -> { BodyText(Texts.PLAYING_TAG, Palette.Mint, 13); BodyText(line.name, sp = 15) }
+                    is GameLine.InFocus -> { MonoText(Texts.IN_FOCUS_TAG, Palette.Mint); BodyText(line.process, sp = 15) }
+                    null -> MonoText(Texts.NO_ACTIVITY)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ChannelPill(c: ConnectionState) {
+private fun ChannelPill(c: ConnectionState, onCoral: Boolean = false) {
+    // Sobre o cartão coral, a bolinha e o texto passam a escuros (menta e coral sobre coral não se leem).
+    val dark = Palette.OnCoral
     when (c.activeChannel) {
-        ChannelKind.USB -> StatusPill(Texts.CHANNEL_USB, Palette.Mint)
-        ChannelKind.WIFI -> StatusPill(Texts.CHANNEL_WIFI, Palette.Mint)
-        null -> StatusPill(Texts.CHANNEL_NONE, Palette.Coral)
+        ChannelKind.USB -> StatusPill(Texts.CHANNEL_USB, if (onCoral) dark else Palette.Mint, if (onCoral) dark else Palette.TextMuted)
+        ChannelKind.WIFI -> StatusPill(Texts.CHANNEL_WIFI, if (onCoral) dark else Palette.Mint, if (onCoral) dark else Palette.TextMuted)
+        null -> StatusPill(Texts.CHANNEL_NONE, if (onCoral) dark else Palette.Coral, if (onCoral) dark else Palette.TextMuted)
     }
 }
 

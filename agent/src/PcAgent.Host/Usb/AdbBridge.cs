@@ -18,6 +18,11 @@ public sealed class ProcessAdbRunner(string exe, TimeSpan? timeout = null) : IAd
 {
     private readonly TimeSpan _timeout = timeout ?? TimeSpan.FromSeconds(8);
 
+    /// <remarks>
+    /// Não espera o fim dos canais de saída: quando o servidor do <c>adb</c> precisa subir, ele herda esses canais e os mantém
+    /// abertos para sempre, então esperar o EOF travaria (ou demoraria até o prazo). Só o fim do <c>adb</c> cliente conta; o
+    /// texto já recebido nesse momento é o resultado.
+    /// </remarks>
     public async Task<AdbResult> RunAsync(IReadOnlyList<string> args, CancellationToken ct)
     {
         var psi = new ProcessStartInfo(exe)
@@ -29,21 +34,27 @@ public sealed class ProcessAdbRunner(string exe, TimeSpan? timeout = null) : IAd
         };
         foreach (var a in args) psi.ArgumentList.Add(a);
 
-        using var p = Process.Start(psi) ?? throw new Win32Exception($"Não consegui iniciar {exe}");
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(_timeout);
-        var stdout = p.StandardOutput.ReadToEndAsync(cts.Token);
-        var stderr = p.StandardError.ReadToEndAsync(cts.Token);
-        try
+        using var p = new Process { StartInfo = psi };
+        var text = new System.Text.StringBuilder();
+        void Add(object _, DataReceivedEventArgs e) { if (e.Data is not null) lock (text) text.AppendLine(e.Data); }
+        p.OutputDataReceived += Add;
+        p.ErrorDataReceived += Add;
+        if (!p.Start()) throw new Win32Exception($"Não consegui iniciar {exe}");
+        p.BeginOutputReadLine();
+        p.BeginErrorReadLine();
+
+        var deadline = DateTime.UtcNow + _timeout;
+        while (!p.HasExited)
         {
-            await p.WaitForExitAsync(cts.Token);
-            return new AdbResult(p.ExitCode, await stdout + await stderr);
+            if (DateTime.UtcNow >= deadline)
+            {
+                try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
+                return new AdbResult(-1, "tempo esgotado");
+            }
+            await Task.Delay(20, ct);   // cancelar (agente fechando) lança aqui; o processo é encerrado pelo `using`
         }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
-            return new AdbResult(-1, "tempo esgotado");
-        }
+        await Task.Delay(100, CancellationToken.None);   // dá tempo de chegarem as últimas linhas já escritas
+        lock (text) return new AdbResult(p.ExitCode, text.ToString());
     }
 }
 
@@ -98,8 +109,11 @@ public sealed record TickReport(AdbState Adb, IReadOnlyList<DeviceReport> Device
 /// agente em 127.0.0.1 sem Wi-Fi. A cada rodada confere os aparelhos e refaz a regra que faltar, o que cobre o cabo
 /// replugado e o servidor do <c>adb</c> reiniciado. Só lê o que o <c>adb</c> informa e cria a regra de reverse; nada mais.
 /// </summary>
-public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, ILogger logger)
+public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, ILogger logger, Func<long>? nowMs = null)
 {
+    private readonly Func<long> _now = nowMs ?? (() => Environment.TickCount64);
+    private long _emptySince = -1;      // desde quando `adb devices` não lista nenhum aparelho (-1 = lista não vazia)
+    private long _lastEmptyLog;
     private readonly Dictionary<string, string> _lastState = [];   // para logar só mudanças
     private AdbState? _lastAdb;
 
@@ -137,6 +151,7 @@ public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, I
         var found = ParseDevices(devices.Output)
             .Where(d => options.Serial.Length == 0 || d.Serial == options.Serial)
             .ToList();
+        WatchEmpty(found.Count);
 
         // aparelho que saiu: esquece, para logar de novo quando voltar
         foreach (var gone in _lastState.Keys.Where(k => found.All(d => d.Serial != k)).ToList())
@@ -179,6 +194,27 @@ public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, I
             }
         }
         return new TickReport(AdbState.Ok, reports);
+    }
+
+    /// <summary>
+    /// O servidor do <c>adb</c> pode ficar com a lista vazia depois de uma queda do USB. Isso não gera nenhum outro log, então
+    /// avisa aqui: ao esvaziar, e de novo a cada 30 s enquanto continuar vazio.
+    /// </summary>
+    private void WatchEmpty(int count)
+    {
+        var now = _now();
+        if (count > 0)
+        {
+            if (_emptySince >= 0) logger.LogInformation("USB: o adb voltou a listar aparelho (depois de {Seconds} s sem nenhum).", (now - _emptySince) / 1000);
+            _emptySince = -1;
+            return;
+        }
+        if (_emptySince < 0) { _emptySince = now; _lastEmptyLog = now; return; }   // a saída do aparelho já foi logada
+        if (now - _lastEmptyLog >= 30_000)
+        {
+            _lastEmptyLog = now;
+            logger.LogWarning("USB: o adb está sem aparelho há {Seconds} s. Se o cabo está ligado, confira a depuração USB no tablet ou rode 'adb kill-server'.", (now - _emptySince) / 1000);
+        }
     }
 
     /// <summary>Linhas <c>serial\testado</c> depois do cabeçalho. Ignora o cabeçalho, linhas vazias e avisos do servidor do adb.</summary>

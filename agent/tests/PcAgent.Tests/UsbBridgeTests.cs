@@ -303,4 +303,76 @@ public class UsbBridgeTests
         var cfg = new ConfigurationBuilder().SetBasePath(dir).AddJsonFile("appsettings.json", optional: false).Build();
         Assert.False(UsbOptions.From(cfg).Enabled);
     }
+
+    // ---------------------------------------------------------------- diagnóstico: aparelho some e o adb fica vazio
+
+    private sealed class CaptureLogger : Microsoft.Extensions.Logging.ILogger
+    {
+        public List<string> Lines = [];
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel l) => true;
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel l, Microsoft.Extensions.Logging.EventId id, TState state, Exception? ex, Func<TState, Exception?, string> f) =>
+            Lines.Add($"{l}: {f(state, ex)}");
+    }
+
+    [Fact]
+    public async Task Adb_vazio_por_muito_tempo_avisa_a_cada_30_segundos_e_registra_a_volta()
+    {
+        long now = 0;
+        var log = new CaptureLogger();
+        var adb = new FakeAdb { Devices = { ["AAA"] = "device" } };
+        var b = new AdbBridge(new UsbOptions(true, "", 3, ""), Port, adb, log, () => now);
+
+        await b.TickAsync(Ct);                         // aparelho presente
+        adb.Devices.Clear(); adb.Reverses.Clear();     // o adb passa a listar nada
+        await b.TickAsync(Ct);                         // "saiu"
+        Assert.Contains(log.Lines, l => l.Contains("saiu"));
+
+        now = 29_000; await b.TickAsync(Ct);
+        Assert.DoesNotContain(log.Lines, l => l.Contains("sem aparelho há"));   // ainda dentro dos 30 s
+        now = 31_000; await b.TickAsync(Ct);
+        Assert.Single(log.Lines, l => l.Contains("sem aparelho há 31 s"));
+        now = 40_000; await b.TickAsync(Ct);
+        Assert.Single(log.Lines, l => l.Contains("sem aparelho há"));           // não repete antes de mais 30 s
+        now = 62_000; await b.TickAsync(Ct);
+        Assert.Equal(2, log.Lines.Count(l => l.Contains("sem aparelho há")));
+
+        adb.Devices["AAA"] = "device";
+        var back = await b.TickAsync(Ct);
+        Assert.Contains(log.Lines, l => l.Contains("voltou a listar aparelho") && l.Contains("62 s"));
+        Assert.True(Assert.Single(back.Devices).ReverseCreated);                // e a regra é refeita
+    }
+
+    // ---------------------------------------------------------------- runner real: processo que trava e que deixa filho com o canal
+
+    private static string Pwsh => "powershell";
+
+    [Fact]
+    public async Task Processo_que_nao_termina_e_morto_no_prazo()
+    {
+        var runner = new ProcessAdbRunner(Pwsh, TimeSpan.FromSeconds(1));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var r = await runner.RunAsync(["-NoProfile", "-Command", "Start-Sleep 30"], Ct);
+        Assert.Equal(-1, r.ExitCode);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(4), $"demorou {sw.Elapsed}");
+    }
+
+    [Fact]
+    public async Task Filho_que_segura_o_canal_de_saida_nao_atrasa_o_resultado()
+    {
+        // como o servidor do adb: o processo termina, mas um filho continua com a saída aberta por mais 6 s
+        var runner = new ProcessAdbRunner(Pwsh, TimeSpan.FromSeconds(20));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var r = await runner.RunAsync(["-NoProfile", "-Command", "Start-Process -NoNewWindow ping -ArgumentList '-n','7','127.0.0.1'; 'oi'"], Ct);
+        Assert.Equal(0, r.ExitCode);
+        Assert.Contains("oi", r.Output);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(4), $"esperou o filho: {sw.Elapsed}");
+    }
+
+    [Fact]
+    public async Task Executavel_inexistente_lanca_Win32Exception_como_o_adb_ausente()
+    {
+        var runner = new ProcessAdbRunner("pcpanel-adb-que-nao-existe-12345");
+        await Assert.ThrowsAsync<Win32Exception>(() => runner.RunAsync(["devices"], Ct));
+    }
 }

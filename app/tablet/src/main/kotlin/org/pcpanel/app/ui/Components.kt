@@ -40,9 +40,14 @@ import org.pcpanel.core.state.Freshness
 /** Blocos visuais do painel: cartão, textos, anel, barra e gráfico. Sem sombra, sem animação contínua (orçamento do tablet). */
 
 @Composable
-fun PanelCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun PanelCard(
+    modifier: Modifier = Modifier,
+    container: Color = Palette.Panel,
+    line: Color = Palette.Border,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val shape = RoundedCornerShape(22.dp)
-    Column(modifier.background(Palette.Panel, shape).border(1.dp, Palette.Border, shape).padding(horizontal = 16.dp, vertical = 12.dp), content = content)
+    Column(modifier.background(container, shape).border(1.dp, line, shape).padding(horizontal = 16.dp, vertical = 12.dp), content = content)
 }
 
 /** Texto curto que avisa que o dado do cartão não é de agora; `null` quando está tudo bem. */
@@ -129,10 +134,10 @@ fun Sparkline(values: List<Int>, modifier: Modifier) {
 }
 
 @Composable
-fun StatusPill(text: String, dot: Color) {
+fun StatusPill(text: String, dot: Color, textColor: Color = Palette.TextMuted) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.size(8.dp).background(dot, CircleShape))
-        MonoText(text, sp = 13)
+        MonoText(text, textColor, sp = 13)
     }
 }
 
