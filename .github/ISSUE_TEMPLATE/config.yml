@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Vulnerabilidade de segurança
+    url: https://github.com/pedroserodio1/atalaia/security/advisories/new
+    about: Não abra issue pública para falha de segurança. Use o relato privado (veja SECURITY.md).

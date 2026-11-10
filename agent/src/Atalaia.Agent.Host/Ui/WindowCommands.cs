@@ -40,6 +40,7 @@ internal sealed class WindowCommands(
     public JsonObject State() => new()
     {
         ["version"] = AppInfo.Version,
+        ["repository"] = repository(),   // para os links da janela (ex.: "Reportar um bug"); a página nunca monta endereço sozinha com outro dono
         ["address"] = runtime.Address,
         ["port"] = runtime.Port,
         ["listenOnLan"] = runtime.ListenOnLan,

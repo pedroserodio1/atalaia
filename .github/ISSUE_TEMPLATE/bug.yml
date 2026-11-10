@@ -1,0 +1,60 @@
+name: Reportar um bug
+description: Algo no agente do PC ou no app do tablet não funciona como deveria
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por avisar! Antes de enviar, **tire do texto e dos prints** o código de acesso de 6 dígitos, tokens, chaves de API,
+        endereços IP, nome do PC e caminhos com o seu nome de usuário.
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do Atalaia
+      description: Aparece no canto da janela do agente (por exemplo, v0.1.1-beta.3).
+      placeholder: v0.1.1-beta.3
+    validations:
+      required: true
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde acontece
+      options:
+        - Agente (PC)
+        - App (tablet)
+        - Instalador ou atualização
+        - Não sei
+    validations:
+      required: true
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu
+      description: Descreva o que você viu. Um print ajuda muito.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que você esperava
+    validations:
+      required: true
+  - type: textarea
+    id: como-repetir
+    attributes:
+      label: Como repetir
+      placeholder: |
+        1. Abrir a aba Atualizações
+        2. ...
+  - type: textarea
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Versão do Windows, modelo do tablet e versão do Android, USB ou Wi-Fi.
+  - type: textarea
+    id: log
+    attributes:
+      label: Log (opcional)
+      description: Trecho de `%LOCALAPPDATA%\AtalaiaAgent\logs\`. Confira se não há dado pessoal antes de colar.
+      render: text

@@ -1,0 +1,36 @@
+name: Sugerir uma ideia
+description: Uma fonte de dados, tela ou melhoria nova
+title: "[ideia] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideias que mexem no contrato entre agente e app (`docs/protocolo-v1.md`), trazem dependência nova ou estão na lista de
+        "fora do escopo" do README precisam de conversa antes de virar código. Esta issue é o lugar dela.
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema isso resolve
+      description: O que você quer fazer e não consegue hoje.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Como você imagina
+      description: Qual dado ou ação, de onde ele vem e como apareceria no tablet.
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas que você considerou
+  - type: dropdown
+    id: contribuir
+    attributes:
+      label: Você pretende implementar?
+      options:
+        - Sim, abro o pull request
+        - Posso ajudar
+        - Não, só sugerindo
