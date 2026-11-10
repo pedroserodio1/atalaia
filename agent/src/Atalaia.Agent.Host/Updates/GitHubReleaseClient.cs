@@ -14,6 +14,12 @@ internal sealed record ReleaseInfo(string Tag, bool Prerelease, bool Draft, stri
     public ReleaseAsset? Find(string name) => Assets.FirstOrDefault(a => a.Name == name);
 }
 
+/// <summary>A lista de releases. <see cref="Releases"/> é <c>null</c> quando o GitHub respondeu 304 (nada mudou desde o <see cref="ETag"/> enviado).</summary>
+internal sealed record ReleaseList(IReadOnlyList<ReleaseInfo>? Releases, string? ETag)
+{
+    public bool NotModified => Releases is null;
+}
+
 internal enum GitHubFailure { Offline, RateLimited, NotFound, Http, BadData }
 
 internal sealed class GitHubException(GitHubFailure kind, string message, DateTimeOffset? retryAt = null) : Exception(message)
@@ -53,6 +59,41 @@ internal sealed class GitHubReleaseClient(HttpClient http, GitHubReleaseClient.O
         Check(response);
         var json = await response.Content.ReadAsStringAsync(cts.Token);
         return Parse(json, tag);
+    }
+
+    public const int ListPageSize = 30;
+
+    /// <summary>
+    /// As releases mais recentes do repositório (<c>?per_page=30</c>). Com <paramref name="etag"/> a consulta é condicional: o GitHub responde 304
+    /// (e isso não gasta o limite da API) quando nada mudou. Elemento da lista com formato estranho é ignorado, para uma release ruim não
+    /// travar as atualizações; já uma resposta que nem é uma lista é <see cref="GitHubFailure.BadData"/>.
+    /// </summary>
+    public async Task<ReleaseList> ListAsync(string? etag, CancellationToken ct)
+    {
+        if (!ReleaseNames.IsValidRepository(options.Repository)) throw new GitHubException(GitHubFailure.BadData, "O repositório configurado é inválido (use dono/nome).");
+
+        using var request = NewRequest(new Uri(_api, $"repos/{options.Repository}/releases?per_page={ListPageSize}"));
+        request.Headers.Accept.ParseAdd("application/vnd.github+json");
+        request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        if (etag is not null && System.Net.Http.Headers.EntityTagHeaderValue.TryParse(etag, out var tag)) request.Headers.IfNoneMatch.Add(tag);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+        using var response = await SendAsync(request, cts.Token);
+        var newTag = response.Headers.ETag?.ToString();
+        if (response.StatusCode == HttpStatusCode.NotModified) return new ReleaseList(null, etag);
+        Check(response);
+        var json = await response.Content.ReadAsStringAsync(cts.Token);
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array) throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado.");
+            var list = new List<ReleaseInfo>();
+            foreach (var item in doc.RootElement.EnumerateArray())
+                if (TryParseRelease(item) is { } release) list.Add(release);
+            return new ReleaseList(list, newTag);
+        }
+        catch (JsonException) { throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado."); }
     }
 
     /// <summary>
@@ -140,21 +181,30 @@ internal sealed class GitHubReleaseClient(HttpClient http, GitHubReleaseClient.O
         try
         {
             using var doc = JsonDocument.Parse(json);
-            var r = doc.RootElement;
+            var release = TryParseRelease(doc.RootElement);
+            if (release is null) throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado.");
+            if (release.Tag != expectedTag) throw new GitHubException(GitHubFailure.BadData, "O GitHub devolveu outra release.");
+            return release;
+        }
+        catch (JsonException) { throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado."); }
+    }
+
+    /// <summary>Uma release do JSON do GitHub; <c>null</c> se faltam os campos essenciais (tag, nome e endereço de cada arquivo).</summary>
+    private static ReleaseInfo? TryParseRelease(JsonElement r)
+    {
+        try
+        {
+            if (r.ValueKind != JsonValueKind.Object) return null;
             var tag = r.GetProperty("tag_name").GetString() ?? "";
-            if (tag != expectedTag) throw new GitHubException(GitHubFailure.BadData, "O GitHub devolveu outra release.");
             var assets = new List<ReleaseAsset>();
             if (r.TryGetProperty("assets", out var arr) && arr.ValueKind == JsonValueKind.Array)
                 foreach (var a in arr.EnumerateArray())
                     assets.Add(new ReleaseAsset(a.GetProperty("name").GetString() ?? "", a.GetProperty("browser_download_url").GetString() ?? "", a.TryGetProperty("size", out var s) && s.TryGetInt64(out var size) ? size : 0));
-            return new ReleaseInfo(tag, r.TryGetProperty("prerelease", out var p) && p.GetBoolean(), r.TryGetProperty("draft", out var d) && d.GetBoolean(),
+            return new ReleaseInfo(tag, r.TryGetProperty("prerelease", out var p) && p.ValueKind == JsonValueKind.True, r.TryGetProperty("draft", out var d) && d.ValueKind == JsonValueKind.True,
                 r.TryGetProperty("body", out var b) && b.ValueKind == JsonValueKind.String ? b.GetString() : null,
                 r.TryGetProperty("html_url", out var h) && h.ValueKind == JsonValueKind.String ? h.GetString() ?? "" : "", assets);
         }
-        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException)
-        {
-            throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado.");
-        }
+        catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException) { return null; }
     }
 
     /// <summary>O arquivo tem que estar na própria release do repositório configurado (nunca outro endereço que a resposta mencione).</summary>

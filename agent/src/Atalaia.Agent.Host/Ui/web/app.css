@@ -191,3 +191,7 @@ button { font: inherit; color: inherit; }
 .pill.soon { background: var(--panel-3); color: var(--muted); font-size: 12px; height: 26px; padding: 0 10px; }
 .row.soon .name, .row.soon .hint { opacity: .65; }
 .btn:disabled, .switch:disabled { cursor: default; }
+.notes { margin: 10px 0 0; padding: 12px 14px; max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--panel-3); border: 1px solid var(--border); border-radius: 12px; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--text); user-select: text; }
+.card.update .job { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.adapter .hint { margin-left: 10px; }
+.welcome .foot .pill { display: flex; width: fit-content; margin-top: 10px; }

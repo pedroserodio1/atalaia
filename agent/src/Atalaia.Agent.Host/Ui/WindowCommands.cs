@@ -6,8 +6,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Atalaia.Agent.Core;
 using Atalaia.Agent.Host.Settings;
+using Atalaia.Agent.Host.Updates;
 
 namespace Atalaia.Agent.Host.Ui;
+
+/// <summary>O estado atual da atualização (lido na hora, a cada <c>state</c>).</summary>
+internal delegate UpdateStatus UpdateStatusSource();
 
 /// <summary>Os comandos que a janela pode pedir ao agente (a lista inteira: ver <see cref="Register"/>).</summary>
 internal sealed class WindowCommands(
@@ -15,7 +19,8 @@ internal sealed class WindowCommands(
     OnboardingStore onboarding,
     Func<string> repository,
     Action closeWindow,
-    Action<string> openExternal)
+    Action<string> openExternal,
+    UpdateStatusSource? updates = null)
 {
     public void Register(CommandRouter router)
     {
@@ -41,7 +46,11 @@ internal sealed class WindowCommands(
         ["simulate"] = runtime.Simulate,
         ["clients"] = new JsonArray([.. runtime.Clients.Select(ClientJson)]),
         ["onboarding"] = OnboardingJson(onboarding.State),
+        ["update"] = UpdateJson(),
     };
+
+    private JsonNode? UpdateJson() =>
+        updates?.Invoke() is { } u ? new JsonObject { ["state"] = u.State, ["version"] = u.Available?.Version.ToString(), ["skipped"] = u.SkippedVersion } : null;
 
     /// <summary>Loopback é o USB (<c>adb reverse</c> chega ao agente como 127.0.0.1); qualquer outro endereço é Wi-Fi/rede local.</summary>
     public static string ChannelOf(string remote) =>

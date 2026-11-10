@@ -12,7 +12,8 @@ internal sealed class Tray : ApplicationContext
     private readonly NotifyIcon _icon;
     private readonly WindowHost _window;
 
-    public Tray(AgentRuntime runtime, WindowHost window)
+    /// <param name="beforeExit">Roda quando o usuário escolhe Sair (a atualização baixada é instalada aqui, se "Instalar sozinho" está ligado).</param>
+    public Tray(AgentRuntime runtime, WindowHost window, Action? beforeExit = null)
     {
         _window = window;
         var open = new ToolStripMenuItem("Abrir Atalaia", null, (_, _) => window.Show()) { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) };
@@ -26,7 +27,7 @@ internal sealed class Tray : ApplicationContext
             Directory.CreateDirectory(AppPaths.Logs);
             Process.Start(new ProcessStartInfo(AppPaths.Logs) { UseShellExecute = true });
         });
-        var exit = new ToolStripMenuItem("Sair", null, (_, _) => { _window.Dispose(); ExitThread(); });
+        var exit = new ToolStripMenuItem("Sair", null, (_, _) => { beforeExit?.Invoke(); Quit(); });
 
         var menu = new ContextMenuStrip();
         menu.Items.AddRange([open, new ToolStripSeparator(), status, clients, code, new ToolStripSeparator(), copy, logs, new ToolStripSeparator(), exit]);
@@ -42,6 +43,13 @@ internal sealed class Tray : ApplicationContext
         _icon.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) window.Show(); };
         if (runtime.TokenCreated)   // o balão nunca mostra o código (fica no histórico de notificações)
             _icon.ShowBalloonTip(8000, "Atalaia", "Novo código de acesso de 6 dígitos. Veja no menu do ícone da bandeja.", ToolTipIcon.Info);
+    }
+
+    /// <summary>Fecha a janela e encerra o agente. Só na thread da interface.</summary>
+    public void Quit()
+    {
+        _window.Dispose();
+        ExitThread();
     }
 
     protected override void ExitThreadCore()

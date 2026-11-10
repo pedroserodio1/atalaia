@@ -107,6 +107,17 @@ function versionLine() {
   return parts.join(' · ');
 }
 
+/** Uma linha sobre a atualização, só com o que o agente sabe: sem checagem ainda (ou com erro), não diz nada. */
+function updatePill() {
+  const u = state.update;
+  if (!u) return null;
+  if (u.state === 'current' && !u.skipped) return pill('Você está na versão mais recente', 'ok');
+  if (u.state === 'available') return pill(`Atualização disponível: ${u.version}`, 'warn');
+  if (u.state === 'offline') return pill('Sem internet para buscar atualizações', '');
+  if (u.state === 'rate_limited') return pill('O GitHub limitou as consultas de atualização por um tempo', '');
+  return null;
+}
+
 function welcome() {
   const o = state.onboarding;
   return h('div', { class: 'welcome' },
@@ -117,7 +128,7 @@ function welcome() {
       h('div', { class: 'actions' },
         h('button', { class: 'btn primary big', onclick: () => act('onboarding.go', { step: 1 }, 'steps') }, 'Começar'),
         h('button', { class: 'btn big', onclick: () => act('onboarding.finish', {}, 'home') }, 'Já está tudo configurado')),
-      h('div', { class: 'foot' }, versionLine())),
+      h('div', { class: 'foot' }, versionLine(), updatePill())),
     h('div', { class: 'art', 'aria-hidden': 'true' },
       h('div', { class: 'tablet' },
         h('div', { class: 'col' }, h('div', { class: 'clock' }),
