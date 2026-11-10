@@ -79,6 +79,9 @@ Chaves principais (padrões em `appsettings.json`):
 | `Plugins:activeWindow:sendTitle` | `false` envia o título vazio |
 | `Plugins:ups:dbPath` | Banco da Intelbras; vazio = `%APPDATA%\Intelbras\ups_desktop\intelbras_nobreak_management_service.db` |
 | `Plugins:ups:shortOutageSec` / `groupWindowSec` | Anti-ruído de quedas curtas (5 s) e janela de agrupamento (600 s) |
+| `Usb:Enabled` | `true` liga o módulo que mantém o `adb reverse` para o tablet ligado por cabo (padrão `false`) |
+| `Usb:AdbPath` | Caminho do `adb.exe`; vazio = o do PATH, depois `ANDROID_HOME`/`ANDROID_SDK_ROOT`\platform-tools |
+| `Usb:PollSeconds` / `Usb:Serial` | Intervalo da conferência (3 s; de 1 a 60) e, se preenchido, o único aparelho a atender (vazio = todos os autorizados) |
 
 Plugins opcionais (todos ligáveis em `appsettings.Local.json`; segredos só em variável de ambiente ou `.env`,
 nunca no `appsettings.json`; veja o `.env.example`):
@@ -95,6 +98,16 @@ nunca no `appsettings.json`; veja o `.env.example`):
 Plugin ligado sem a configuração necessária (por exemplo `steam` sem chave) aparece com status `error` no
 `hello` e o agente segue normalmente; os formatos de `data` de todas as fontes estão em
 [`../docs/protocolo-v1.md`](../docs/protocolo-v1.md).
+
+## USB: tablet ligado por cabo (`Usb:*`)
+
+Com o módulo ligado, o agente roda `adb reverse tcp:<porta> tcp:<porta>` para cada aparelho autorizado, e assim o app
+no tablet alcança o agente em `127.0.0.1` sem Wi-Fi e sem `ListenOnLan`. A cada `Usb:PollSeconds` ele confere os
+aparelhos (`adb devices`) e a regra (`adb reverse --list`) e refaz o que faltar, o que cobre o cabo replugado e o servidor
+do `adb` reiniciado. Só usa `devices`, `reverse --list` e `reverse`; não instala nada nem toca no aparelho.
+Aparelho `unauthorized` ou `offline` é só registrado no log (aceite a depuração USB na tela do tablet).
+Ligue em `appsettings.Local.json` (`"Usb": { "Enabled": true }`) ou por `PCAGENT_Usb__Enabled=true`. Requer o
+`platform-tools` do Android (o `adb`); sem ele o log avisa uma vez e o agente segue normalmente.
 
 ## Painel (`tools/painel.html`)
 

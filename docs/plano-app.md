@@ -77,7 +77,7 @@ agent/src/PcAgent.Host/Usb/AdbBridge.cs      (a fazer, etapa 7)
 | 6c | Jogo (Steam) e Claude | **Pronta** (10/11), conferida no tablet real com o agente `--simulate` por USB. 161 testes de `:core` verdes. Ver "6c, o que ficou decidido" |
 | 6d | Configuração: endereços e token | **Pronta** (10/11), conferida no tablet real (debug e release) com o agente `--simulate` por USB. 168 testes de `:core` verdes. Ver "6d, o que ficou decidido" |
 | — | Medir de novo com as telas finais | A fazer (novo) |
-| 7 | Módulo USB no agente (`adb reverse`) | A fazer (só após aprovação já dada ao plano; toca só `PcAgent.Host`, `appsettings.json` e o README do agente) |
+| 7 | Módulo USB no agente (`adb reverse`) | **Pronta** (10/11): `Usb/AdbBridge.cs`, desligado por padrão; 114 testes do agente verdes (18 novos, com `adb` falso); conferida com o `adb` e o tablet reais. Ver "7, o que ficou decidido" |
 | 8 | Roteiro de teste manual, README final, relatório do que foi e não foi verificado | A fazer |
 
 Detalhes das etapas pendentes:
@@ -92,6 +92,24 @@ Detalhes das etapas pendentes:
   backoff. Capa: hash só hexadecimal (até 64), limite de 8 MB, cache de 4 MB por hash (o `Bitmap` decodificado fica no
   `:tablet`, na etapa 6). Aprendizado de teste: o `hostName` do MockWebServer deu um nome de máquina nesta máquina, então os
   testes usam `127.0.0.1`.
+- **7, o que ficou decidido na implementação:**
+  - **Mudanças no agente** (as únicas autorizadas): `src/PcAgent.Host/Usb/AdbBridge.cs` (novo), o encaixe em
+    `AgentRuntime.cs` (sobe depois do Kestrel, com a porta real, e para junto com o agente), a seção `Usb` em
+    `appsettings.json` (`Enabled:false`, `AdbPath:""`, `PollSeconds:3`, `Serial:""`), o README do agente e
+    `tests/PcAgent.Tests/UsbBridgeTests.cs`. `docs/protocolo-v1.md` não foi tocado.
+  - **Como funciona:** a cada rodada `adb devices`; para cada aparelho `device` (e igual a `Usb:Serial`, se houver),
+    `adb -s <serial> reverse --list` e, se faltar a linha `tcp:<porta> tcp:<porta>`, `adb -s <serial> reverse tcp:<porta>
+    tcp:<porta>`. `unauthorized` e `offline` só viram log. Loga só mudanças (uma linha por criação, sem repetir a cada
+    rodada). `adb` ausente, travado (8 s) ou com saída estranha nunca derruba o agente: o log avisa uma vez e ele tenta de
+    novo na próxima rodada. Não remove a regra ao sair.
+  - **Localizar o `adb`:** `Usb:AdbPath`; senão o `adb.exe` do PATH; senão `ANDROID_HOME` e `ANDROID_SDK_ROOT`
+    (`platform-tools\adb.exe`). Também vale `PCAGENT_Usb__AdbPath`. Sem nada, tenta `adb` e, se não existir, avisa.
+  - **Formato real do `adb` neste PC** (platform-tools 37.0.1): `devices` vem com CRLF e `\t`; `reverse --list` devolve
+    `(reverse) tcp:8765 tcp:8765` (vazio quando não há regra); o parser aceita também o formato antigo `host-N tcp:… tcp:…`.
+  - **Conferido com o tablet real** (agente `--simulate`, `PCAGENT_Usb__Enabled=true`): a regra apareceu sozinha ao subir
+    o agente; removida à mão, voltou em ~2 s; depois de `adb kill-server` voltou também; o app conectou por USB só com a
+    regra criada pelo agente. **Não conferido:** o cabo fisicamente desplugado e replugado (só simulado em teste: o
+    aparelho some e volta), e vários aparelhos ao mesmo tempo.
 - **6d, o que ficou decidido na implementação:**
   - **Regras no `:core`** (`settings/ConfigDraft`, com testes): adicionar (`host`, `host:porta`, `[ipv6]:porta`, validado pela
     `HostPolicy`, sem repetido, no máximo 4), mover para cima/baixo (a ordem é a prioridade), remover, e validar o token

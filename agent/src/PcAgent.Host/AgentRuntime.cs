@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PcAgent.Core;
+using PcAgent.Host.Usb;
 using Serilog;
 
 namespace PcAgent.Host;
@@ -15,6 +16,8 @@ internal sealed class AgentRuntime(IConfiguration config, bool simulate, TokenSt
 {
     private WebApplication? _app;
     private Scheduler? _scheduler;
+    private CancellationTokenSource? _usbCts;
+    private Task? _usbTask;
 
     public string Token => token.Token;
     public bool TokenCreated => token.Created;
@@ -47,10 +50,27 @@ internal sealed class AgentRuntime(IConfiguration config, bool simulate, TokenSt
         var actualPort = new Uri(app.Urls.First()).Port;
         Address = $"{(lan ? "0.0.0.0" : "127.0.0.1")}:{actualPort}";
         Log.Information("Agente rodando em {Address}{Mode}", Address, simulate ? " (simulado)" : "");
+
+        // Módulo opcional (Usb:Enabled): mantém `adb reverse` para o tablet ligado por cabo. Desligado por padrão.
+        var usb = UsbOptions.From(config);
+        if (usb.Enabled)
+        {
+            var exe = AdbLocator.Resolve(usb.AdbPath, Environment.GetEnvironmentVariable, File.Exists) ?? "adb";
+            var bridge = new AdbBridge(usb, actualPort, new ProcessAdbRunner(exe), loggers.CreateLogger("Usb"));
+            _usbCts = new CancellationTokenSource();
+            _usbTask = Task.Run(() => bridge.RunAsync(_usbCts.Token));
+        }
     }
 
     public async Task StopAsync()
     {
+        if (_usbCts is not null)
+        {
+            await _usbCts.CancelAsync();
+            if (_usbTask is not null) await _usbTask;
+            _usbCts.Dispose();
+            _usbCts = null;
+        }
         if (_scheduler is not null) await _scheduler.StopAsync();
         if (_app is not null) await _app.StopAsync();
     }

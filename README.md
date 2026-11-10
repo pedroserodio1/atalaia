@@ -8,7 +8,7 @@ executa as ações; o **app do tablet** só desenha as telas e devolve os toques
 criado).
 
 > **Estado:** em desenvolvimento. O agente está pronto para uso; o app do tablet já conecta, mostra dados ao vivo e
-> controla o PC, mas ainda falta o módulo USB do agente e os testes com cabo e Wi-Fi reais (veja "Estado" mais abaixo).
+> controla o PC, mas ainda faltam os testes com cabo desplugado e Wi-Fi reais (veja "Estado" mais abaixo).
 
 ## Como funciona
 
@@ -65,7 +65,8 @@ agente pela rede, ligue `Agent:ListenOnLan` (veja o [README do agente](agent/REA
 adb install -r tablet/build/outputs/apk/debug/tablet-debug.apk
 ```
 
-**3. Ligar os dois.** Por USB, o tablet alcança o agente com `adb reverse tcp:8765 tcp:8765`. Na primeira vez o app abre
+**3. Ligar os dois.** Por USB, o tablet alcança o agente com `adb reverse tcp:8765 tcp:8765`, que o próprio agente mantém
+se você ligar `Usb:Enabled` (veja o [README do agente](agent/README.md)); ou faça à mão. Na primeira vez o app abre
 a tela de configuração sozinho: informe os endereços do PC em ordem de prioridade (`127.0.0.1` é o USB; o IP do PC é o
 Wi-Fi) e o token (no PC: bandeja, "Copiar token"). Depois, a configuração abre com toque longo no relógio, ou tocando
 na faixa de erro de conexão. Para automatizar em build de debug:
@@ -86,7 +87,7 @@ adb shell am start -n org.pcpanel.app/.MainActivity --es hosts "127.0.0.1:8765,1
 | App: protocolo, conexão, failover USB/Wi-Fi, estado | Pronto e testado (a troca de canal foi testada só com rede falsa) |
 | App: telas Início, Sistema, Mídia, Discord, Jogo (Steam) e Claude | Prontas, conferidas no tablet real com o agente simulado |
 | App: tela de configuração (endereços e token) | Pronta, conferida no tablet real |
-| Agente: módulo que mantém o `adb reverse` sozinho | A fazer |
+| Agente: módulo que mantém o `adb reverse` sozinho (`Usb:Enabled`) | Pronto, conferido com o tablet real |
 | Teste com cabo e Wi-Fi reais, medição final de desempenho | A fazer |
 
 O acompanhamento detalhado, com decisões e resultados de medição, está em [`docs/plano-app.md`](docs/plano-app.md).
