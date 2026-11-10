@@ -52,19 +52,21 @@ fun LeftColumn(
     now: Long,
     feedback: String?,
     onMedia: (action: String, positionSec: Double?) -> Unit,
+    onOpenConfig: () -> Unit,
     modifier: Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ClockCard(state, now)
+        ClockCard(state, now, onOpenConfig)
         MediaCard(state, now, feedback, onMedia, Modifier.weight(1f))
         ClaudeCard(state, now)
     }
 }
 
 @Composable
-private fun ClockCard(state: AppState, now: Long) {
+private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
     val time by rememberLocalDateTime()
-    PanelCard(Modifier.fillMaxWidth()) {
+    // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel).
+    PanelCard(Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }) }) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             MonoText(Pt.date(time.toLocalDate()))
             ChannelPill(state.connection)

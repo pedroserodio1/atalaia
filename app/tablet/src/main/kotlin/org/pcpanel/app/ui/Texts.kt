@@ -96,6 +96,23 @@ object Texts {
         else -> s
     }
 
+    const val CONFIG_ENDPOINTS = "Endereços do PC"
+    const val CONFIG_ENDPOINTS_HINT = "O primeiro é o preferido. USB é 127.0.0.1; Wi-Fi é o IP do PC."
+    const val CONFIG_HOST_PLACEHOLDER = "192.168.0.12 ou 192.168.0.12:8765"
+    const val CONFIG_ADD = "Adicionar"
+    const val CONFIG_TOKEN = "Token do agente"
+    const val CONFIG_TOKEN_HINT = "No PC: bandeja, Copiar token."
+    const val CONFIG_TOKEN_SAVED_HINT = "Já há um token guardado. Deixe vazio para manter."
+    const val CONFIG_TOKEN_PLACEHOLDER = "cole ou digite o token"
+    const val CONFIG_TOKEN_KEEP = "manter o token guardado"
+    const val CONFIG_TOKEN_NOT_SAVED = "Não consegui guardar o token neste aparelho."
+    const val CONFIG_SHOW = "Mostrar"
+    const val CONFIG_HIDE = "Ocultar"
+    const val CONFIG_PASTE = "Colar"
+    const val CONFIG_SAVE = "Salvar"
+    const val CONFIG_CANCEL = "Cancelar"
+    const val CONFIG_TAP = "Toque aqui."
+
     const val POWER_ALERT_TITLE = "Sem energia da rede"
 
     fun connectionBanner(s: ConnectionState): String? = when (s) {
@@ -104,7 +121,7 @@ object Texts {
         is ConnectionState.InvalidEndpoint -> "Endereço recusado. ${s.reason}"
         is ConnectionState.Connecting -> "Conectando a ${s.endpoint}…"
         is ConnectionState.Unreachable -> "PC desligado ou inalcançável. Tentando de novo…"
-        ConnectionState.TokenInvalid -> "Token inválido. Copie o token de novo no agente (bandeja, Copiar token)."
+        ConnectionState.TokenInvalid -> "Token inválido. No agente: bandeja, Copiar token."
         is ConnectionState.VersionMismatch -> "Versão do protocolo incompatível com o agente."
     }
 

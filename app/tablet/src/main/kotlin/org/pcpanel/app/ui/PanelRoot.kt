@@ -14,7 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.app.Activity
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -60,6 +64,17 @@ fun PanelRoot(app: PanelApp) {
     val state by remember { app.store.state.sample(500) }.collectAsStateWithLifecycle(app.store.state.value)
     val now by rememberNow(app.clock)
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    // Sem endereço ou sem token guardados, a configuração abre sozinha; depois, por toque longo no relógio ou pela faixa de conexão.
+    var configuring by rememberSaveable { mutableStateOf(app.settings.endpoints.isEmpty() || app.settings.token == null) }
+    // Ao sair da configuração o teclado pode ter deixado a barra do sistema à mostra: esconde de novo (tela cheia).
+    val view = LocalView.current
+    LaunchedEffect(configuring) {
+        if (!configuring) (view.context as? Activity)?.window?.let { WindowInsetsControllerCompat(it, view).hide(WindowInsetsCompat.Type.systemBars()) }
+    }
+    if (configuring) {
+        ConfigScreen(app) { configuring = false }
+        return
+    }
     val scope = rememberCoroutineScope()
 
     var feedback by remember { mutableStateOf<String?>(null) }
@@ -77,11 +92,12 @@ fun PanelRoot(app: PanelApp) {
                 onMedia = { action, pos ->
                     if (pos != null) act("media", action, buildJsonObject { put("positionSec", pos) }) else act("media", action)
                 },
+                onOpenConfig = { configuring = true },
                 modifier = Modifier.width(270.dp).fillMaxHeight(),
             )
             Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 TabBar(tab) { tab = it }
-                ConnectionBanner(state.connection)
+                ConnectionBanner(state.connection) { configuring = true }
                 val content = Modifier.weight(1f).fillMaxWidth()
                 when (tab) {
                     0 -> HomeScreen(state, now, onClearNotifications = { act("notifications", "clear_all") }, modifier = content)
@@ -127,14 +143,17 @@ private fun Tab(icon: IconKind, label: String, on: Boolean, onClick: () -> Unit)
 
 /** Faixa de estado da conexão: some quando está conectado. */
 @Composable
-private fun ConnectionBanner(c: ConnectionState) {
+private fun ConnectionBanner(c: ConnectionState, onConfigure: () -> Unit) {
     val text = Texts.connectionBanner(c) ?: return
+    // Nestes estados o problema se resolve na configuração: a faixa inteira vira um botão para abri-la.
+    val fixable = c is ConnectionState.Stopped || c is ConnectionState.InvalidEndpoint || c is ConnectionState.TokenInvalid
     val problem = c !is ConnectionState.Connecting
     val shape = RoundedCornerShape(14.dp)
     Box(
-        Modifier.fillMaxWidth().height(40.dp).background(Palette.Panel, shape).border(1.dp, if (problem) Palette.Coral else Palette.Border, shape).padding(horizontal = 14.dp),
+        Modifier.fillMaxWidth().height(40.dp).background(Palette.Panel, shape).border(1.dp, if (problem) Palette.Coral else Palette.Border, shape)
+            .clickable(enabled = fixable, onClick = onConfigure).padding(horizontal = 14.dp),
         contentAlignment = Alignment.CenterStart,
-    ) { BodyText(text, if (problem) Palette.Coral else Palette.TextMuted, 14) }
+    ) { BodyText(if (fixable) "$text ${Texts.CONFIG_TAP}" else text, if (problem) Palette.Coral else Palette.TextMuted, 14) }
 }
 
 /** Queda de energia: faixa coral no topo, em qualquer aba, enquanto durar. */

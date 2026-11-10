@@ -75,7 +75,7 @@ agent/src/PcAgent.Host/Usb/AdbBridge.cs      (a fazer, etapa 7)
 | 6a | Casca (coluna "agora" + abas), Início, Sistema, indicador de canal, alerta do `ups` | **Pronta** (09/11), conferida no tablet real com o agente `--simulate` por USB (`adb reverse`). Spike removido. 155 testes de `:core` verdes. Ver "6a, o que ficou decidido" |
 | 6b | Mídia + Mixer e Discord | **Pronta** (09/11), conferida no tablet real com o agente `--simulate` por USB. 159 testes de `:core` verdes. Ver "6b, o que ficou decidido" |
 | 6c | Jogo (Steam) e Claude | **Pronta** (10/11), conferida no tablet real com o agente `--simulate` por USB. 161 testes de `:core` verdes. Ver "6c, o que ficou decidido" |
-| 6d | Configuração: endereços e token | A fazer |
+| 6d | Configuração: endereços e token | **Pronta** (10/11), conferida no tablet real (debug e release) com o agente `--simulate` por USB. 168 testes de `:core` verdes. Ver "6d, o que ficou decidido" |
 | — | Medir de novo com as telas finais | A fazer (novo) |
 | 7 | Módulo USB no agente (`adb reverse`) | A fazer (só após aprovação já dada ao plano; toca só `PcAgent.Host`, `appsettings.json` e o README do agente) |
 | 8 | Roteiro de teste manual, README final, relatório do que foi e não foi verificado | A fazer |
@@ -92,6 +92,23 @@ Detalhes das etapas pendentes:
   backoff. Capa: hash só hexadecimal (até 64), limite de 8 MB, cache de 4 MB por hash (o `Bitmap` decodificado fica no
   `:tablet`, na etapa 6). Aprendizado de teste: o `hostName` do MockWebServer deu um nome de máquina nesta máquina, então os
   testes usam `127.0.0.1`.
+- **6d, o que ficou decidido na implementação:**
+  - **Regras no `:core`** (`settings/ConfigDraft`, com testes): adicionar (`host`, `host:porta`, `[ipv6]:porta`, validado pela
+    `HostPolicy`, sem repetido, no máximo 4), mover para cima/baixo (a ordem é a prioridade), remover, e validar o token
+    (sem espaços, até 256 caracteres; vazio só é aceito quando já há um guardado e então mantém o atual).
+  - **Tela:** dois cartões: endereços (cada um com a posição, o canal USB/Wi-Fi, ▲ ▼ ✕, e o campo de novo endereço) e token
+    (campo mascarado, Mostrar/Ocultar, Colar da área de transferência, Salvar e Cancelar). O token nunca é exibido de volta:
+    o campo vem vazio ("manter o token guardado"). Primeira execução: abre sozinha, já com `127.0.0.1:8765` (USB) na lista.
+    Depois: toque longo no relógio, ou toque na faixa de conexão quando o problema se resolve ali (sem configuração,
+    endereço recusado, token inválido). **Sem PIN** (o plano original previa um; não foi pedido para esta base).
+  - **Teclado:** a tela rola e sobe com o teclado (`imePadding` + rolagem), porque ele cobre metade dos 505 dp; ao sair, a
+    barra do sistema é escondida de novo. Digitar o token de 43 caracteres no teclado do tablet é incômodo: a alternativa
+    prática é o intent de debug (`--es hosts … --es token …`) ou o botão Colar.
+  - **Salvar** grava os endereços, guarda o token cifrado no Keystore (só se foi digitado um) e reinicia a conexão na hora.
+  - **Conferido no tablet:** primeira execução abre a configuração; token errado salvo → "Token inválido…" (e continua
+    assim depois de reiniciar o app); tocar na faixa abre a configuração; token certo → conectou por USB; toque longo no
+    relógio abre; `8.8.8.8` é recusado com a explicação. **Release** (R8, ~1,5 MB) rodou com as seis abas, sem falha, PSS ~38 MB.
+    **Não conferido:** reordenar com mais de um endereço no tablet, o botão Colar, e o desempenho final com todas as telas.
 - **6c, o que ficou decidido na implementação:**
   - **Abas:** agora são seis (Início, Sistema, Mídia, Discord, Jogo, Claude), 6 × 88 + 5 × 4 = 548 dp: cabem no tablet
     (a borda direita da última fica a ~20 px do limite da tela). Uma sétima já não cabe (ver seção 7).

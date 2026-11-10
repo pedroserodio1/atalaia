@@ -46,9 +46,10 @@ class PanelApp : Application() {
         if (token != null && endpoints.isNotEmpty()) connection.start(endpoints, token)
     }
 
-    fun configure(endpoints: List<Endpoint>, token: String): Boolean {
+    /** Grava os endereços e (se vier) o token, e reinicia a conexão. `token = null` mantém o guardado. */
+    fun configure(endpoints: List<Endpoint>, token: String?): Boolean {
         settings.endpoints = endpoints
-        val saved = settings.saveToken(token)
+        val saved = token == null || settings.saveToken(token)
         if (saved) startIfConfigured()
         return saved
     }
