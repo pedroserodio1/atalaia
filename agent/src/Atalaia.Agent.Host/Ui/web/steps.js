@@ -336,5 +336,3 @@ window.StepViews = {
   1: networkStep, 2: usbStep, 3: appStep, 4: codeStep, 5: sourcesStep, 6: doneStep,
   stop: () => Poll.stop(),
 };
-
-start();
