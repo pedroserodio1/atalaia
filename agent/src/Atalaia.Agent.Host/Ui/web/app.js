@@ -57,7 +57,7 @@ if (host) {
   host.addEventListener('message', (e) => {
     let m;
     try { m = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch { return; }
-    if (m.event) { if (m.event === 'clients') refresh(); return; }
+    if (m.event) { if (m.event === 'clients' && view === 'home') refresh(); return; }   // os passos consultam por conta própria
     const p = pending.get(m.id);
     if (!p) return;
     pending.delete(m.id);
@@ -131,8 +131,6 @@ function welcome() {
             h('div', { class: 'box' }, h('div', { class: 'bar' }, h('i')), h('div', { class: 'bar' }, h('i'))))))));
 }
 
-function statusWord(s) { return s === 'done' ? 'Feito' : s === 'skipped' ? 'Pulado' : 'Pendente'; }
-
 function sidebar(o) {
   const items = [];
   for (let i = 1; i <= LAST; i++) {
@@ -150,21 +148,8 @@ function sidebar(o) {
 }
 
 function stepBody(o) {
-  if (o.current === LAST) {
-    // Resumo: o que foi feito, pulado ou ainda está pendente (o estado de verdade que o agente guardou).
-    const rows = [];
-    for (let i = 1; i < LAST; i++) {
-      const st = o.steps[STEPS[i].key];
-      rows.push(h('div', { class: 'row' },
-        h('div', { class: 'grow' }, h('div', { class: 'name' }, STEPS[i].title)),
-        h('span', { class: st === 'done' ? 'pill ok' : st === 'skipped' ? 'pill warn' : 'pill' }, '● ' + statusWord(st)),
-        st === 'done' ? null : h('button', { class: 'btn small', onclick: () => act('onboarding.go', { step: i }, 'steps') }, st === 'skipped' ? 'Retomar' : 'Fazer agora')));
-    }
-    return h('div', { class: 'card' }, h('div', { class: 'eyebrow' }, 'Resumo'), rows);
-  }
-  return h('div', { class: 'card' },
-    h('div', { class: 'name' }, 'Em construção'),
-    h('div', { class: 'empty' }, 'O conteúdo deste passo chega na próxima etapa do Atalaia 0.1.1. Por enquanto, dá para pular e voltar depois.'));
+  const make = window.StepViews && StepViews[o.current];
+  return make ? make(o) : h('div', { class: 'card' }, h('div', { class: 'name' }, 'Passo indisponível'));
 }
 
 function steps() {
@@ -227,9 +212,13 @@ function home() {
 }
 
 function render() {
+  if (window.StepViews) StepViews.stop();   // para as consultas do passo que estava na tela
   const app = document.getElementById('app');
   app.replaceChildren(view === 'welcome' ? welcome() : view === 'steps' ? steps() : home());
 }
 
-setInterval(() => { if (state && view === 'home') render(); }, 30000);   // "conectado há N min"
-refresh();
+/** Chamado por steps.js, depois que todas as telas existem. */
+function start() {
+  setInterval(() => { if (state && view === 'home') render(); }, 30000);   // "conectado há N min"
+  refresh();
+}

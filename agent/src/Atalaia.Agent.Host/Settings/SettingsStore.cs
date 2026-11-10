@@ -54,6 +54,13 @@ internal sealed class SettingsStore(string path)
         }
     }
 
+    /// <summary>Volta o arquivo para um conteúdo anterior (usado quando uma mudança de configuração não pôde ser aplicada).</summary>
+    public void Replace(JsonObject content) => Update(root =>
+    {
+        root.Clear();
+        foreach (var (key, value) in content.ToArray()) { content.Remove(key); root[key] = value; }
+    });
+
     /// <summary>Atalho: grava um valor em <c>"Secao:Chave"</c> (cria as seções que faltarem). <c>null</c> remove a chave.</summary>
     public void Set(string key, JsonNode? value) => Update(root => SetPath(root, key, value));
 

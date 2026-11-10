@@ -27,5 +27,31 @@ Rodar: `dotnet run --project agent/src/Atalaia.Agent.Host -- --simulate` (ou o `
 | 11 | Tela com zoom de 125% ou 150% | A janela abre com tamanho proporcional, sem texto borrado |
 | 12 | **Sem o WebView2** (VM sem o runtime, ou renomear a pasta do runtime) | Aparece a mensagem "A janela do Atalaia precisa do WebView2…", o agente continua na bandeja |
 
-**O que este roteiro não cobre ainda** (chega nas próximas fases): os passos reais do onboarding (rede, Firewall, adb, instalação do APK, código,
-fontes), as telas de configuração, a atualização automática e a instalação pelo `Atalaia-Agent-Setup`.
+## Fase 2: os seis passos do onboarding
+
+Rodar como na Fase 1. Com `ATALAIA_DATA_DIR` apontando para uma pasta de teste, o `settings.json` real não é tocado.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | **Rede:** abrir o passo 1 | Mostra o IP da placa com gateway; com mais de uma placa lista todas (a sem gateway marcada) e dá para trocar. O tipo da rede (privada/pública) bate com Configurações > Rede do Windows |
+| 2 | **Firewall sem regra:** apagar a regra `Atalaia-Agente` (e qualquer outra que libere a porta) e ver o passo | "Pendente" em coral e o botão **Liberar no Firewall** |
+| 3 | **Liberar** | O Windows pede permissão de administrador (UAC). Aceitar: o estado passa a "Liberada" e existe a regra `Atalaia-Agente` (TCP, só a porta, perfil Privado, sub-rede local) em Firewall do Windows com Segurança Avançada. **Cancelar** o UAC: aparece "Você cancelou o pedido de permissão do Windows" e nada muda |
+| 4 | **Trocar a porta** (ex.: 8800) com o Wi-Fi ligado | O agente religa na porta nova **sem mudar o código de acesso**; a regra do Firewall passa a ser da porta nova (não sobra a antiga). Porta ocupada por outro programa, ou fora de 1024 a 65535, é recusada com explicação |
+| 5 | **Verificar** com o Wi-Fi ligado e a regra criada | Três itens confirmados e a nota dizendo que o tablet só é provado no passo 4. Mudar a rede para Pública e verificar de novo: o item do tipo de rede fica em coral |
+| 6 | **Wi-Fi com variável de ambiente fixando** (`ATALAIA_Agent__ListenOnLan=false`) e tentar ligar | A chave volta sozinha e a mensagem cita a variável; o `settings.json` não muda |
+| 7 | **USB:** sem o `adb` no PATH | "Não encontrado", com o botão para abrir a página do Google (nada é baixado) e **Procurar…** aceitando só um `adb.exe` |
+| 8 | **Tablet plugado, sem aceitar a depuração** | O aparelho aparece como "aguardando você tocar em Permitir"; ao aceitar no tablet, vira "Online" sozinho (a tela consulta a cada 3 s) |
+| 9 | **Cabo desplugado e replugado** com "Manter o túnel USB" ligado | "Túnel" vai a "Ativo", volta a "Aguardando o tablet" ao desplugar e a "Ativo" ao replugar |
+| 10 | **App no tablet, build instalada de uma release** (`0.1.1-beta.N`) com o app antigo `0.0.1` (chave de debug) no tablet | O botão baixa e confere o APK, e a instalação falha com a explicação da assinatura diferente. **Desinstalar e instalar** só aparece depois, com o aviso de que apaga a configuração do app; confirmar instala. Cancelar não desinstala nada |
+| 11 | **App no tablet, adulterar a soma** (mudar uma linha do `SHA256SUMS.txt` de uma release de teste) | "A soma de verificação do arquivo não confere": nada é instalado e o arquivo baixado é apagado |
+| 12 | **App no tablet em build `-dev`** | Aviso de que não há release e o botão **Escolher APK…**: só aceita um arquivo que seja um APK; instala e mostra "App instalado" |
+| 13 | **QR** | A câmera do tablet abre a página da release (ou a lista de releases em build `-dev`) |
+| 14 | **Código:** com o tablet configurado | O código mostrado é o do menu da bandeja; ao tablet conectar, o passo conclui sozinho em 1 s e avança. Com `ATALAIA_TOKEN` definido, o código não aparece nem é copiado |
+| 15 | **Fontes** | As onze, ligar e desligar religa o agente sem perder o código. O que falta (clima, nobreak, Steam, Discord) aparece em coral com a variável a definir, nunca o valor |
+| 16 | **Pronto:** ligar **Iniciar com o Windows**, reiniciar a sessão do Windows | O agente sobe sozinho na bandeja, sem abrir a janela (o onboarding já foi concluído). Desligar remove o valor `Atalaia` da chave Run |
+
+**O que ainda não foi provado** (precisa de Windows com permissão de administrador, tablet real ou release publicada): a criação da regra pelo processo
+elevado, a instalação real no tablet e o download de uma release de verdade (só existe a partir da `0.1.1-beta.1`).
+
+**O que este roteiro não cobre ainda** (chega nas próximas fases): as telas de configuração, a atualização automática e a instalação pelo
+`Atalaia-Agent-Setup`.

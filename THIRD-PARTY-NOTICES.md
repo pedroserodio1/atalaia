@@ -17,6 +17,7 @@ Esta lista cobre as **dependências diretas**. As transitivas (puxadas por elas)
 | System.Diagnostics.PerformanceCounter | 10.0.14 | MIT | CPU e memória |
 | [Serilog.AspNetCore](https://github.com/serilog/serilog-aspnetcore) | 10.0.0 | Apache-2.0 | Log |
 | [Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file) | 7.0.0 | Apache-2.0 | Arquivo de log |
+| [QRCoder](https://github.com/codebude/QRCoder) | 1.8.1 | MIT | QR do link da release no passo "App no tablet" (gera SVG localmente) |
 | [Microsoft.Web.WebView2](https://aka.ms/webview) (SDK) | 1.0.4314.35 | BSD-3-Clause | Janela do agente (a página local roda num WebView2) |
 | .NET e ASP.NET Core (runtime) | 10 | MIT | Plataforma |
 

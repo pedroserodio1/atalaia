@@ -26,6 +26,8 @@
   <ItemGroup>
     <!-- Janela do agente: HTML/CSS local num WebView2 (o runtime Evergreen já vem no Windows 11). BSD-3-Clause. -->
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <!-- QR do link da release no passo "App no tablet" (gera SVG; MIT). -->
+    <PackageReference Include="QRCoder" Version="1.8.1" />
     <EmbeddedResource Include="Assets\atalaia.ico" LogicalName="atalaia.ico" />
     <None Remove="Ui\web\**" />
     <Content Include="Ui\web\**" Link="ui\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
