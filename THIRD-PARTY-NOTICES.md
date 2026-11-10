@@ -17,7 +17,11 @@ Esta lista cobre as **dependências diretas**. As transitivas (puxadas por elas)
 | System.Diagnostics.PerformanceCounter | 10.0.14 | MIT | CPU e memória |
 | [Serilog.AspNetCore](https://github.com/serilog/serilog-aspnetcore) | 10.0.0 | Apache-2.0 | Log |
 | [Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file) | 7.0.0 | Apache-2.0 | Arquivo de log |
+| [Microsoft.Web.WebView2](https://aka.ms/webview) (SDK) | 1.0.4314.35 | BSD-3-Clause | Janela do agente (a página local roda num WebView2) |
 | .NET e ASP.NET Core (runtime) | 10 | MIT | Plataforma |
+
+O **WebView2 Runtime** (o navegador embutido que a janela usa) é um componente do Windows da Microsoft, instalado à parte e **não redistribuído**
+pelo Atalaia. Sem ele a janela não abre, e o agente segue funcionando na bandeja.
 
 Só nos testes do agente (não fazem parte do programa distribuído): xunit 2.9.3 (Apache-2.0), xunit.runner.visualstudio 3.1.4
 (Apache-2.0), Microsoft.NET.Test.Sdk 17.14.1 (MIT) e coverlet.collector 6.0.4 (MIT).
@@ -39,7 +43,8 @@ usado para rodar os testes: não é distribuído junto com o programa.
 
 ## Fontes (SIL Open Font License 1.1)
 
-As fontes ficam em [`app/third-party/`](app/third-party/) com as licenças originais.
+As fontes ficam em [`app/third-party/`](app/third-party/) com as licenças originais. A janela do agente usa as mesmas fontes, copiadas em
+`agent/src/Atalaia.Agent.Host/Ui/web/fonts/` junto com as licenças (e carregadas do disco, sem Google Fonts).
 
 - **Manrope**, Copyright 2018 The Manrope Project Authors ([googlefonts/manrope](https://github.com/googlefonts/manrope)).
   **Os arquivos `manrope_500.ttf`, `manrope_700.ttf` e `manrope_800.ttf` são versões modificadas**: instâncias estáticas

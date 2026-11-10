@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Pedro Serôdio
 
 using System.Runtime.InteropServices;
+using Atalaia.Agent.Host.Settings;
+using Atalaia.Agent.Host.Ui;
 using Serilog;
 using Serilog.Events;
 
@@ -19,21 +21,28 @@ internal static class Program
         var console = args.Contains("--console");
         if (console) AllocConsole();
 
+        // Uma instância só. Quem tenta abrir de novo não sobe outro agente: pede à primeira que traga a janela para a frente.
+        using var showWindow = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Atalaia.Agent.Host.Show");
         using var instance = new Mutex(true, @"Local\Atalaia.Agent.Host.SingleInstance", out var first);
         if (!first)
         {
-            Warn("O Atalaia já está rodando (veja o ícone na bandeja).", console);
+            showWindow.Set();
+            if (console) Console.WriteLine("O Atalaia já está rodando: a janela foi trazida para a frente.");
             return 0;
         }
 
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);   // sem isso o WebView2 sai borrado com zoom diferente de 100%
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
         AgentRuntime? runtime = null;
+        WindowHost? window = null;
         try
         {
             var config = HostConfig.Build();
             ConfigureLog(console);
+            if (HostConfig.SettingsQuarantined is { } bad)
+                Log.Warning("O settings.json estava inválido: foi guardado em {Path} e o agente começou com a configuração padrão.", bad);
             runtime = new AgentRuntime(config, simulate, TokenStore.Load(config));
             Task.Run(runtime.StartAsync).GetAwaiter().GetResult();   // fora da thread da interface
 
@@ -43,7 +52,24 @@ internal static class Program
                 Console.WriteLine(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}   (novo a cada início)" : $"Token: {runtime.Token}");
             }
 
-            Application.Run(new Tray(runtime));
+            var onboarding = new OnboardingStore(SettingsStore.Default);
+            window = new WindowHost(runtime, onboarding, () => RepositoryFrom(config));
+            var tray = new Tray(runtime, window);
+
+            // Outra instância pediu a janela: abre/traz para a frente (Show pode ser chamado de qualquer thread).
+            var wait = ThreadPool.RegisterWaitForSingleObject(showWindow, (_, _) => window.Show(), null, Timeout.Infinite, executeOnlyOnce: false);
+
+            // Primeira execução: abre o onboarding sozinho, assim que o laço de mensagens estiver rodando.
+            if (onboarding.State.AutoOpen)
+            {
+                EventHandler? once = null;
+                once = (_, _) => { Application.Idle -= once; window.Show(); };
+                Application.Idle += once;
+            }
+
+            Application.Run(tray);
+            wait.Unregister(null);
+            window.Dispose();
             Task.Run(runtime.DisposeAsync().AsTask).GetAwaiter().GetResult();
             return 0;
         }
@@ -58,6 +84,10 @@ internal static class Program
             Log.CloseAndFlush();
         }
     }
+
+    /// <summary>O repositório do GitHub (dono/nome) de <c>Updates:Repository</c>; valor ausente ou inválido volta ao padrão.</summary>
+    private static string RepositoryFrom(Microsoft.Extensions.Configuration.IConfiguration config) =>
+        config["Updates:Repository"] is { } r && LinkPolicy.IsValidRepository(r) ? r : LinkPolicy.DefaultRepository;
 
     private static void ConfigureLog(bool console)
     {
