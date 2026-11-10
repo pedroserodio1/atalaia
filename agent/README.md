@@ -5,7 +5,7 @@ para o app do tablet. Contrato das mensagens: [`../docs/protocolo-v1.md`](../doc
 O que este marco implementa: [`../docs/marco-1.md`](../docs/marco-1.md).
 
 Roda como **processo de usuário** (não como serviço do Windows: na sessão 0 não existem SMTC, janela ativa,
-áudio do usuário nem o `%APPDATA%` do nobreak). Sem janela: fica na bandeja do sistema.
+áudio do usuário nem o `%APPDATA%` do nobreak). Fica na bandeja do sistema e tem uma **janela** própria (abre pelo ícone).
 
 ## Como rodar
 
@@ -26,7 +26,18 @@ dotnet run --project src/Atalaia.Agent.Host -- --console --simulate
 | `--simulate` | Troca os plugins reais pelos do simulador. Os seis ficam ligados, seja qual for a configuração. |
 | `--console` | Abre um console com o endereço e o token e espelha o log nele. A bandeja continua. |
 
-Sem `--console` não há janela: use o ícone da bandeja (**Atalaia**). O menu tem o endereço em uso,
+### A janela
+
+O **ícone da bandeja** (**Atalaia**) abre a janela: **Abrir Atalaia** no menu, ou um clique com o botão esquerdo. Na **primeira execução** ela
+abre sozinha, com o onboarding (primeira configuração), até você concluir ou usar **Sair da configuração**; depois disso só abre pelo ícone
+(e dá para refazer a primeira configuração pela janela). Fechar a janela **não** encerra o agente: ele segue na bandeja, e **Sair** no
+menu é que o encerra. Abrir o Atalaia de novo com ele já rodando só traz a janela para a frente (uma instância por vez).
+
+A janela é uma página local (HTML) mostrada pelo **WebView2** da Microsoft, que já vem no Windows 11. Sem o WebView2 a janela não abre
+(o programa avisa e o agente continua na bandeja). A página só enxerga o agente por uma lista fixa de comandos, não abre outros sites nem
+arquivos, e **só abre no próprio PC**: o tablet nunca altera a configuração. Ela nunca mostra o código de acesso fora da tela própria dele.
+
+O menu da bandeja tem o endereço em uso,
 `Clientes conectados: N`, o **código de acesso** (6 dígitos), **Copiar código**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
 Se não conseguir subir (porta ocupada, por exemplo), aparece uma caixa de mensagem com o erro.
 
@@ -55,9 +66,14 @@ dotnet test
 
 ## Configuração
 
-Ordem de carga (o último vence): `appsettings.json` → `appsettings.Local.json` → `.env` → variáveis de
+Ordem de carga (o último vence): `appsettings.json` → `appsettings.Local.json` → **`settings.json`** → `.env` → variáveis de
 ambiente com prefixo `ATALAIA_` (use `__` no lugar de `:`, por exemplo `ATALAIA_Plugins__ups__enabled=true`).
 Uma variável já definida no ambiente tem prioridade sobre a do `.env`.
+
+O **`settings.json`** (em `%LOCALAPPDATA%\AtalaiaAgent\`) é o que a janela do agente grava: o estado do onboarding e, nas próximas etapas,
+as opções que você muda pela janela. Fica fora da pasta de instalação (que não é gravável) e o `appsettings.json` versionado nunca recebe
+configuração pessoal. **Segredos** (chaves de API) nunca vão para o `settings.json`: só por variável de ambiente ou `.env`. Se o arquivo ficar
+ilegível, o agente o guarda ao lado como `settings.json.corrompido-<data>` e sobe com a configuração padrão (o log avisa).
 
 Os ajustes pessoais vão em **`agent/appsettings.Local.json`** (fora do git; é copiado para a pasta de saída ao
 compilar, ou pode ficar ao lado do `AtalaiaAgent.exe`). Só precisa conter o que muda:
@@ -79,6 +95,7 @@ Chaves principais (padrões em `appsettings.json`):
 | `Agent:Port` | Porta do WebSocket e do HTTP da capa (8765) |
 | `Agent:ListenOnLan` | `false` = `127.0.0.1`; `true` = `0.0.0.0` |
 | `Agent:MaxSilenceMs` | Reenvia o dado a cada tanto tempo mesmo sem mudança (10000) |
+| `Updates:Repository` | Repositório do GitHub (`dono/nome`) de onde a janela abre os links e, na atualização automática, as releases (`pedroserodio1/atalaia`) |
 | `Plugins:<id>:enabled` / `intervalMs` | Liga/desliga e intervalo de coleta de cada plugin |
 | `Plugins:system:netInterface` | Nome da placa de rede; vazio = a primeira ativa com gateway IPv4 |
 | `Plugins:gpu:nvidiaSmiPath` | Caminho do `nvidia-smi` (padrão: o do PATH) |
@@ -163,7 +180,7 @@ Sem token ou com token errado: 401. Hash que não está entre as 8 capas mais re
 
 ```
 src/Atalaia.Agent.Core                núcleo: contratos, envelope, hub, agendador, cache (sem Windows nem ASP.NET)
-src/Atalaia.Agent.Host                executável: Kestrel, configuração, Serilog, token, bandeja, registro de plugins
+src/Atalaia.Agent.Host                executável: Kestrel, configuração, Serilog, token, bandeja, janela (Ui/), settings.json (Settings/), registro de plugins
 src/Atalaia.Agent.Plugins.*           system, gpu, media, activeWindow, audio, ups e o simulador
 tests/Atalaia.Agent.Tests             xUnit (Kestrel real em 127.0.0.1:0 + ClientWebSocket)
 tools/test-client.html          cópia exata de docs/test-client.html

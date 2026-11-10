@@ -4,6 +4,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Atalaia.Agent.Host.Settings;
 
 namespace Atalaia.Agent.Host;
 
@@ -12,18 +14,36 @@ internal static class AppPaths
     public static string Dir { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AtalaiaAgent");
     public static string Logs { get; } = Path.Combine(Dir, "logs");
+    /// <summary>Pasta de dados do WebView2 (cache, cookies). Fica fora da pasta de instalação, que não é gravável.</summary>
+    public static string WebView2Data { get; } = Path.Combine(Dir, "webview2");
 }
 
 internal static class HostConfig
 {
-    /// <summary>appsettings.json → appsettings.Local.json → .env → variáveis ATALAIA_*.</summary>
+    /// <summary>appsettings.json → appsettings.Local.json → settings.json (a janela do agente) → .env → variáveis ATALAIA_*.</summary>
     public static IConfiguration Build()
     {
         LoadDotEnv();
+        SettingsQuarantined = SettingsStore.Default.QuarantineIfInvalid();   // settings.json estragado não pode impedir o agente de subir
+        return Compose(AppContext.BaseDirectory, SettingsStore.Default);
+    }
+
+    /// <summary>Se o <c>settings.json</c> estava inválido na partida, onde a cópia dele foi guardada (o <c>Program</c> avisa no log).</summary>
+    public static string? SettingsQuarantined { get; private set; }
+
+    /// <summary>
+    /// A ordem de carga, sem o <c>.env</c> (que mexe nas variáveis do processo). O <c>.env</c> entra em <see cref="Build"/> por variável
+    /// de ambiente, então vale a mesma precedência: a variável vence o <c>settings.json</c>.
+    /// </summary>
+    internal static IConfiguration Compose(string baseDirectory, SettingsStore settings)
+    {
+        var settingsDir = Path.GetDirectoryName(settings.FilePath)!;
+        Directory.CreateDirectory(settingsDir);   // o provedor de arquivos exige que a pasta exista
         return new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
+            .SetBasePath(baseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile("appsettings.Local.json", optional: true)
+            .AddJsonFile(new PhysicalFileProvider(settingsDir), Path.GetFileName(settings.FilePath), optional: true, reloadOnChange: false)
             .AddEnvironmentVariables("ATALAIA_")
             .Build();
     }

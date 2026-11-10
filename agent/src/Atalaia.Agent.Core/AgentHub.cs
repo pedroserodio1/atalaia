@@ -18,6 +18,12 @@ namespace Atalaia.Agent.Core;
 /// </summary>
 public enum AuthResult { Ok, Wrong, Locked }
 
+/// <summary>Um cliente conectado e autenticado (para a janela do agente). Só leitura; não faz parte do protocolo.</summary>
+/// <param name="Remote">Endereço de origem (<c>127.0.0.1</c> = USB via adb reverse; o resto = rede local).</param>
+/// <param name="Client">O <c>client</c> do <c>hello</c> (<c>tablet</c>, <c>web-test</c>), cortado em 32 caracteres.</param>
+/// <param name="Version">A <c>version</c> do <c>hello</c>, cortada em 32 caracteres.</param>
+public sealed record ClientInfo(string Remote, string Client, string Version, DateTimeOffset ConnectedAt);
+
 public sealed class AgentHub
 {
     public const int MaxIncomingBytes = 64 * 1024;
@@ -47,6 +53,15 @@ public sealed class AgentHub
     }
 
     public int ClientCount { get { lock (_lock) return _connections.Count; } }
+
+    /// <summary>Clientes autenticados agora, do mais antigo para o mais novo.</summary>
+    public IReadOnlyList<ClientInfo> Clients
+    {
+        get { lock (_lock) return [.. _connections.Select(c => c.Info!).OrderBy(i => i.ConnectedAt)]; }
+    }
+
+    /// <summary>Disparado (fora do lock, em thread qualquer) quando um cliente autentica ou sai.</summary>
+    public event Action? ClientsChanged;
 
     /// <summary>Comparação em tempo constante. Usada também pelo <c>GET /cover</c>.</summary>
     public bool ValidateToken(string? candidate) =>
@@ -83,11 +98,13 @@ public sealed class AgentHub
     {
         var conn = new Connection(ws);
         conn.StartSender(ct);
+        var joined = false;
         try
         {
             if (!await HandshakeAsync(conn, ct, remote)) return;
 
-            lock (_lock) _connections.Add(conn);
+            lock (_lock) { _connections.Add(conn); joined = true; }
+            RaiseClientsChanged();
             await ReceiveLoopAsync(conn, ct);
         }
         catch (OperationCanceledException) { }
@@ -95,6 +112,7 @@ public sealed class AgentHub
         finally
         {
             lock (_lock) _connections.Remove(conn);
+            if (joined) RaiseClientsChanged();
             await conn.CloseAsync(WebSocketCloseStatus.NormalClosure);
         }
     }
@@ -141,9 +159,22 @@ public sealed class AgentHub
             return false;
         }
 
+        conn.Info = new ClientInfo(RemoteText(remote), Cut(Str(data, "client")), Cut(Str(data, "version")), DateTimeOffset.UtcNow);
         conn.Enqueue(Hello());
         return true;
     }
+
+    private void RaiseClientsChanged()
+    {
+        try { ClientsChanged?.Invoke(); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Um ouvinte de ClientsChanged falhou."); }   // quem ouve nunca derruba o hub
+    }
+
+    private static string RemoteText(IPAddress? remote) =>
+        remote is null ? "" : (remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote).ToString();
+
+    /// <summary>O hello vem do cliente (não confiável): corta o tamanho antes de mostrar na janela.</summary>
+    private static string Cut(string? s) => s is null ? "" : s.Length <= 32 ? s : s[..32];
 
     private OutMessage Hello() => new("hello", null, Json.NowMs(), Json.ToElement(new
     {
@@ -302,6 +333,7 @@ public sealed class AgentHub
         private long _seq;
 
         public Connection(WebSocket ws) => _ws = ws;
+        public ClientInfo? Info { get; set; }   // preenchido no handshake, antes de entrar em _connections
 
         public bool Wants(string? source) => source is null || _sources is not { } s || s.Contains(source);
         public void SetSources(HashSet<string>? sources) => _sources = sources;
