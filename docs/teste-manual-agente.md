@@ -53,5 +53,20 @@ Rodar como na Fase 1. Com `ATALAIA_DATA_DIR` apontando para uma pasta de teste, 
 **O que ainda não foi provado** (precisa de Windows com permissão de administrador, tablet real ou release publicada): a criação da regra pelo processo
 elevado, a instalação real no tablet e o download de uma release de verdade (só existe a partir da `0.1.1-beta.1`).
 
-**O que este roteiro não cobre ainda** (chega nas próximas fases): as telas de configuração, a atualização automática e a instalação pelo
-`Atalaia-Agent-Setup`.
+## Fase 3: telas de configuração
+
+Depois de concluir (ou usar "Já está tudo configurado" na Boas-vindas), a janela abre no **Início** das configurações, com Conexão, Fontes de dados,
+Jogos e ações e Atualizações. Para abrir: menu da bandeja > **Abrir Atalaia**.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | **Conexão** | Código de acesso (o mesmo da bandeja), tablets conectados agora (USB ou Wi-Fi, atualiza sozinho), e embaixo as mesmas telas de Rede e Firewall e de USB e adb do onboarding, com o estado real |
+| 2 | **"Em breve"** na Conexão | "Gerar novo", "Cancelar", "Revogar", mDNS e Wake-on-LAN aparecem **desabilitados** e marcados "em breve": nada deles responde ao clique |
+| 3 | **Iniciar com o Windows** | Liga e desliga como no passo 6 do onboarding (valor `Atalaia` na chave Run) |
+| 4 | **Fontes de dados** | A mesma lista do onboarding; ligar e desligar uma fonte religa o agente sem mudar o código de acesso |
+| 5 | **Jogos e ações** | Só texto explicando o que vem: cenas por jogo e ações extras, tudo "em breve" e desabilitado |
+| 6 | **Atualizações** | A versão real, "Verificar automaticamente" (grava `Updates:AutoCheck`) e "Canal" e "Verificar agora" desabilitados ("em breve" até a Fase 4) |
+| 7 | **Refazer a primeira configuração** (rodapé da barra lateral) | Volta à Boas-vindas com o onboarding do zero; se o onboarding não foi concluído, o botão é "Retomar" e leva ao passo em que parou |
+| 8 | **Fechar a janela** (rodapé) | Fecha só a janela; o agente segue na bandeja |
+
+**O que este roteiro não cobre ainda** (chega nas próximas fases): a busca e a instalação de atualizações e a instalação pelo `Atalaia-Agent-Setup`.

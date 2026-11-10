@@ -57,7 +57,7 @@ if (host) {
   host.addEventListener('message', (e) => {
     let m;
     try { m = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch { return; }
-    if (m.event) { if (m.event === 'clients' && view === 'home') refresh(); return; }   // os passos consultam por conta própria
+    if (m.event) return;   // cada tela consulta o agente por conta própria
     const p = pending.get(m.id);
     if (!p) return;
     pending.delete(m.id);
@@ -180,35 +180,7 @@ function since(ms) {
 }
 
 function home() {
-  const o = state.onboarding;
-  const clients = state.clients.length === 0
-    ? h('div', { class: 'empty' }, 'Nenhum tablet conectado agora.')
-    : state.clients.map((c) => h('div', { class: 'row' },
-      h('div', { class: 'grow' },
-        h('div', { class: 'name' }, c.client || 'cliente'),
-        h('div', { class: 'hint' }, [c.version ? `versão ${c.version}` : null, `conectado ${since(c.since)}`].filter(Boolean).join(' · '))),
-      h('span', { class: 'pill ok' }, '● ' + (c.channel === 'usb' ? 'USB' : 'Wi-Fi'))));
-  return h('div', { class: 'frame' },
-    h('nav', { class: 'side', 'aria-label': 'Seções' },
-      h('div', { class: 'eyebrow' }, 'Atalaia'),
-      h('button', { class: 'step on', 'aria-current': 'page' }, h('span', null, 'Início')),
-      h('div', { class: 'grow' }),
-      h('button', { class: 'link leave', onclick: () => call('window.close').catch((e) => toast(e.message)) }, 'Fechar a janela')),
-    h('main', { class: 'content' },
-      h('div', null, h('div', { class: 'eyebrow' }, versionLine()), h('h2', null, 'Atalaia'),
-        h('div', { class: 'sub' }, 'O agente continua rodando na bandeja com a janela fechada')),
-      h('div', { class: 'body' },
-        h('div', { class: 'card' },
-          h('div', { class: 'row' },
-            h('div', { class: 'grow' }, h('div', { class: 'name' }, 'Agente'),
-              h('div', { class: 'hint' }, `${state.address}${state.simulate ? ' · dados simulados' : ''}${state.listenOnLan ? ' · aceita o Wi-Fi' : ' · só o USB (este PC)'}`)),
-            h('span', { class: 'pill ok' }, '● Rodando'))),
-        h('div', { class: 'card' }, h('div', { class: 'eyebrow' }, 'Tablets conectados'), clients),
-        o.completed ? null : h('div', { class: 'notice' }, 'A primeira configuração não foi concluída. Você pode retomar de onde parou.'),
-        h('div', null,
-          o.completed
-            ? h('button', { class: 'btn', onclick: () => act('onboarding.restart', {}, 'welcome') }, 'Refazer a primeira configuração')
-            : h('button', { class: 'btn primary', onclick: () => act('onboarding.go', { step: Math.max(1, o.current) }, 'steps') }, 'Retomar a primeira configuração')))));
+  return window.SettingsHome ? SettingsHome() : h('div', { class: 'card' }, h('div', { class: 'name' }, 'Configurações indisponíveis'));
 }
 
 function render() {
@@ -217,8 +189,7 @@ function render() {
   app.replaceChildren(view === 'welcome' ? welcome() : view === 'steps' ? steps() : home());
 }
 
-/** Chamado por steps.js, depois que todas as telas existem. */
+/** Chamado por main.js, depois que todas as telas existem. */
 function start() {
-  setInterval(() => { if (state && view === 'home') render(); }, 30000);   // "conectado há N min"
   refresh();
 }
