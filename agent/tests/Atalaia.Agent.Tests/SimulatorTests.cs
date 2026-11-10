@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Pedro Serôdio
+
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;

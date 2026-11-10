@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Pedro Serôdio
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // App do tablet (Android + Compose). Kotlin já vem embutido no AGP 9.

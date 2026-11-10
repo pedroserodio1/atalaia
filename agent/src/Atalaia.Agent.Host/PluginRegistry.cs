@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Pedro Serôdio
+
 using Microsoft.Extensions.Configuration;
 using Atalaia.Agent.Core;
 using Atalaia.Agent.Plugins.ActiveWindow;

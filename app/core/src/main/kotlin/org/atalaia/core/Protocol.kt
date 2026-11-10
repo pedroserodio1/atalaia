@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Pedro Serôdio
+
 package org.atalaia.core
 
 /** Constantes do protocolo v1 (docs/protocolo-v1.md). Nada aqui é decisão do app. */

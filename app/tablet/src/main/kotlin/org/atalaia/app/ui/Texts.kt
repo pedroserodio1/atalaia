@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Pedro Serôdio
+
 package org.atalaia.app.ui
 
 import org.atalaia.core.connection.ActionOutcome

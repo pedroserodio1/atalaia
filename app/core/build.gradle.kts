@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Pedro Serôdio
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Núcleo sem Android: protocolo, conexão, failover e estado. Roda na JVM, então os testes não precisam de emulador.
