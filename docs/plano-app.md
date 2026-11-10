@@ -1,4 +1,4 @@
-# Plano do app do tablet (`pc-panel`)
+# Plano do app do tablet (`Atalaia`)
 
 Documento de acompanhamento do app Android em `app/`. O contrato com o agente é `docs/protocolo-v1.md` (manda sobre este
 documento). Status em **09/11/2026, 20:46**. Nada foi commitado (a pasta ainda não é um repositório git).
@@ -32,7 +32,7 @@ Orçamento: sem animação contínua, blur nem sombras pesadas; UI limitada a 2 
 | Rede | OkHttp 4.12.0 (a 5.5.1 existe; troca só se houver motivo); JSON com `kotlinx-serialization`; coroutines; sem Coil/Retrofit/Hilt |
 | `ws://` sem TLS | Cleartext liberado no app inteiro (a config de rede do Android não aceita faixa de IP); a restrição real a loopback e rede privada (10/8, 172.16/12, 192.168/16, link-local) é feita no código, ao salvar e antes de conectar. O token trafega em claro na LAN (decisão do v1) |
 | Token | AES-GCM com chave no Android Keystore, `allowBackup=false`; se a decriptação falhar, o app pede o token de novo. Endereços (não secretos) em `SharedPreferences` |
-| Módulos | `app/` na raiz do repositório; `:core` (Kotlin/JVM puro) e `:tablet` (Android + Compose). Pacote `org.pcpanel.app`; nome e `appId` em `gradle.properties` |
+| Módulos | `app/` na raiz do repositório; `:core` (Kotlin/JVM puro) e `:tablet` (Android + Compose). Pacote `org.atalaia.app`; nome e `appId` em `gradle.properties` |
 | Relógio | O do tablet (HH:mm, fuso do aparelho, atualizado na virada do minuto) |
 | Jogo atual | `steam` ok e `game != null`: nome com "● jogando". Senão, `activeWindow` (processo sem `.exe`) rotulado "em foco". Sem tempo de jogo (o v1 não tem) |
 | Vários clientes | O hub aceita N conexões e não expulsa a antiga; quem fecha a que sai é o app. Sem mudança no agente |
@@ -58,7 +58,7 @@ app/
     src/test/kotlin/…  src/test/resources/fixtures/agent-simulate.jsonl
   tablet/    Android + Compose: ui/theme, spike/ (descartável), [settings/, ui/ a fazer]
   tools/     measure-perf.ps1 (mede memória, CPU, quadros e partida a frio por adb); out/ ignorado pelo git
-agent/src/PcAgent.Host/Usb/AdbBridge.cs      (a fazer, etapa 7)
+agent/src/Atalaia.Agent.Host/Usb/AdbBridge.cs      (a fazer, etapa 7)
 ```
 
 ## 5. Etapas e status
@@ -93,20 +93,20 @@ Detalhes das etapas pendentes:
   `:tablet`, na etapa 6). Aprendizado de teste: o `hostName` do MockWebServer deu um nome de máquina nesta máquina, então os
   testes usam `127.0.0.1`.
 - **7, o que ficou decidido na implementação:**
-  - **Mudanças no agente** (as únicas autorizadas): `src/PcAgent.Host/Usb/AdbBridge.cs` (novo), o encaixe em
+  - **Mudanças no agente** (as únicas autorizadas): `src/Atalaia.Agent.Host/Usb/AdbBridge.cs` (novo), o encaixe em
     `AgentRuntime.cs` (sobe depois do Kestrel, com a porta real, e para junto com o agente), a seção `Usb` em
     `appsettings.json` (`Enabled:false`, `AdbPath:""`, `PollSeconds:3`, `Serial:""`), o README do agente e
-    `tests/PcAgent.Tests/UsbBridgeTests.cs`. `docs/protocolo-v1.md` não foi tocado.
+    `tests/Atalaia.Agent.Tests/UsbBridgeTests.cs`. `docs/protocolo-v1.md` não foi tocado.
   - **Como funciona:** a cada rodada `adb devices`; para cada aparelho `device` (e igual a `Usb:Serial`, se houver),
     `adb -s <serial> reverse --list` e, se faltar a linha `tcp:<porta> tcp:<porta>`, `adb -s <serial> reverse tcp:<porta>
     tcp:<porta>`. `unauthorized` e `offline` só viram log. Loga só mudanças (uma linha por criação, sem repetir a cada
     rodada). `adb` ausente, travado (8 s) ou com saída estranha nunca derruba o agente: o log avisa uma vez e ele tenta de
     novo na próxima rodada. Não remove a regra ao sair.
   - **Localizar o `adb`:** `Usb:AdbPath`; senão o `adb.exe` do PATH; senão `ANDROID_HOME` e `ANDROID_SDK_ROOT`
-    (`platform-tools\adb.exe`). Também vale `PCAGENT_Usb__AdbPath`. Sem nada, tenta `adb` e, se não existir, avisa.
+    (`platform-tools\adb.exe`). Também vale `ATALAIA_Usb__AdbPath`. Sem nada, tenta `adb` e, se não existir, avisa.
   - **Formato real do `adb` neste PC** (platform-tools 37.0.1): `devices` vem com CRLF e `\t`; `reverse --list` devolve
     `(reverse) tcp:8765 tcp:8765` (vazio quando não há regra); o parser aceita também o formato antigo `host-N tcp:… tcp:…`.
-  - **Conferido com o tablet real** (agente `--simulate`, `PCAGENT_Usb__Enabled=true`): a regra apareceu sozinha ao subir
+  - **Conferido com o tablet real** (agente `--simulate`, `ATALAIA_Usb__Enabled=true`): a regra apareceu sozinha ao subir
     o agente; removida à mão, voltou em ~2 s; depois de `adb kill-server` voltou também; o app conectou por USB só com a
     regra criada pelo agente. **Não conferido:** o cabo fisicamente desplugado e replugado (só simulado em teste: o
     aparelho some e volta), e vários aparelhos ao mesmo tempo.
@@ -129,7 +129,7 @@ Detalhes das etapas pendentes:
     **Não conferido:** reordenar com mais de um endereço no tablet, o botão Colar, e o desempenho final com todas as telas.
 - **Código de acesso de 6 dígitos (10/11, pedido do Pedro):** o agente deixou de gerar e gravar um token de 43 caracteres em
   `agent.json`. A cada início gera **6 dígitos novos** (`TokenStore.NewCode`, sorteio criptográfico, só em memória); aparece no
-  menu da bandeja ("Código de acesso: NNNNNN") e no console; `PCAGENT_TOKEN` continua podendo fixar um token qualquer. O
+  menu da bandeja ("Código de acesso: NNNNNN") e no console; `ATALAIA_TOKEN` continua podendo fixar um token qualquer. O
   protocolo v1 **não mudou** (o token continua sendo um texto no `hello`). Como 6 dígitos são 1 milhão de combinações, entrou
   junto um **limite de tentativas erradas** (`AuthThrottle`): 5 erros por endereço de rede e bloqueio de 1 min, dobrando até 15
   min (histórico some após 1 h); 20 erros em 10 min somando todos bloqueiam a rede por 10 min; 4401 com motivo `locked`, e 429
@@ -191,7 +191,7 @@ Detalhes das etapas pendentes:
     declaradas, Claude só com plano), `panel/Formatting` (data e números em pt-BR sem depender do locale do aparelho) e
     `AppState.cpuHistory` (60 s). `Endpoint.parse`/`parseList` leem `host`, `host:porta` e `[ipv6]:porta`.
   - **Configuração e token já existem** (`SettingsStore`, `TokenVault` com AES-GCM no Keystore): a 6d só põe a tela por
-    cima. Funcionou no Keystore do T68. Até lá, só em build de debug, `adb shell am start -n org.pcpanel.app/.MainActivity
+    cima. Funcionou no Keystore do T68. Até lá, só em build de debug, `adb shell am start -n org.atalaia.app/.MainActivity
     --es hosts "127.0.0.1:8765,192.168.0.12" --es token "..."` grava os dois; em release isso é ignorado.
   - **Tela:** coluna "agora" de 270 dp (relógio 56 sp, canal USB/Wi-Fi/sem conexão, jogo ou janela, mídia com anterior,
     tocar/pausar e próxima de 48 dp e barra de posição com toque para ir ao ponto, Claude), abas Início e Sistema de 88 × 56
@@ -332,7 +332,7 @@ O PC é desligado por volta das 22h, o que afeta o plano:
   fechamentos 4400/4401 e `GET /cover` com `Authorization`; correlação de ações; failover (canal cai, queda silenciosa por
   falta de `pong`, volta ao preferido, ação em andamento na troca); idade do dado e alerta do `ups`.
 - **Agente (etapa 7):** executor de `adb` falso: aparelho novo, replug, `unauthorized`, `adb` ausente.
-- **Manual:** `app/docs/teste-manual.md` (a escrever) contra `dotnet run --project src/PcAgent.Host -- --console --simulate`,
+- **Manual:** `app/docs/teste-manual.md` (a escrever) contra `dotnet run --project src/Atalaia.Agent.Host -- --console --simulate`,
   incluindo desplugar o cabo, desligar o Wi-Fi do tablet, trocar de canal com ação em andamento, queda do `ups` e o ciclo de
   desligar e ligar o PC.
 

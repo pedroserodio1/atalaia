@@ -241,7 +241,7 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
   quando o Discord está fechado: isso não é erro do plugin. `channel` é `null` fora de canais de voz.
 - Atualiza por eventos (quem fala, mudo, troca de canal), publicados no ritmo do intervalo (padrão 1 s).
 - Escopos `rpc`, `rpc.voice.read` e `identify`. Na primeira vez o Discord mostra um pop-up de autorização
-  (até ~2 min para aceitar); o refresh token fica em `%LOCALAPPDATA%\PcAgent\discord.json`, nunca no log.
+  (até ~2 min para aceitar); o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json`, nunca no log.
 - Exige `clientId` e `clientSecret` na configuração (variável de ambiente ou `.env`).
 
 ## Ações por fonte

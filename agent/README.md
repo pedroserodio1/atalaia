@@ -1,4 +1,4 @@
-# Painel Agent (agente do PC)
+# Atalaia (agente do PC)
 
 Agente que roda no PC (Windows 11) e publica métricas, mídia, janela ativa, volume e nobreak por WebSocket
 para o app do tablet. Contrato das mensagens: [`../docs/protocolo-v1.md`](../docs/protocolo-v1.md).
@@ -12,13 +12,13 @@ Roda como **processo de usuário** (não como serviço do Windows: na sessão 0 
 Requer o SDK .NET 10 (alvo `net10.0-windows10.0.19041.0`). A partir desta pasta (`agent/`):
 
 ```bash
-dotnet run --project src/PcAgent.Host -- --console
+dotnet run --project src/Atalaia.Agent.Host -- --console
 ```
 
 Com dados falsos (os seis plugins ligados, inclusive `ups`, sem precisar de hardware):
 
 ```bash
-dotnet run --project src/PcAgent.Host -- --console --simulate
+dotnet run --project src/Atalaia.Agent.Host -- --console --simulate
 ```
 
 | Argumento | Efeito |
@@ -26,7 +26,7 @@ dotnet run --project src/PcAgent.Host -- --console --simulate
 | `--simulate` | Troca os plugins reais pelos do simulador. Os seis ficam ligados, seja qual for a configuração. |
 | `--console` | Abre um console com o endereço e o token e espelha o log nele. A bandeja continua. |
 
-Sem `--console` não há janela: use o ícone da bandeja (**Painel Agent**). O menu tem o endereço em uso,
+Sem `--console` não há janela: use o ícone da bandeja (**Atalaia**). O menu tem o endereço em uso,
 `Clientes conectados: N`, o **código de acesso** (6 dígitos), **Copiar código**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
 Se não conseguir subir (porta ocupada, por exemplo), aparece uma caixa de mensagem com o erro.
 
@@ -43,7 +43,7 @@ dotnet test
 - Para parear o tablet ou a página de teste: o código aparece no menu do ícone da bandeja (**Código de acesso: 042917**) e
   na saída do `--console`; **Copiar código** põe na área de transferência. **Ao reiniciar o agente o código muda** e o
   tablet precisa do novo (o app avisa "Código inválido" e abre a configuração com um toque na faixa).
-- `PCAGENT_TOKEN` (variável de ambiente ou `.env`) **fixa** o token: nesse caso ele não muda a cada início, não aparece no
+- `ATALAIA_TOKEN` (variável de ambiente ou `.env`) **fixa** o token: nesse caso ele não muda a cada início, não aparece no
   menu (só "Token fixo") e pode ter qualquer tamanho. Veja `.env.example`. O `agent.json` das versões anteriores não é mais usado.
 - **Limite de tentativas erradas** (porque 6 dígitos são só 1 milhão de combinações): quem vem pela rede tem 5 erros por endereço;
   depois fica bloqueado 1 min, e cada novo bloqueio dobra a espera (até 15 min; o histórico só some depois de 1 h sem erros). Somando
@@ -56,11 +56,11 @@ dotnet test
 ## Configuração
 
 Ordem de carga (o último vence): `appsettings.json` → `appsettings.Local.json` → `.env` → variáveis de
-ambiente com prefixo `PCAGENT_` (use `__` no lugar de `:`, por exemplo `PCAGENT_Plugins__ups__enabled=true`).
+ambiente com prefixo `ATALAIA_` (use `__` no lugar de `:`, por exemplo `ATALAIA_Plugins__ups__enabled=true`).
 Uma variável já definida no ambiente tem prioridade sobre a do `.env`.
 
 Os ajustes pessoais vão em **`agent/appsettings.Local.json`** (fora do git; é copiado para a pasta de saída ao
-compilar, ou pode ficar ao lado do `PcAgent.exe`). Só precisa conter o que muda:
+compilar, ou pode ficar ao lado do `AtalaiaAgent.exe`). Só precisa conter o que muda:
 
 ```json
 {
@@ -97,8 +97,8 @@ nunca no `appsettings.json`; veja o `.env.example`):
 | `Plugins:weather:latitude` / `longitude` | Local do clima (Open-Meteo), graus decimais com ponto. Sem isso o plugin fica em erro |
 | `Plugins:claude:configDir` | Pasta do Claude Code; vazio = `CLAUDE_CONFIG_DIR` ou `~/.claude` |
 | `Plugins:claude:livePlan` / `livePlanIntervalMin` | `true` consulta o plano com `claude -p` (~10 s e **consome cota real**), a cada 30 min por padrão. `false` usa o cache do Claude Code, que só vale se tiver até 15 min (senão o plano fica "sem dados"; o cache só se atualiza com o Claude Code em uso) |
-| `Plugins:steam:apiKey` / `steamId64` | Chave da Web API e SteamID64 (`PCAGENT_Plugins__steam__apiKey`) |
-| `Plugins:discord:clientId` / `clientSecret` | App do Discord (`PCAGENT_Plugins__discord__clientId`). Na primeira vez o Discord mostra um pop-up de autorização; o refresh token fica em `%LOCALAPPDATA%\PcAgent\discord.json` |
+| `Plugins:steam:apiKey` / `steamId64` | Chave da Web API e SteamID64 (`ATALAIA_Plugins__steam__apiKey`) |
+| `Plugins:discord:clientId` / `clientSecret` | App do Discord (`ATALAIA_Plugins__discord__clientId`). Na primeira vez o Discord mostra um pop-up de autorização; o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json` |
 | `Plugins:notifications` | Só nome do app e contagem; exige liberar o acesso em Configurações > Privacidade > Notificações |
 
 Plugin ligado sem a configuração necessária (por exemplo `steam` sem chave) aparece com status `error` no
@@ -112,7 +112,7 @@ no tablet alcança o agente em `127.0.0.1` sem Wi-Fi e sem `ListenOnLan`. A cada
 aparelhos (`adb devices`) e a regra (`adb reverse --list`) e refaz o que faltar, o que cobre o cabo replugado e o servidor
 do `adb` reiniciado. Só usa `devices`, `reverse --list` e `reverse`; não instala nada nem toca no aparelho.
 Aparelho `unauthorized` ou `offline` é só registrado no log (aceite a depuração USB na tela do tablet).
-Ligue em `appsettings.Local.json` (`"Usb": { "Enabled": true }`) ou por `PCAGENT_Usb__Enabled=true`. Requer o
+Ligue em `appsettings.Local.json` (`"Usb": { "Enabled": true }`) ou por `ATALAIA_Usb__Enabled=true`. Requer o
 `platform-tools` do Android (o `adb`); sem ele o log avisa uma vez e o agente segue normalmente.
 
 ## Painel (`tools/painel.html`)
@@ -162,15 +162,15 @@ Sem token ou com token errado: 401. Hash que não está entre as 8 capas mais re
 ## Estrutura
 
 ```
-src/PcAgent.Core                núcleo: contratos, envelope, hub, agendador, cache (sem Windows nem ASP.NET)
-src/PcAgent.Host                executável: Kestrel, configuração, Serilog, token, bandeja, registro de plugins
-src/PcAgent.Plugins.*           system, gpu, media, activeWindow, audio, ups e o simulador
-tests/PcAgent.Tests             xUnit (Kestrel real em 127.0.0.1:0 + ClientWebSocket)
+src/Atalaia.Agent.Core                núcleo: contratos, envelope, hub, agendador, cache (sem Windows nem ASP.NET)
+src/Atalaia.Agent.Host                executável: Kestrel, configuração, Serilog, token, bandeja, registro de plugins
+src/Atalaia.Agent.Plugins.*           system, gpu, media, activeWindow, audio, ups e o simulador
+tests/Atalaia.Agent.Tests             xUnit (Kestrel real em 127.0.0.1:0 + ClientWebSocket)
 tools/test-client.html          cópia exata de docs/test-client.html
 ```
 
-Cada plugin referencia só o `PcAgent.Core`; o `PcAgent.Host` é a raiz de composição (id → fábrica em
-`PluginRegistry.cs`). Logs diários em `%LOCALAPPDATA%\PcAgent\logs\` (sem token, sem título de janela, sem
+Cada plugin referencia só o `Atalaia.Agent.Core`; o `Atalaia.Agent.Host` é a raiz de composição (id → fábrica em
+`PluginRegistry.cs`). Logs diários em `%LOCALAPPDATA%\AtalaiaAgent\logs\` (sem token, sem título de janela, sem
 dados de mídia).
 
 Tudo é somente leitura no sistema. O agente nunca abre porta serial e, no banco da Intelbras, lê só

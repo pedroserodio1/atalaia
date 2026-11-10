@@ -1,8 +1,8 @@
-# pc-panel (app do tablet)
+# Atalaia (app do tablet)
 
 App Android que mostra o painel do PC. Conecta no agente (`../agent`) pelo protocolo v1
 ([`../docs/protocolo-v1.md`](../docs/protocolo-v1.md)), por USB (`adb reverse`) ou Wi-Fi, trocando sozinho de um para o outro.
-`pc-panel` é um nome provisório: para trocar, edite `appName` e `appId` em `gradle.properties`.
+O nome exibido no tablet e o identificador do app (`applicationId`) vêm de `appName` e `appId` em `gradle.properties`.
 
 Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 × 505 dp em paisagem.
 
@@ -57,7 +57,7 @@ derrubar o app no tablet.
    Firewall do Windows.
 2. Abra o app: a configuração abre sozinha. Informe os endereços e o código de 6 dígitos do agente (no PC: menu do ícone da bandeja; ele muda toda vez que o agente reinicia).
 3. Em build de debug, dá para configurar por `adb`:
-   `adb shell am start -n org.pcpanel.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "..."`
+   `adb shell am start -n org.atalaia.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "..."`
    (ignorado em release).
 
 ## Testes e verificação

@@ -8,7 +8,7 @@ plugins {
 
 android {
     // Pacote dos fontes (R, BuildConfig). O applicationId, que é o que identifica o app no aparelho, vem de gradle.properties.
-    namespace = "org.pcpanel.app"
+    namespace = "org.atalaia.app"
     compileSdk = 37
 
     defaultConfig {

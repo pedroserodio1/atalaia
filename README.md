@@ -1,11 +1,11 @@
-# pc-panel
+# Atalaia
 
 Um tablet Android usado vira o painel dedicado do PC: mostra o uso do sistema, a música que está tocando, o Discord e o
 uso do Claude, e controla volume, mídia e microfone. Um programa em segundo plano no PC (o **agente**) lê os dados e
 executa as ações; o **app do tablet** só desenha as telas e devolve os toques.
 
-`pc-panel` é um nome provisório. O projeto é de código aberto, sob a licença [GPL-3.0](LICENSE). As fontes do app (Manrope e
-IBM Plex Mono) são OFL e ficam em [`app/third-party/`](app/third-party/).
+**Atalaia** é o posto de vigia de onde se enxerga ao longe: aqui, o tablet que fica de olho no seu PC. O projeto é de código
+aberto, sob a [GNU GPL, versão 3 ou posterior](LICENSE) (veja [Licença](#licença)).
 
 > **Estado:** em desenvolvimento. O agente está pronto para uso; o app do tablet já conecta, mostra dados ao vivo e
 > controla o PC, mas ainda faltam os testes com cabo desplugado e Wi-Fi reais (veja "Estado" mais abaixo).
@@ -51,8 +51,8 @@ Requisitos: Windows 11, SDK .NET 10 (agente); JDK 17 ou mais novo e Android SDK 
 **1. Agente.** A partir de `agent/`:
 
 ```bash
-dotnet run --project src/PcAgent.Host -- --console --simulate   # dados falsos, sem precisar de hardware
-dotnet run --project src/PcAgent.Host -- --console              # dados reais
+dotnet run --project src/Atalaia.Agent.Host -- --console --simulate   # dados falsos, sem precisar de hardware
+dotnet run --project src/Atalaia.Agent.Host -- --console              # dados reais
 ```
 
 A cada início o agente gera um **código de 6 dígitos novo**, que aparece no menu do ícone da bandeja e no console. Para o
@@ -72,7 +72,7 @@ Wi-Fi) e o código de 6 dígitos (no PC: menu do ícone da bandeja). Depois, a c
 na faixa de erro de conexão. Para automatizar em build de debug:
 
 ```bash
-adb shell am start -n org.pcpanel.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "CODIGO"
+adb shell am start -n org.atalaia.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "CODIGO"
 ```
 
 (`hosts` é a lista de endereços em ordem de prioridade; o token fica guardado cifrado no Keystore do aparelho.)
@@ -97,3 +97,13 @@ O acompanhamento detalhado, com decisões e resultados de medição, está em [`
 Medido no tablet T68 (MediaTek MT6737T, 32 bits, Android 8.1, cerca de 1,4 GB de RAM reais, tela de 862 × 505 dp em
 paisagem). O app foi desenhado para esse limite: sem animação contínua, tela atualizada a 2 Hz, capas reduzidas e
 cache pequeno. A medição no tablet real mostrou uso de memória e de CPU baixos.
+
+## Licença
+
+Copyright (C) 2026 Pedro Serôdio. O Atalaia é software livre: você pode redistribuí-lo e/ou modificá-lo sob os termos da GNU
+General Public License, na versão 3 da Licença ou (a seu critério) qualquer versão posterior. Ele é distribuído na esperança de ser
+útil, mas **sem nenhuma garantia**. O texto completo está em [`LICENSE`](LICENSE) e o aviso padrão em [`NOTICE`](NOTICE).
+Cada arquivo de código traz o identificador `SPDX-License-Identifier: GPL-3.0-or-later`.
+
+As bibliotecas e fontes de terceiros, com as suas licenças, estão em [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+Contribuições enviadas ao projeto passam a valer sob essa mesma licença.

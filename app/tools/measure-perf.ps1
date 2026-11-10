@@ -8,7 +8,7 @@ param(
     [int]$Minutes = 30,
     [int]$IntervalSec = 60,
     [int]$ColdStarts = 5,
-    [string]$Package = 'org.pcpanel.app',
+    [string]$Package = 'org.atalaia.app',
     [string]$Activity = '.MainActivity',
     [string]$Serial = ''
 )

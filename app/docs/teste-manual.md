@@ -5,7 +5,7 @@
 Se você só vai fazer um teste, faça este. Prova que o app conecta pelo cabo e se recupera sozinho.
 
 1. **Suba o agente** no PC, com dados falsos e o módulo USB ligado (a partir de `agent/`):
-   `$env:PCAGENT_Usb__Enabled="true"; dotnet run --project src/PcAgent.Host -- --console --simulate`
+   `$env:ATALAIA_Usb__Enabled="true"; dotnet run --project src/Atalaia.Agent.Host -- --console --simulate`
    O console mostra o **código de acesso** de 6 dígitos (também no menu do ícone da bandeja); guarde-o.
 2. **Abra o app no tablet** (cabo ligado). Na primeira vez ele pede o código: digite os 6 dígitos e toque em **Salvar**.
    **Deve aparecer:** **USB** com bolinha verde no canto de cima da coluna da esquerda, e os números mudando.
@@ -34,10 +34,10 @@ Cada cenário diz o **esperado** e o que **anotar**. Marque `[x]` ao passar e es
 - [ ] **Agente com dados falsos** (a partir de `agent/`):
 
   ```bash
-  PCAGENT_Usb__Enabled=true dotnet run --project src/PcAgent.Host -- --console --simulate
+  ATALAIA_Usb__Enabled=true dotnet run --project src/Atalaia.Agent.Host -- --console --simulate
   ```
 
-  (No PowerShell: `$env:PCAGENT_Usb__Enabled="true"; dotnet run --project src/PcAgent.Host -- --console --simulate`.)
+  (No PowerShell: `$env:ATALAIA_Usb__Enabled="true"; dotnet run --project src/Atalaia.Agent.Host -- --console --simulate`.)
   O console mostra o código de 6 dígitos (e o menu da bandeja). Ele **muda a cada início do agente**. Com `--simulate` as 11 fontes ficam ligadas e o nobreak alterna entre rede e bateria sozinho.
 - [ ] **Wi-Fi (só para os cenários 4 a 7):** ligue `Agent:ListenOnLan` em `agent/appsettings.Local.json`
   (`{ "Agent": { "ListenOnLan": true }, "Usb": { "Enabled": true } }`), reinicie o agente e **permita** o aviso do Firewall do
@@ -63,7 +63,7 @@ dado sem `update` por mais de 15 s aparece como "velho".
 2. Mídia: tocar/pausar, próxima, anterior e toque na barra de posição. **Esperado:** o agente reage (o dado muda em ≤ 1 s).
 3. Mixer: arraste o volume de um app e toque em "mudo". Discord: mic mudo e volumes. **Esperado:** o valor fica no que você
    soltou e o agente confirma.
-4. Log do agente (`%LOCALAPPDATA%\PcAgent\logs`): **Esperado:** uma linha `USB: reverse … criado`, sem repetir a cada rodada.
+4. Log do agente (`%LOCALAPPDATA%\AtalaiaAgent\logs`): **Esperado:** uma linha `USB: reverse … criado`, sem repetir a cada rodada.
 
 ## 3. Desplugar o cabo (só USB configurado)
 

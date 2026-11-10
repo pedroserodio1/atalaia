@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Atalaia.Agent.Core\Atalaia.Agent.Core.csproj" />
+  </ItemGroup>
+</Project>

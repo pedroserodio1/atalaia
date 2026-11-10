@@ -14,6 +14,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pc-panel"   // placeholder; o nome exibido no tablet vem de appName em gradle.properties
+rootProject.name = "atalaia"
 
 include(":core", ":tablet")

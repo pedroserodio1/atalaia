@@ -29,7 +29,7 @@ Documento para quem vai implementar. Leia inteiro antes de escrever código, jun
 
 - Windows 11. SDK .NET 10.0.401 instalado.
 - Alvo `net10.0-windows10.0.19041.0` (o mesmo do PcProbe: o NAudio 3.x exige net9+, e o WinRT exige o
-  sufixo `windows10.0.19041.0`). O `PcAgent.Core` usa `net10.0` puro.
+  sufixo `windows10.0.19041.0`). O `Atalaia.Agent.Core` usa `net10.0` puro.
 - Versões de pacote fixas, sem `*`. As já validadas no PcProbe: `NAudio 3.3.0`, `Microsoft.Data.Sqlite 10.0.14`,
   `System.Diagnostics.PerformanceCounter 10.0.14`. Para os demais (Serilog, xUnit etc.), usar a última
   estável e fixar.
@@ -42,34 +42,34 @@ Tudo dentro de `agent/`, na raiz desta pasta (ao lado de `probe_tests/` e `docs/
 
 ```
 agent/
-  PcAgent.sln
+  Atalaia.sln
   Directory.Build.props            TargetFramework, Nullable enable, ImplicitUsings, LangVersion
   appsettings.json                 versionado, sem nada pessoal
   .env.example                     versionado
   .gitignore                       .env, .env.*, !.env.example, appsettings.Local.json, bin/, obj/
   README.md
   src/
-    PcAgent.Core/                  net10.0. Contratos, protocolo, hub, agendador, cache. Sem dependência de Windows nem de ASP.NET.
-    PcAgent.Host/                  executável. Kestrel, configuração, Serilog, token, bandeja, registro de plugins.
-    PcAgent.Plugins.System/
-    PcAgent.Plugins.Gpu/
-    PcAgent.Plugins.Media/
-    PcAgent.Plugins.ActiveWindow/
-    PcAgent.Plugins.Audio/
-    PcAgent.Plugins.Ups/
-    PcAgent.Plugins.Simulator/     os 6 ids com dados falsos, para --simulate
+    Atalaia.Agent.Core/                  net10.0. Contratos, protocolo, hub, agendador, cache. Sem dependência de Windows nem de ASP.NET.
+    Atalaia.Agent.Host/                  executável. Kestrel, configuração, Serilog, token, bandeja, registro de plugins.
+    Atalaia.Agent.Plugins.System/
+    Atalaia.Agent.Plugins.Gpu/
+    Atalaia.Agent.Plugins.Media/
+    Atalaia.Agent.Plugins.ActiveWindow/
+    Atalaia.Agent.Plugins.Audio/
+    Atalaia.Agent.Plugins.Ups/
+    Atalaia.Agent.Plugins.Simulator/     os 6 ids com dados falsos, para --simulate
   tests/
-    PcAgent.Tests/                 xUnit
+    Atalaia.Agent.Tests/                 xUnit
   tools/
     test-client.html               cópia exata de docs/test-client.html
 ```
 
-- Cada plugin referencia só o `PcAgent.Core`.
-- O `PcAgent.Host` é a raiz de composição: referencia todos os projetos de plugin e tem um registro
-  `id → fábrica`. O `PcAgent.Core` não conhece nenhuma fonte.
+- Cada plugin referencia só o `Atalaia.Agent.Core`.
+- O `Atalaia.Agent.Host` é a raiz de composição: referencia todos os projetos de plugin e tem um registro
+  `id → fábrica`. O `Atalaia.Agent.Core` não conhece nenhuma fonte.
 - Não fazer carga dinâmica de DLLs de plugin agora. Só vale a pena quando houver plugin de terceiros.
 
-## 4. Contratos (`PcAgent.Core`)
+## 4. Contratos (`Atalaia.Agent.Core`)
 
 ```csharp
 public interface IPlugin
@@ -118,7 +118,7 @@ Plugin desligado na configuração não é iniciado e aparece no `hello` como `d
 
 ### Hub
 
-- Opera sobre `System.Net.WebSockets.WebSocket`, para ser testável. O `PcAgent.Host` só mapeia `/ws` no Kestrel e entrega o socket.
+- Opera sobre `System.Net.WebSockets.WebSocket`, para ser testável. O `Atalaia.Agent.Host` só mapeia `/ws` no Kestrel e entrega o socket.
 - Por conexão: estado do handshake, filtro de assinatura, contador `seq` e um `Channel` limitado a 64
   mensagens com `BoundedChannelFullMode.DropOldest`. Um laço de envio por conexão lê o canal, atribui o
   `seq` e escreve no socket. Publicar nunca espera um cliente.
@@ -128,12 +128,12 @@ Plugin desligado na configuração não é iniciado e aparece no `hello` como `d
 
 - Cache: último `data` e instante de coleta por fonte. É o que alimenta os `snapshot`.
 - `IBlobStore`: dicionário em memória com as 8 entradas mais recentes. Hash = 16 primeiros hex do SHA-256.
-- O `PcAgent.Host` mapeia `GET /cover/{hash}` conforme o protocolo (token no cabeçalho `Authorization`).
+- O `Atalaia.Agent.Host` mapeia `GET /cover/{hash}` conforme o protocolo (token no cabeçalho `Authorization`).
 
 ### Configuração
 
 Ordem de carga: `appsettings.json` → `appsettings.Local.json` (opcional, fora do git, para os ajustes
-pessoais) → `.env` → variáveis de ambiente com prefixo `PCAGENT_`. O `.env` é carregado como no
+pessoais) → `.env` → variáveis de ambiente com prefixo `ATALAIA_`. O `.env` é carregado como no
 `LoadEnv` do PcProbe (variável de ambiente já definida tem prioridade).
 
 `appsettings.json` versionado:
@@ -158,16 +158,16 @@ pessoais) → `.env` → variáveis de ambiente com prefixo `PCAGENT_`. O `.env`
 ### Token
 
 - Na primeira execução, gerar 32 bytes aleatórios (`RandomNumberGenerator`) em base64url e gravar em
-  `%LOCALAPPDATA%\PcAgent\agent.json`. Nas seguintes, ler de lá.
-- `PCAGENT_TOKEN` (ambiente ou `.env`) substitui o do arquivo. O `.env.example` traz só essa variável, vazia e comentada.
+  `%LOCALAPPDATA%\AtalaiaAgent\agent.json`. Nas seguintes, ler de lá.
+- `ATALAIA_TOKEN` (ambiente ou `.env`) substitui o do arquivo. O `.env.example` traz só essa variável, vazia e comentada.
 - Comparar com `CryptographicOperations.FixedTimeEquals`.
 - O token aparece só no console (modo `--console`) e pelo item "Copiar token" da bandeja. Nunca no arquivo de log.
 
 ### Log
 
-Serilog com arquivo rotativo diário em `%LOCALAPPDATA%\PcAgent\logs\`. No modo `--console`, também no console.
+Serilog com arquivo rotativo diário em `%LOCALAPPDATA%\AtalaiaAgent\logs\`. No modo `--console`, também no console.
 
-## 6. Execução e bandeja (`PcAgent.Host`)
+## 6. Execução e bandeja (`Atalaia.Agent.Host`)
 
 O agente roda como **processo de usuário** (não como serviço do Windows: na sessão 0 não há SMTC, janela
 ativa, áudio do usuário nem o `%APPDATA%` do nobreak).
@@ -175,7 +175,7 @@ ativa, áudio do usuário nem o `%APPDATA%` do nobreak).
 - Projeto `WinExe` com `UseWindowsForms` e `FrameworkReference` a `Microsoft.AspNetCore.App`. Sem janela de console.
 - A thread principal (STA) roda o `NotifyIcon`; o Generic Host (Kestrel + agendador) roda em segundo plano.
   Os plugins não podem ser chamados a partir da thread da interface.
-- Ícone: `SystemIcons.Application` por enquanto (sem arquivo `.ico`). Dica do ícone: `Painel Agent`.
+- Ícone: `SystemIcons.Application` por enquanto (sem arquivo `.ico`). Dica do ícone: `Atalaia`.
 - Menu da bandeja:
   - linha de status desabilitada: `Rodando em 127.0.0.1:8765` (ou `0.0.0.0:8765`), mais `(simulado)` quando for o caso;
   - `Clientes conectados: N` (desabilitada, atualizada ao abrir o menu);
@@ -190,7 +190,7 @@ Argumentos de linha de comando:
 
 | Argumento | Efeito |
 |---|---|
-| `--simulate` | Troca os plugins reais pelos do `PcAgent.Plugins.Simulator`. Os seis ficam ligados, inclusive `ups`, seja qual for a configuração. |
+| `--simulate` | Troca os plugins reais pelos do `Atalaia.Agent.Plugins.Simulator`. Os seis ficam ligados, inclusive `ups`, seja qual for a configuração. |
 | `--console` | Abre um console (`AllocConsole`), imprime o endereço e o token e espelha o log nele. A bandeja continua. |
 
 A janela de configuração **não** faz parte deste marco (ver seção 11).
@@ -267,7 +267,7 @@ Anti-ruído: classe pura `OutageDebouncer` (sem relógio próprio; recebe os ins
 | Janela aberta há `groupWindowSec` ou mais com contador > 0 (`Tick`) | Um `power_flicker` (warn) com a contagem; zera o contador e fecha a janela |
 | Falha quando já há uma aberta, ou volta sem falha aberta | Ignorar |
 
-### `PcAgent.Plugins.Simulator`
+### `Atalaia.Agent.Plugins.Simulator`
 
 - Seis plugins com os mesmos `Id` e formatos dos reais, gerando valores no estilo do `simFrames()` da página de teste (passeio aleatório, limites plausíveis).
 - `audio` guarda volume e mudo em memória e aceita `set_volume` e `toggle_mute`.
@@ -289,7 +289,7 @@ Com plugins falsos e Kestrel real em `127.0.0.1:0`, usando `ClientWebSocket`:
 
 ## 9. README (`agent/README.md`, em português)
 
-Como rodar (`dotnet run --project src/PcAgent.Host -- --console`, com e sem `--simulate`), onde fica o
+Como rodar (`dotnet run --project src/Atalaia.Agent.Host -- --console`, com e sem `--simulate`), onde fica o
 token e como parear, como ajustar `appsettings.Local.json`, como testar com `tools/test-client.html`
 (abrir o arquivo no navegador, pôr a URL e o token; o modo "simulador local" da página funciona sem o
 agente) e como testar a capa (`curl -H "Authorization: Bearer <token>" http://127.0.0.1:8765/cover/<hash> -o capa.jpg`).
@@ -297,8 +297,8 @@ agente) e como testar a capa (`curl -H "Authorization: Bearer <token>" http://12
 ## 10. Ordem de trabalho e critério de aceite
 
 1. Solução, projetos, `Directory.Build.props`, `.gitignore`. Copiar `docs/test-client.html` para `agent/tools/`.
-2. `PcAgent.Core`: contratos, envelope, hub, agendador, cache, blobs. Testes 1 a 5.
-3. `PcAgent.Plugins.Simulator` e `PcAgent.Host` (configuração, token, Kestrel, `/cover`, `--simulate`, `--console`). Testes 6 e 7.
+2. `Atalaia.Agent.Core`: contratos, envelope, hub, agendador, cache, blobs. Testes 1 a 5.
+3. `Atalaia.Agent.Plugins.Simulator` e `Atalaia.Agent.Host` (configuração, token, Kestrel, `/cover`, `--simulate`, `--console`). Testes 6 e 7.
 4. Bandeja.
 5. Plugins reais, um por vez: `system`, `gpu`, `activeWindow`, `audio`, `media`, `ups` (com o teste 8).
 6. README.
