@@ -48,8 +48,9 @@ O caminho completo, em ordem:
 1. **Abra uma issue** descrevendo a fonte: qual dado, de onde vem, que campos, se há ações e se precisa de credencial.
 2. **Crie o projeto** `agent/src/Atalaia.Agent.Plugins.<Nome>/` com a classe do plugin (use o `Weather` como modelo).
 3. **Registre**: `Atalaia.Agent.sln`, `ProjectReference` no `Atalaia.Agent.Host.csproj` e a linha em `PluginRegistry.cs`.
-4. **Configure**: a entrada em `agent/appsettings.json` (`enabled` e `intervalMs`). Segredos ficam só em variáveis de ambiente
-   (`ATALAIA_Plugins__<id>__<chave>`), documentadas em `agent/.env.example`, nunca no `appsettings.json`.
+4. **Configure**: a entrada em `agent/appsettings.json` (`enabled` e `intervalMs`). Segredos entram por variáveis de ambiente
+   (`ATALAIA_Plugins__<id>__<chave>`, documentadas em `agent/.env.example`) ou pelo formulário da janela, que os guarda no cofre
+   criptografado do usuário (campos declarados em `SourceCredentials`); nunca no `appsettings.json` nem no `settings.json`.
 5. **Simule**: um plugin simulado com o mesmo `id` e o mesmo formato, em `Atalaia.Agent.Plugins.Simulator`, para que todos
    possam ver a fonte sem o hardware dela.
 6. **Teste**: a lógica de leitura/conversão como um método puro e estático, com testes xUnit que não dependem de rede,
@@ -107,6 +108,23 @@ Regras completas em [`.claude/rules/app-kotlin.md`](.claude/rules/app-kotlin.md)
 
 A skill `/verificar-contribuicao` (ou o script `.claude/skills/verificar-contribuicao/verificar.ps1`) faz as checagens
 mecânicas.
+
+## Ramos, versões e releases
+
+O detalhe está em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Em resumo:
+
+| Canal | Ramo | Tag | Release |
+|---|---|---|---|
+| Estável | `main` | `vX.Y.Z` | normal |
+| Beta | `development` | `vX.Y.Z-beta.N` | pré-lançamento |
+| Trabalho | `beta/X.Y.Z` e sub-ramos (`feat/`, `fix/`, `docs/`, `chore/`) | sem tag | nenhuma |
+
+- Abra o PR **para o ramo do ciclo** (`beta/X.Y.Z`, o mais recente), não para `main` nem `development`. Quem integra o ciclo é o mantenedor.
+- Merge: sub-ramo para `beta/X.Y.Z` por *squash*; `beta/X.Y.Z` para `development` e `development` para `main` por *merge commit*.
+- Versão (SemVer): **patch** é correção compatível; **minor** é recurso novo compatível (plugin, tela, campo opcional no protocolo);
+  **major** é quebra (protocolo incompatível, configuração que deixa de funcionar, requisito mínimo maior). Antes da 1.0, o minor
+  pode quebrar, com aviso nas notas. **Beta** (`-beta.N`) é uma candidata: vem antes da estável de mesmo número.
+- Só o mantenedor cria tags e releases. Tag publicada nunca é movida nem apagada.
 
 ## Commits e pull requests
 

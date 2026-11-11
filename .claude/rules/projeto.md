@@ -30,7 +30,11 @@ Valem para qualquer mudança no repositório.
 ## Segurança e privacidade (inegociável)
 - **Nada pessoal no código nem na documentação:** caminho de usuário, IP, domínio, nome de máquina, número de série, e-mail,
   coordenadas. Tudo vem de configuração do usuário. Exemplos usam valores falsos (`192.168.0.12`, `FAKESERIAL0123456`).
-- **Nunca** coloque segredo (token, chave de API, `.env`) no repositório, em teste, em log, em issue ou em PR.
+- **Nunca** coloque segredo (token, chave de API, `.env`) no repositório, em teste, em log, em issue ou em PR. Valores de teste são
+  inventados (`FAKEKEY0123456789ABCDEF`), nunca uma chave de verdade.
+- **Segredo digitado na janela** (chave da Steam, `clientSecret` do Discord) vai para o **cofre**, `%LOCALAPPDATA%\AtalaiaAgent\secrets.dat`,
+  cifrado com a DPAPI do Windows (escopo do usuário atual); nunca para o `settings.json`. O valor **nunca volta para a página** (só "configurada")
+  nem vai para o log. Variável de ambiente `ATALAIA_*` e `.env` continuam mandando sobre o cofre.
 - O agente só **lê** o sistema do usuário. O que ele faz de efetivo são as ações declaradas por cada plugin, e nada além.
 - O app só aceita endereços de loopback e de rede local, e o código de acesso nunca é exibido de volta.
 
@@ -39,6 +43,9 @@ Valem para qualquer mudança no repositório.
 - **Sem linhas de atribuição** nas mensagens (`Co-Authored-By`, "Generated with ...").
 - Não commite sem o usuário pedir. Nunca altere a configuração do git nem use `push --force` em branch compartilhada.
 - Nunca inclua `appsettings.Local.json`, `.env`, `local.properties`, chaves ou builds.
+- Ramos, versões e releases seguem `docs/versionamento-e-releases.md`: trabalho em `beta/X.Y.Z` (sub-ramos por squash), `development`
+  recebe o ciclo (merge commit) e gera betas (`vX.Y.Z-beta.N`), `main` só recebe estável (`vX.Y.Z`). Nada de commit direto em
+  `main` nem em `development`. **Nunca crie, mova nem apague tag**: quem cria a tag é o mantenedor.
 
 ## Verificar antes de dizer que terminou
 - `dotnet test` (em `agent/`) e `./gradlew :core:test` (em `app/`) precisam passar. Se não conseguiu rodar algo, diga isso, e

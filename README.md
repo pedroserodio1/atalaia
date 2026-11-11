@@ -1,5 +1,7 @@
 # Atalaia
 
+<p align="center"><img src="assets/brand/social-preview.png" alt="Atalaia: o painel do seu PC, no tablet" width="640"></p>
+
 Um tablet Android usado vira o painel dedicado do PC: mostra o uso do sistema, a música que está tocando, o Discord e o
 uso do Claude, e controla volume, mídia e microfone. Um programa em segundo plano no PC (o **agente**) lê os dados e
 executa as ações; o **app do tablet** só desenha as telas e devolve os toques.
@@ -33,6 +35,11 @@ aberto, sob a [GNU GPL, versão 3 ou posterior](LICENSE) (veja [Licença](#licen
 `system` (CPU, RAM, discos, rede), `gpu` (NVIDIA), `media` (faixa, capa e controles), `audio` (volume geral e por
 aplicativo), `activeWindow`, `ups` (nobreak Intelbras, com alerta de queda de energia), e as opcionais `weather`,
 `notifications`, `claude`, `steam` e `discord`. Só ações declaradas pelos plugins existem: não há comando livre.
+
+> **Compatibilidade do nobreak.** A fonte `ups` funciona hoje **só com nobreaks Intelbras, lendo o banco de dados do software
+> deles** (somente leitura). Outras marcas e softwares **ainda não são compatíveis**. Tem outro nobreak? **Pull requests
+> adicionando o suporte são muito bem-vindos:** abra antes uma issue contando de onde vêm os dados do seu aparelho e veja
+> o [`CONTRIBUTING.md`](CONTRIBUTING.md). O plugin atual (`agent/src/Atalaia.Agent.Plugins.Ups`) serve de modelo.
 
 ## Estrutura do repositório
 
@@ -92,6 +99,40 @@ adb shell am start -n org.atalaia.app/.MainActivity --es hosts "127.0.0.1:8765,1
 
 O acompanhamento detalhado, com decisões e resultados de medição, está em [`docs/plano-app.md`](docs/plano-app.md).
 
+## Ramos, versões e releases
+
+O projeto usa três tipos de ramo. A diferença que importa para quem usa e para quem contribui:
+
+| Ramo | Para que serve | Tag | Release no GitHub | Quem deve usar |
+|---|---|---|---|---|
+| **`main`** | Só o que é **estável**. É a versão que todo mundo deve instalar | `vX.Y.Z` | normal (a "latest") | usuários em geral |
+| **`development`** | Integração e **beta**: o que já passou do ciclo de trabalho e está sendo testado antes de virar estável | `vX.Y.Z-beta.N` | pré-lançamento | quem escolheu o canal **Beta** e aceita bugs |
+| **`beta/X.Y.Z`** e sub-ramos (`feat/`, `fix/`, `docs/`, `chore/`) | **Trabalho** de uma versão em andamento | sem tag | nenhuma | quem desenvolve |
+
+Em uma frase: tag de versão em `main` é estável; tag de beta em `development` é beta; o trabalho de cada versão acontece em
+`beta/X.Y.Z` e só entra em `development` quando está pronto.
+
+```
+feat/x ─┐
+fix/y  ─┴─> beta/0.1.2 ──PR──> development ──PR──> main
+ (squash)               (merge commit)       (merge commit)
+                              │ v0.1.2-beta.N         │ v0.1.2
+                              └─ release beta         └─ release estável
+```
+
+- **Nada de commit direto** em `main` nem em `development`: tudo entra por pull request com o CI verde (`agente`, `app` e `scripts`).
+- **Quer contribuir?** Abra o PR para o ramo do ciclo (`beta/X.Y.Z`, o mais recente), nunca para `main` nem `development`. Quem
+  integra o ciclo e cria as tags é o mantenedor.
+- **Atualização automática:** o agente tem dois canais. **Estável** só considera releases normais (`main`); **Beta** considera também os
+  pré-lançamentos (`development`). Ele nunca faz downgrade.
+- **Número da versão (SemVer):** `MAJOR.MINOR.PATCH`. Correção compatível sobe o PATCH, recurso novo sobe o MINOR, quebra sobe o MAJOR. Antes da
+  `1.0.0` um MINOR pode quebrar compatibilidade, e as notas avisam. O número do ciclo fica no arquivo [`VERSION`](VERSION).
+- **O que cada release publica:** o instalador do agente (`Atalaia-Agent-Setup-<versão>.exe`), o APK do tablet
+  (`Atalaia-Tablet-<versão>.apk`), o `SHA256SUMS.txt` e as notas.
+
+Todas as regras (merge, hotfix, tags, assinatura) estão em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). O que
+vem em cada versão está no [`ROADMAP.md`](ROADMAP.md).
+
 ## Tablet alvo
 
 Medido no tablet T68 (MediaTek MT6737T, 32 bits, Android 8.1, cerca de 1,4 GB de RAM reais, tela de 862 × 505 dp em
@@ -104,6 +145,8 @@ Copyright (C) 2026 Pedro Serôdio. O Atalaia é software livre: você pode redis
 General Public License, na versão 3 da Licença ou (a seu critério) qualquer versão posterior. Ele é distribuído na esperança de ser
 útil, mas **sem nenhuma garantia**. O texto completo está em [`LICENSE`](LICENSE) e o aviso padrão em [`NOTICE`](NOTICE).
 Cada arquivo de código traz o identificador `SPDX-License-Identifier: GPL-3.0-or-later`.
+A logo e o ícone (`assets/brand/`) são do projeto e seguem a mesma licença; os textos da logo são contornos das fontes
+Manrope e IBM Plex Mono (SIL OFL 1.1).
 
 As bibliotecas e fontes de terceiros, com as suas licenças, estão em [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
 Contribuições enviadas ao projeto passam a valer sob essa mesma licença.

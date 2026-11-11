@@ -4,28 +4,62 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Atalaia.Agent.Host.Settings;
 
 namespace Atalaia.Agent.Host;
 
 internal static class AppPaths
 {
-    public static string Dir { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AtalaiaAgent");
+    /// <summary>
+    /// Onde o agente guarda logs, <c>settings.json</c>, downloads e os dados do WebView2: <c>%LOCALAPPDATA%\AtalaiaAgent</c>, ou a pasta de
+    /// <c>ATALAIA_DATA_DIR</c> (caminho completo), para testar sem mexer na configuração de verdade (VM, outro usuário, pasta descartável).
+    /// </summary>
+    public static string Dir { get; } = Resolve(Environment.GetEnvironmentVariable("ATALAIA_DATA_DIR"),
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+
+    internal static string Resolve(string? overrideDir, string localAppData) =>
+        !string.IsNullOrWhiteSpace(overrideDir) && Path.IsPathFullyQualified(overrideDir.Trim())
+            ? Path.GetFullPath(overrideDir.Trim())
+            : Path.Combine(localAppData, "AtalaiaAgent");
     public static string Logs { get; } = Path.Combine(Dir, "logs");
+    /// <summary>Pasta de dados do WebView2 (cache, cookies). Fica fora da pasta de instalação, que não é gravável.</summary>
+    public static string WebView2Data { get; } = Path.Combine(Dir, "webview2");
 }
 
 internal static class HostConfig
 {
-    /// <summary>appsettings.json → appsettings.Local.json → .env → variáveis ATALAIA_*.</summary>
+    /// <summary>appsettings.json → appsettings.Local.json → settings.json (a janela do agente) → cofre de segredos → .env → variáveis ATALAIA_*.</summary>
     public static IConfiguration Build()
     {
         LoadDotEnv();
-        return new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
+        SettingsQuarantined = SettingsStore.Default.QuarantineIfInvalid();   // settings.json estragado não pode impedir o agente de subir
+        SecretsQuarantined = SecretVault.Default.QuarantineIfUnreadable();   // idem o cofre: ilegível não impede de subir
+        return Compose(AppContext.BaseDirectory, SettingsStore.Default, SecretVault.Default);
+    }
+
+    /// <summary>Se o <c>settings.json</c> estava inválido na partida, onde a cópia dele foi guardada (o <c>Program</c> avisa no log).</summary>
+    public static string? SettingsQuarantined { get; private set; }
+
+    /// <summary>Se o cofre de segredos não pôde ser decifrado na partida, onde a cópia dele foi guardada (o <c>Program</c> avisa no log, sem conteúdo).</summary>
+    public static string? SecretsQuarantined { get; private set; }
+
+    /// <summary>
+    /// A ordem de carga, sem o <c>.env</c> (que mexe nas variáveis do processo). O <c>.env</c> entra em <see cref="Build"/> por variável
+    /// de ambiente, então vale a mesma precedência: a variável vence o <c>settings.json</c> e o cofre de segredos.
+    /// </summary>
+    internal static IConfiguration Compose(string baseDirectory, SettingsStore settings, SecretVault? vault = null)
+    {
+        var settingsDir = Path.GetDirectoryName(settings.FilePath)!;
+        Directory.CreateDirectory(settingsDir);   // o provedor de arquivos exige que a pasta exista
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(baseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile("appsettings.Local.json", optional: true)
-            .AddEnvironmentVariables("ATALAIA_")
-            .Build();
+            .AddJsonFile(new PhysicalFileProvider(settingsDir), Path.GetFileName(settings.FilePath), optional: true, reloadOnChange: false);
+        // Os segredos entram só na memória do processo (chave "Plugins:steam:apiKey" → valor), acima do settings.json e abaixo do ambiente.
+        if (vault is not null) builder.AddInMemoryCollection(vault.Read().Select(p => new KeyValuePair<string, string?>(p.Key, p.Value)));
+        return builder.AddEnvironmentVariables("ATALAIA_").Build();
     }
 
     /// <summary>

@@ -26,3 +26,6 @@ Thumbs.db
 
 # Claude Code: configuracao local de cada pessoa (as regras e skills em .claude/ vao para o repositorio)
 .claude/settings.local.json
+
+# Saída local do instalador (scripts/build-installer.ps1)
+dist/
