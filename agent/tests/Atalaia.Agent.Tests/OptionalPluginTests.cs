@@ -247,10 +247,10 @@ public class DiscordTests
 public class OptionalSourcesServerTests
 {
     private static readonly string[] AllIds =
-        ["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "claude", "steam", "discord"];
+        ["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord"];
 
     [Fact]
-    public async Task Simulador_tem_os_onze_ids_e_todos_publicam()
+    public async Task Simulador_tem_os_dez_ids_e_todos_publicam()
     {
         await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
         using var c = await TestClient.ConnectAsync(s.WsUri);
@@ -263,8 +263,6 @@ public class OptionalSourcesServerTests
             Assert.True(Environment.TickCount64 < end, "alguma fonte simulada não publicou");
             await Task.Delay(30);
         }
-        s.Scheduler.Cache.TryGet("claude", out var claude);
-        Assert.Equal("live", claude!.Data.GetProperty("plan").GetProperty("source").GetString());
         s.Scheduler.Cache.TryGet("discord", out var discord);
         Assert.True(discord!.Data.GetProperty("channel").GetProperty("members").GetArrayLength() > 0);
     }

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Atalaia.Agent.Core;
 using Atalaia.Agent.Plugins.ActiveWindow;
 using Atalaia.Agent.Plugins.Audio;
-using Atalaia.Agent.Plugins.Claude;
 using Atalaia.Agent.Plugins.Discord;
 using Atalaia.Agent.Plugins.Notifications;
 using Atalaia.Agent.Plugins.Steam;
@@ -31,7 +30,6 @@ internal static class PluginRegistry
         ("ups", () => new UpsPlugin()),
         ("weather", () => new WeatherPlugin()),
         ("notifications", () => new NotificationsPlugin()),
-        ("claude", () => new ClaudePlugin()),
         ("steam", () => new SteamPlugin()),
         ("discord", () => new DiscordPlugin()),
     ];
@@ -39,7 +37,7 @@ internal static class PluginRegistry
     public static List<PluginRegistration> Build(IConfiguration config, bool simulate)
     {
         var section = config.GetSection("Plugins");
-        if (simulate)   // os onze ligados, seja qual for a configuração
+        if (simulate)   // os dez ligados, seja qual for a configuração
             return SimulatorPlugins.All()
                 .Select(p => PluginRegistration.From(p, section.GetSection(p.Id)) with { Enabled = true, IntervalMs = p.DefaultIntervalMs })   // simulado: ritmo próprio, sem esperar o intervalo real do ups (15 s)
                 .ToList();

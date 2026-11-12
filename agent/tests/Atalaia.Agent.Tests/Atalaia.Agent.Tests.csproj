@@ -20,6 +20,8 @@
     <ProjectReference Include="..\..\src\Atalaia.Agent.Core\Atalaia.Agent.Core.csproj" />
     <ProjectReference Include="..\..\src\Atalaia.Agent.Host\Atalaia.Agent.Host.csproj" />
     <ProjectReference Include="..\..\src\Atalaia.Agent.Plugins.Simulator\Atalaia.Agent.Plugins.Simulator.csproj" />
+    <!-- fonte desativada na 0.1.2 (fora do Host); o projeto e os testes dele ficam até existir uma fonte confiável -->
+    <ProjectReference Include="..\..\src\Atalaia.Agent.Plugins.Claude\Atalaia.Agent.Plugins.Claude.csproj" />
   </ItemGroup>
 
 </Project>

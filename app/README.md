@@ -9,8 +9,8 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 ## O que o app faz
 
 - **Coluna "agora"** (em todas as telas): relógio, canal ativo (USB, Wi-Fi ou sem conexão), jogo ou janela em foco, mídia com
-  controles e uso do Claude.
-- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord, Jogo (Steam) e Claude.
+  controles.
+- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord e Jogo (Steam).
 - **Conexão:** lista de endereços em ordem de prioridade (padrão: USB em `127.0.0.1`, depois o IP do PC no Wi-Fi). Uma conexão
   por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 5 s e volta quando ele fica pronto.
 - **Segurança:** só aceita endereços de loopback e rede local; o token fica cifrado no Keystore e não é exibido de volta.
