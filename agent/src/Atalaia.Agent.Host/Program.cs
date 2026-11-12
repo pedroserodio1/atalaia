@@ -55,13 +55,13 @@ internal static class Program
                 Log.Warning("O settings.json estava inválido: foi guardado em {Path} e o agente começou com a configuração padrão.", bad);
             if (HostConfig.SecretsQuarantined is { } unreadable)
                 Log.Warning("O cofre de segredos não pôde ser lido (outro usuário do Windows ou arquivo estragado): foi guardado em {Path} e as credenciais precisam ser digitadas de novo.", unreadable);
-            runtime = new AgentRuntime(config, simulate, TokenStore.Load(config));
+            runtime = new AgentRuntime(config, simulate, TokenStore.Load(config, SecretVault.Default));
             Task.Run(runtime.StartAsync).GetAwaiter().GetResult();   // fora da thread da interface
 
             if (console)   // o token só aparece aqui (e em "Copiar token"), nunca no arquivo de log
             {
                 Console.WriteLine($"Agente em ws://{runtime.Address}/ws{(simulate ? " (simulado)" : "")}");
-                Console.WriteLine(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}   (novo a cada início)" : $"Token: {runtime.Token}");
+                Console.WriteLine(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}" : $"Token: {runtime.Token}");
             }
 
             var onboarding = new OnboardingStore(SettingsStore.Default);

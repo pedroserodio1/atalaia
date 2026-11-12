@@ -33,6 +33,9 @@ internal sealed class AgentRuntime(IConfiguration config, bool simulate, TokenSt
     public IConfiguration Config => _config;
     public string Token => token.Token;
     public bool TokenCreated => token.Created;
+
+    /// <summary>Troca o código de acesso. Só vale para o hub da próxima subida: quem chama religa o agente (<see cref="RestartAsync"/>), o que derruba os tablets.</summary>
+    public void ReplaceToken(TokenStore.Result next) => token = next;
     public bool Simulate => simulate;
     public string Address { get; private set; } = "";
     public int Port { get; private set; }

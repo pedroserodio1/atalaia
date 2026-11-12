@@ -193,7 +193,7 @@ public class StepCommandsContractTests : StepTestBase
     {
         // O contrato de segurança da ponte: acrescentar um comando exige mudar este teste de propósito.
         Assert.Equal(
-            ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get",
+            ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get", "code.keep", "code.renew",
              "network.firewallCreate", "network.get", "network.setAdapter", "network.setLan", "network.setPort", "network.verify",
              "sources.clearConfig", "sources.configure", "sources.get", "sources.set", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
             H.Router.Commands.Order(StringComparer.Ordinal).ToArray());

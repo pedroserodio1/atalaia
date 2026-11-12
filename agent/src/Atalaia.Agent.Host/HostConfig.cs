@@ -101,16 +101,28 @@ public static class TokenStore
     /// <param name="Created"><c>true</c> se o código foi gerado agora (e por isso pode ser mostrado); <c>false</c> se veio de ATALAIA_TOKEN.</param>
     public sealed record Result(string Token, bool Created);
 
+    /// <summary>Chave (no <c>settings.json</c>) da opção "manter o mesmo código entre reinícios".</summary>
+    internal const string KeepKey = "Access:KeepCode";
+    /// <summary>Chave (no cofre, DPAPI) do código mantido.</summary>
+    internal const string SavedKey = "Access:Code";
+
     /// <summary>
-    /// ATALAIA_TOKEN fixa o token. Sem ele, o agente gera um <b>código de 6 dígitos novo a cada início</b>, só em memória: não
-    /// grava arquivo, então o tablet precisa do código novo sempre que o agente reinicia.
+    /// ATALAIA_TOKEN fixa o token. Com "manter o código" ligado, o código de 6 dígitos vem do cofre (e é sorteado e guardado se ainda não
+    /// existe ou está estragado). Sem nenhum dos dois, gera um <b>código novo a cada início</b>, só em memória.
     /// </summary>
-    public static Result Load(IConfiguration config)
+    internal static Result Load(IConfiguration config, SecretVault? vault = null)
     {
         var fromEnv = config["TOKEN"]?.Trim();
         if (!string.IsNullOrEmpty(fromEnv)) return new Result(fromEnv, false);
-        return new Result(NewCode(), true);
+        if (!config.GetValue(KeepKey, false)) return new Result(NewCode(), true);
+        var saved = config[SavedKey]?.Trim();
+        if (IsCode(saved)) return new Result(saved!, true);
+        var code = NewCode();
+        vault?.Update(d => d[SavedKey] = code);
+        return new Result(code, true);
     }
+
+    internal static bool IsCode(string? s) => s is { Length: 6 } && s.All(char.IsAsciiDigit);
 
     /// <summary>Seis dígitos sorteados com gerador criptográfico, com zeros à esquerda (ex.: <c>042917</c>).</summary>
     public static string NewCode() =>
