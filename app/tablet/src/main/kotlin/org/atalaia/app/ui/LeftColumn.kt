@@ -32,7 +32,6 @@ import org.atalaia.core.connection.ConnectionState
 import org.atalaia.core.connection.activeChannel
 import org.atalaia.core.panel.GameLine
 import org.atalaia.core.panel.Pt
-import org.atalaia.core.panel.claudeLine
 import org.atalaia.core.panel.gameLine
 import org.atalaia.core.panel.mediaLine
 import org.atalaia.core.protocol.UpsData
@@ -49,7 +48,7 @@ fun rememberLocalDateTime(): State<LocalDateTime> = produceState(LocalDateTime.n
     }
 }
 
-/** Coluna fixa "agora", igual em todas as telas: relógio e atividade, mídia com controles, uso do Claude. */
+/** Coluna fixa "agora", igual em todas as telas: relógio e atividade, mídia com controles. */
 @Composable
 fun LeftColumn(
     state: AppState,
@@ -62,7 +61,6 @@ fun LeftColumn(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ClockCard(state, now, onOpenConfig)
         MediaCard(state, now, feedback, onMedia, Modifier.weight(1f))
-        ClaudeCard(state, now)
     }
 }
 
@@ -161,28 +159,4 @@ fun RoundButton(icon: IconKind, enabled: Boolean, primary: Boolean, onClick: () 
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { PanelIcon(icon, if (enabled) fg else Palette.TextMuted, 22.dp) }
-}
-
-@Composable
-private fun ClaudeCard(state: AppState, now: Long) {
-    val c = claudeLine(state, now) ?: return
-    PanelCard(Modifier.fillMaxWidth()) {
-        CardLabel(Texts.CLAUDE, c.freshness)
-        Column(Modifier.padding4(top = 4), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            c.fiveHourPercent?.let { UsageBar(Texts.CLAUDE_5H, it) }
-            c.sevenDayPercent?.let { UsageBar(Texts.CLAUDE_WEEK, it) }
-        }
-    }
-}
-
-@Composable
-private fun UsageBar(label: String, percent: Int) {
-    Column {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            BodyText(label, sp = 13)
-            MonoText("$percent%")
-        }
-        Box(Modifier.height(4.dp))
-        ProgressBar(percent, levelColor(percent, 90))
-    }
 }

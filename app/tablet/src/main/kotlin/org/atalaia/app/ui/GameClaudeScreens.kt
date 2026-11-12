@@ -22,8 +22,6 @@ import org.atalaia.app.ui.theme.Palette
 import org.atalaia.core.panel.GameLine
 import org.atalaia.core.panel.Pt
 import org.atalaia.core.panel.gameLine
-import org.atalaia.core.protocol.ClaudeData
-import org.atalaia.core.protocol.ClaudeWindow
 import org.atalaia.core.protocol.SteamData
 import org.atalaia.core.state.AppState
 
@@ -91,67 +89,5 @@ fun GameScreen(state: AppState, now: Long, modifier: Modifier) {
                 }
             }
         }
-    }
-}
-
-// ---------------------------------------------------------------- Claude
-
-@Composable
-fun ClaudeScreen(state: AppState, now: Long, modifier: Modifier) {
-    val c = state.dataOf<ClaudeData>("claude")
-    val freshness = state.freshness("claude", now)
-    val agentNow = state.agentNowMs(now)
-    val plan = c?.plan
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PanelCard(Modifier.fillMaxWidth()) {
-            CardLabel(Texts.CLAUDE_USAGE, freshness)
-            if (c != null && plan == null) {
-                Box(Modifier.fillMaxWidth().height(112.dp), contentAlignment = Alignment.CenterStart) { MonoText(Texts.NO_PLAN) }
-            } else {
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    UsageRing(Texts.CLAUDE_5H, plan?.fiveHourPercent, Pt.untilReset(plan?.fiveHourResetsAt, agentNow))
-                    UsageRing(Texts.CLAUDE_WEEK, plan?.sevenDayPercent, Pt.untilReset(plan?.sevenDayResetsAt, agentNow))
-                }
-            }
-        }
-        PanelCard(Modifier.fillMaxWidth().weight(1f)) {
-            CardLabel(Texts.CLAUDE_LOCAL, freshness)
-            if (c == null) return@PanelCard
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 4.dp)) {
-                WindowRow(Texts.WINDOW_5H, c.last5h)
-                WindowRow(Texts.WINDOW_24H, c.last24h)
-                WindowRow(Texts.WINDOW_7D, c.last7d)
-                if (c.models.isNotEmpty()) {
-                    Box(Modifier.height(8.dp))
-                    MonoText(Texts.CLAUDE_MODELS)
-                    c.models.forEach { m ->
-                        Row(Modifier.fillMaxWidth().height(30.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.weight(1f)) { BodyText(m.model, sp = 14) }
-                            MonoText("${Pt.tokens(m.outputTokens)} ${Texts.OUTPUT}", Palette.Text, 13)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun UsageRing(label: String, percent: Int?, reset: String?) {
-    Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        Ring(percent, levelColor(percent, 90), 92.dp, "%")
-        Column {
-            BodyText(label, sp = 16)
-            MonoText(reset ?: "", sp = 12)
-        }
-    }
-}
-
-@Composable
-private fun WindowRow(label: String, w: ClaudeWindow) {
-    Row(Modifier.fillMaxWidth().height(32.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.weight(0.5f)) { BodyText(label, sp = 15) }
-        Box(Modifier.weight(1f)) { MonoText("${w.responses ?: 0} ${Texts.RESPONSES}", Palette.Text, 13) }
-        Box(Modifier.weight(1f)) { MonoText("${Pt.tokens(w.outputTokens)} ${Texts.OUTPUT}", Palette.Text, 13) }
     }
 }

@@ -20,7 +20,7 @@ public class SourceCatalogTests
     {
         var registered = PluginRegistry.Build(new ConfigurationBuilder().Build(), simulate: true).Select(r => r.Plugin.Id).ToArray();
         Assert.Equal(registered.Order(StringComparer.Ordinal), SourceCatalog.All.Select(s => s.Id).Order(StringComparer.Ordinal));
-        Assert.Equal(11, SourceCatalog.All.Count);
+        Assert.Equal(10, SourceCatalog.All.Count);
         Assert.Equal(SourceCatalog.All.Count, SourceCatalog.All.Select(s => s.Id).Distinct().Count());
         Assert.All(SourceCatalog.All, s => { Assert.False(string.IsNullOrWhiteSpace(s.Name)); Assert.False(string.IsNullOrWhiteSpace(s.Description)); });
     }
@@ -76,16 +76,11 @@ public class SourceCatalogTests
         Assert.Single(SourceCatalog.Missing("gpu", Probe(env: new() { ["PATH"] = null })));
     }
 
-    // -------------------------------------------------------------- Claude
-
     [Fact]
-    public void Claude_procura_a_pasta_configurada_depois_a_variavel_depois_a_do_usuario()
+    public void A_fonte_claude_esta_desativada_e_fora_do_catalogo_e_do_registro()
     {
-        Assert.Empty(SourceCatalog.Missing("claude", Probe(dir: d => d == @"C:\Users\fake\.claude")));
-        Assert.Single(SourceCatalog.Missing("claude", Probe(dir: _ => false)));
-        Assert.Empty(SourceCatalog.Missing("claude", Probe(env: new() { ["CLAUDE_CONFIG_DIR"] = @"E:\cfg" }, dir: d => d == @"E:\cfg")));
-        Assert.Empty(SourceCatalog.Missing("claude", Probe(new() { ["configDir"] = @"F:\c" }, dir: d => d == @"F:\c", env: new() { ["CLAUDE_CONFIG_DIR"] = @"E:\cfg" })));
-        Assert.Single(SourceCatalog.Missing("claude", Probe(new() { ["configDir"] = @"F:\c" }, dir: d => d == @"E:\cfg")));
+        Assert.DoesNotContain(SourceCatalog.All, s => s.Id == "claude");
+        Assert.DoesNotContain(PluginRegistry.Build(new ConfigurationBuilder().Build(), simulate: false), r => r.Plugin.Id == "claude");
     }
 
     // -------------------------------------------------------------- credenciais

@@ -21,7 +21,7 @@ internal sealed record SourceProbe(
     string UserHome);                        // %USERPROFILE%
 
 /// <summary>
-/// As onze fontes que o agente publica, na ordem do registro, com a descrição para o usuário e o que falta configurar. A lista é a do
+/// As dez fontes que o agente publica, na ordem do registro, com a descrição para o usuário e o que falta configurar. A lista é a do
 /// <c>PluginRegistry</c> (um teste confere que são as mesmas): fonte nova no agente entra aqui também.
 /// </summary>
 internal static class SourceCatalog
@@ -36,7 +36,6 @@ internal static class SourceCatalog
         new("ups", "Nobreak", "nobreak Intelbras, lido do banco do software dele"),
         new("weather", "Clima", "temperatura e condição, via Open-Meteo"),
         new("notifications", "Notificações", "avisos do Windows: só o nome do app e a contagem"),
-        new("claude", "Claude", "limites de sessão e semanais"),
         new("steam", "Steam", "jogo atual, biblioteca e amigos"),
         new("discord", "Discord", "chamada de voz"),
     ];
@@ -56,11 +55,6 @@ internal static class SourceCatalog
             case "weather":
                 return Coordinate(p.Option("latitude")) && Coordinate(p.Option("longitude"))
                     ? [] : ["Faltam a latitude e a longitude do seu local: use o botão Configurar (graus decimais, com ponto). Também valem Plugins:weather:latitude e Plugins:weather:longitude."];
-            case "claude":
-                {
-                    var dir = Blank(p.Option("configDir")) ?? Blank(p.Env("CLAUDE_CONFIG_DIR")) ?? Path.Combine(p.UserHome, ".claude");
-                    return p.DirectoryExists(dir) ? [] : ["A pasta do Claude Code não foi encontrada. Se ela está em outro lugar, informe em Plugins:claude:configDir."];
-                }
             case "steam":
                 return Blank(p.Option("apiKey")) is not null && Blank(p.Option("steamId64")) is not null
                     ? [] : ["Faltam a chave da API e o SteamID64: use o botão Configurar (a chave fica criptografada neste PC) ou defina as variáveis de ambiente ATALAIA_Plugins__steam__apiKey e ATALAIA_Plugins__steam__steamId64."];

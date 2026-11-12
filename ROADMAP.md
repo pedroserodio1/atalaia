@@ -9,10 +9,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 
 ## Onde estamos
 
-- **Agente (Windows):** 11 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `claude` (a ser desativada, ver 0.1.2), `steam`, `discord`, `weather`, `notifications`),
+- **Agente (Windows):** 10 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `steam`, `discord`, `weather`, `notifications`),
   bandeja, janela de configuração (WinForms + WebView2) com onboarding de 6 passos, módulo USB (`adb reverse`), cofre de segredos, atualização
   automática.
-- **App (tablet):** 6 abas (Início, Sistema, Mídia, Discord, Jogo, Claude), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
+- **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
 - **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 está fechada.
 - **Issues abertas:** [#12](https://github.com/pedroserodio1/atalaia/issues/12) (Steam desmarca "jogando agora"),
@@ -58,7 +58,7 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
 - [ ] **#17:** o nobreak fica marcado "na bateria" para sempre quando a energia volta com o PC desligado (o evento de restauração nunca é gravado).
   Deduzir a volta da rede nas leituras de `status_history`: tensão de entrada normal OU carga da bateria subindo (ideia do mantenedor), com regra
   anti-ruído (a carga oscila 1%) e função pura testada; a tensão em bateria ainda é a confirmar com uma queda real. O alerta do tablet deve sumir sozinho.
-- [ ] **Desativar a fonte Claude** (plugin `claude`, aba Claude e o bloco na coluna "agora") até existir uma fonte de dados mais confiável.
+- [x] **Desativar a fonte Claude** (plugin `claude`, aba Claude e o bloco na coluna "agora") até existir uma fonte de dados mais confiável.
   Decisão do mantenedor: fica desligada de vez, sem opção de ligar, e some do onboarding e da aba Fontes de dados. O código pode ficar no
   repositório, mas o `hello` não deve declará-la e o app não deve desenhar a aba (restam 5). Os itens que dependem dela (tutorial da 0.2.0 e
   alerta de limite da 0.3.0) ficam suspensos. Voltar a ligar é uma decisão futura, quando houver fonte confiável.
@@ -125,6 +125,10 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
 ### Pequenas melhorias de instalação
 
 - [ ] App do tablet abrindo sozinho ao ligar o aparelho (hoje é só tela cheia e sempre acesa).
+- [ ] App do tablet abrindo sozinho **depois de instalado ou atualizado por USB**. Hoje o `adb install -r` deixa o app fechado. Depois de uma
+  instalação bem-sucedida o agente roda `adb shell am start -n org.atalaia.app/.MainActivity` (argumentos fixos, só o pacote do Atalaia),
+  no `AdbService.RunInstallAsync`, que serve à atualização automática e ao passo "App no tablet". Falhar ao abrir não deve virar erro de
+  instalação. É comportamento novo (`feat`), por isso fica na 0.2.0 e não na 0.1.2 (a esteira barra `feat` em patch).
 - [ ] Avisar na tela quando o código de acesso mudou depois de atualizar ou reiniciar o agente (o tablet precisa do código novo). Some se a #15
   for resolvida pelo pareamento.
 

@@ -38,7 +38,7 @@ Cada cenário diz o **esperado** e o que **anotar**. Marque `[x]` ao passar e es
   ```
 
   (No PowerShell: `$env:ATALAIA_Usb__Enabled="true"; dotnet run --project src/Atalaia.Agent.Host -- --console --simulate`.)
-  O console mostra o código de 6 dígitos (e o menu da bandeja). Ele **muda a cada início do agente**. Com `--simulate` as 11 fontes ficam ligadas e o nobreak alterna entre rede e bateria sozinho.
+  O console mostra o código de 6 dígitos (e o menu da bandeja). Ele **muda a cada início do agente**. Com `--simulate` as 10 fontes ficam ligadas e o nobreak alterna entre rede e bateria sozinho.
 - [ ] **Wi-Fi (só para os cenários 4 a 7):** ligue `Agent:ListenOnLan` em `agent/appsettings.Local.json`
   (`{ "Agent": { "ListenOnLan": true }, "Usb": { "Enabled": true } }`), reinicie o agente e **permita** o aviso do Firewall do
   Windows para rede privada. Descubra o IP do PC (`ipconfig`, o IPv4 da placa que o tablet alcança) e confirme que o tablet
@@ -59,7 +59,7 @@ dado sem `update` por mais de 15 s aparece como "velho".
 
 ## 2. USB normal
 
-1. Com o cabo ligado e o agente rodando, navegue pelas seis abas. **Esperado:** todas desenham dados; nenhuma falha.
+1. Com o cabo ligado e o agente rodando, navegue pelas cinco abas. **Esperado:** todas desenham dados; nenhuma falha.
 2. Mídia: tocar/pausar, próxima, anterior e toque na barra de posição. **Esperado:** o agente reage (o dado muda em ≤ 1 s).
 3. Mixer: arraste o volume de um app e toque em "mudo". Discord: mic mudo e volumes. **Esperado:** o valor fica no que você
    soltou e o agente confirma.

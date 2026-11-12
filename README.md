@@ -3,7 +3,7 @@
 <p align="center"><img src="assets/brand/social-preview.png" alt="Atalaia: o painel do seu PC, no tablet" width="640"></p>
 
 Um tablet Android usado vira o painel dedicado do PC: mostra o uso do sistema, a música que está tocando, o Discord e o
-uso do Claude, e controla volume, mídia e microfone. Um programa em segundo plano no PC (o **agente**) lê os dados e
+jogo que está aberto, e controla volume, mídia e microfone. Um programa em segundo plano no PC (o **agente**) lê os dados e
 executa as ações; o **app do tablet** só desenha as telas e devolve os toques.
 
 **Atalaia** é o posto de vigia de onde se enxerga ao longe: aqui, o tablet que fica de olho no seu PC. O projeto é de código
@@ -19,7 +19,7 @@ aberto, sob a [GNU GPL, versão 3 ou posterior](LICENSE) (veja [Licença](#licen
   ┌──────────────────────┐   WebSocket + HTTP     ┌────────────────────────┐
   │ agente (C#, .NET 10) │ ◄────────────────────► │ app (Kotlin + Compose) │
   │ bandeja do sistema   │  USB (adb reverse) ou  │ coluna "agora" + abas  │
-  │ 11 fontes de dados   │  Wi-Fi da rede local   │ troca de USB/Wi-Fi     │
+  │ 10 fontes de dados   │  Wi-Fi da rede local   │ troca de USB/Wi-Fi     │
   └──────────────────────┘   protocolo v1         └────────────────────────┘
 ```
 
@@ -34,7 +34,7 @@ aberto, sob a [GNU GPL, versão 3 ou posterior](LICENSE) (veja [Licença](#licen
 
 `system` (CPU, RAM, discos, rede), `gpu` (NVIDIA), `media` (faixa, capa e controles), `audio` (volume geral e por
 aplicativo), `activeWindow`, `ups` (nobreak Intelbras, com alerta de queda de energia), e as opcionais `weather`,
-`notifications`, `claude`, `steam` e `discord`. Só ações declaradas pelos plugins existem: não há comando livre.
+`notifications`, `steam` e `discord`. A fonte `claude` está desativada desde a 0.1.2. Só ações declaradas pelos plugins existem: não há comando livre.
 
 > **Compatibilidade do nobreak.** A fonte `ups` funciona hoje **só com nobreaks Intelbras, lendo o banco de dados do software
 > deles** (somente leitura). Outras marcas e softwares **ainda não são compatíveis**. Tem outro nobreak? **Pull requests
@@ -90,9 +90,9 @@ adb shell am start -n org.atalaia.app/.MainActivity --es hosts "127.0.0.1:8765,1
 
 | Parte | Situação |
 |---|---|
-| Agente (marco 1) | Pronto: 11 fontes, ações, capa da mídia, bandeja, simulador |
+| Agente (marco 1) | Pronto: 10 fontes, ações, capa da mídia, bandeja, simulador |
 | App: protocolo, conexão, failover USB/Wi-Fi, estado | Pronto e testado (a troca de canal foi testada só com rede falsa) |
-| App: telas Início, Sistema, Mídia, Discord, Jogo (Steam) e Claude | Prontas, conferidas no tablet real com o agente simulado |
+| App: telas Início, Sistema, Mídia, Discord e Jogo (Steam) | Prontas, conferidas no tablet real com o agente simulado |
 | App: tela de configuração (endereços e token) | Pronta, conferida no tablet real |
 | Agente: módulo que mantém o `adb reverse` sozinho (`Usb:Enabled`) | Pronto, conferido com o tablet real |
 | Teste com cabo e Wi-Fi reais, medição final de desempenho | A fazer |
