@@ -14,4 +14,7 @@ object Protocol {
 
     /** Fechamento 4401: token errado, hello ausente ou primeira mensagem que não é hello. */
     const val CLOSE_UNAUTHORIZED = 4401
+
+    /** Razão do 4401 quando o agente bloqueou este endereço por tentativas erradas (o token nem foi conferido). */
+    const val CLOSE_REASON_LOCKED = "locked"
 }
