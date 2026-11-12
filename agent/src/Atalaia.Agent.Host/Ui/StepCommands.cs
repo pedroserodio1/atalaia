@@ -34,7 +34,8 @@ internal sealed record StepServices(
     Func<string?> PickAdb,                        // caixa "Procurar…" (só na thread da janela)
     Func<string?> PickApk,
     Action<string> CopyText,
-    Action<string> OpenExternal);
+    Action<string> OpenExternal,
+    Func<string, IReadOnlyDictionary<string, string>, CancellationToken, Task<SourceTestResult>> TestSource);   // "Testar conexão": a rede entra por aqui
 
 /// <summary>
 /// Os comandos dos seis passos do onboarding: rede e Firewall, USB e adb, app no tablet, código, fontes e resumo. A janela só pergunta e
@@ -79,6 +80,8 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         r.Register("sources.set", a => SourcesSet(CommandRouter.Text(a, "id", 32), Bool(a, "enabled")));
         r.Register("sources.configure", a => SourcesConfigure(CommandRouter.Text(a, "id", 32), FormValues(a)));
         r.Register("sources.clearConfig", a => SourcesClearConfig(CommandRouter.Text(a, "id", 32)));
+        r.Register("sources.test", a => SourcesTest(CommandRouter.Text(a, "id", 32), OptionalValues(a)));
+        r.Register("sources.openPage", a => SourcesOpenPage(CommandRouter.Text(a, "id", 32)));
 
         r.Register("summary.get", _ => Summary());
         r.Register("startup.set", a => StartupSet(Bool(a, "enabled")));
@@ -404,6 +407,7 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
             };
             var fields = SourceCredentials.For(info.Id);
             if (fields.Count > 0) entry["fields"] = new JsonArray([.. fields.Select(f => FieldJson(info.Id, f))]);
+            if (SourceHelp.For(info.Id) is { } help) entry["help"] = HelpJson(info.Id, help);
             list.Add(entry);
         }
         return new JsonObject { ["simulate"] = s.Runtime.Simulate, ["sources"] = list };
@@ -427,6 +431,16 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         return o;
     }
 
+    /// <summary>O tutorial da fonte. O endereço da página nunca vai para a tela: ela só pede "abrir" pelo id (<c>sources.openPage</c>).</summary>
+    private static JsonNode HelpJson(string sourceId, SourceHelp h) => new JsonObject
+    {
+        ["title"] = h.Title,
+        ["steps"] = new JsonArray([.. h.Steps.Select(t => (JsonNode)JsonValue.Create(t)!)]),
+        ["ifWrong"] = new JsonArray([.. h.IfWrong.Select(t => (JsonNode)JsonValue.Create(t)!)]),
+        ["pageLabel"] = h.PageLabel,
+        ["canTest"] = SourceTester.CanTest(sourceId),
+    };
+
     /// <summary>Os valores do formulário (<c>values</c>: nome do campo → texto). Qualquer outra forma é recusada.</summary>
     private static Dictionary<string, string?> FormValues(JsonElement a)
     {
@@ -438,6 +452,46 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
                 : p.Value.ValueKind == JsonValueKind.Null ? null : throw new CommandException("invalid_args", $"O valor de '{p.Name}' precisa ser texto.");
         return map;
     }
+
+    /// <summary>Como <see cref="FormValues"/>, mas sem <c>values</c> vale vazio (a fonte do nobreak não tem formulário).</summary>
+    private static Dictionary<string, string?> OptionalValues(JsonElement a) =>
+        a.TryGetProperty("values", out var v) && v.ValueKind == JsonValueKind.Object ? FormValues(a) : [];
+
+    private Task<JsonNode?> SourcesOpenPage(string id)
+    {
+        var url = SourceHelp.PageUrl(id) ?? throw new CommandException("invalid_args", "Esta fonte não tem página para abrir.");
+        s.OpenExternal(url);   // o endereço vem da lista fechada de SourceHelp, nunca da página
+        return Task.FromResult<JsonNode?>(null);
+    }
+
+    /// <summary>
+    /// "Testar conexão": usa o que está digitado e, no segredo em branco, o que já está guardado (mesma regra do "em branco = manter"). Campo que uma
+    /// variável de ambiente define vale pelo valor dela. Não grava nada, não religa o agente, e o valor nunca volta nem vai para o log.
+    /// O resultado é sempre <c>{ ok, message }</c>, até quando os campos estão errados: a causa aparece no próprio formulário.
+    /// </summary>
+    private async Task<JsonNode?> SourcesTest(string id, Dictionary<string, string?> submitted)
+    {
+        if (!SourceTester.CanTest(id)) throw new CommandException("invalid_args", "Esta fonte não tem teste.");
+        var fields = SourceCredentials.For(id);
+        if (submitted.Keys.Any(k => fields.All(f => f.Name != k))) throw new CommandException("invalid_args", "Campo desconhecido.");
+
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (fields.Count > 0)
+        {
+            var pinned = fields.Where(f => !string.IsNullOrWhiteSpace(s.Probe(id).Env(f.EnvName(id)))).ToList();
+            var form = submitted.Where(kv => pinned.All(f => f.Name != kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            if (!SourceCredentials.TryValidateForm(id, form, f => pinned.Contains(f) || !string.IsNullOrWhiteSpace(s.Runtime.Config[f.Key(id)]) || s.Vault.Has(f.Key(id)),
+                    out var changes, out var errors))
+                return TestJson(new SourceTestResult(false, string.Join(" ", errors)));
+            foreach (var f in fields)
+                values[f.Name] = changes.TryGetValue(f, out var typed) ? typed
+                    : s.Runtime.Config[f.Key(id)] is { Length: > 0 } saved ? saved : "";
+            if (values.Values.Any(string.IsNullOrWhiteSpace)) return TestJson(new SourceTestResult(false, "Faltam campos para testar. Preencha e tente de novo."));
+        }
+        return TestJson(await s.TestSource(id, values, CancellationToken.None));
+    }
+
+    private static JsonNode TestJson(SourceTestResult r) => new JsonObject { ["ok"] = r.Ok, ["message"] = r.Message };
 
     private async Task<JsonNode?> SourcesConfigure(string id, Dictionary<string, string?> submitted)
     {

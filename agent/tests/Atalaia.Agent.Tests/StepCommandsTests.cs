@@ -71,6 +71,8 @@ internal sealed class StepHarness : IAsyncLifetime
     public Func<string, AdbResult>? InstallReply;
     public List<string> Copied = [];
     public List<string> Opened = [];
+    public List<(string Id, Dictionary<string, string> Values)> Tested = [];   // o que "Testar conexão" mandou testar (a rede nunca é tocada)
+    public SourceTestResult TestReply = new(true, "ok");
     public Dictionary<string, string> RunKeyValues = [];
     public string ExePath = @"C:\Atalaia\AtalaiaAgent.exe";
     public StepCommands Commands = null!;
@@ -115,7 +117,8 @@ internal sealed class StepHarness : IAsyncLifetime
             PickAdb: () => PickAdb(),
             PickApk: () => PickApk(),
             CopyText: Copied.Add,
-            OpenExternal: Opened.Add);
+            OpenExternal: Opened.Add,
+            TestSource: (id, values, _) => { Tested.Add((id, new Dictionary<string, string>(values))); return Task.FromResult(TestReply); });
         Commands = new StepCommands(services);
         Commands.Register(Router);
     }
@@ -195,7 +198,7 @@ public class StepCommandsContractTests : StepTestBase
         Assert.Equal(
             ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get", "code.keep", "code.renew",
              "network.firewallCreate", "network.get", "network.setAdapter", "network.setLan", "network.setPort", "network.verify",
-             "sources.clearConfig", "sources.configure", "sources.get", "sources.set", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
+             "sources.clearConfig", "sources.configure", "sources.get", "sources.openPage", "sources.set", "sources.test", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
             H.Router.Commands.Order(StringComparer.Ordinal).ToArray());
     }
 }
