@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -171,6 +172,19 @@ class AppStateStoreTest {
     }
 
     @Test
+    fun fonte_de_intervalo_longo_so_fica_velha_depois_de_dois_intervalos() = runTest {
+        val x = ctx()
+        x.feed(hello())   // a Steam do hello coleta a cada 30 s
+        x.feed(update("steam", agentT0, """{"name":"J","state":"online","game":null}"""))
+        advanceTimeBy(45_000)
+        assertEquals(Freshness.FRESH, x.s.freshness("steam", x.now()))   // entre duas coletas não é "velho"
+        advanceTimeBy(15_000)
+        assertEquals(Freshness.FRESH, x.s.freshness("steam", x.now()))   // 2 × 30 s: no limite ainda vale
+        advanceTimeBy(1)
+        assertNotEquals(Freshness.FRESH, x.s.freshness("steam", x.now()))
+    }
+
+    @Test
     fun snapshot_antigo_nao_parece_fresco_a_idade_vem_do_relogio_do_agente() = runTest {
         val x = ctx()
         x.feed(hello())   // o "agora" do agente é agentT0
@@ -221,7 +235,7 @@ class AppStateStoreTest {
         // se o plugin em erro se recuperou e manda dado, o dado fresco vale
         x.feed(update("steam", agentT0, """{"name":"J","state":"online"}"""))
         assertEquals(Freshness.FRESH, x.s.freshness("steam", x.now()))
-        advanceTimeBy(20_000)
+        advanceTimeBy(60_001)   // a Steam coleta a cada 30 s: velho só depois de 2 intervalos
         assertEquals(Freshness.ERROR, x.s.freshness("steam", x.now()))   // e volta a erro quando para
     }
 
