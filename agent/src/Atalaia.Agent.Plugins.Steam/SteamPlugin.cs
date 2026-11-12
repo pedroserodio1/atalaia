@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
 using Atalaia.Agent.Core;
 
 namespace Atalaia.Agent.Plugins.Steam;
@@ -14,11 +15,17 @@ public sealed class SteamPlugin : IPlugin
     private static readonly TimeSpan ExtrasEvery = TimeSpan.FromMinutes(10);
 
     private sealed record Extras(int? Level, object? Library, List<object> Recent, object? Friends);
+    private sealed record Profile(string Name, string State, string AvatarUrl);
+
+    /// <summary>Jogo em andamento: nome e appId (texto, como no protocolo).</summary>
+    public sealed record SteamGame(string Name, string AppId);
 
     private readonly HttpClient _http = new() { BaseAddress = new Uri("https://api.steampowered.com/"), Timeout = TimeSpan.FromSeconds(8) };
     private string _key = "", _id = "";
     private Extras? _extras;
     private long _extrasStamp;
+    private Profile? _profile;     // último perfil lido com sucesso
+    private SteamGame? _game;      // último jogo mostrado
 
     public string Id => "steam";
     public string Name => "Steam";
@@ -42,9 +49,24 @@ public sealed class SteamPlugin : IPlugin
 
     public async Task<JsonElement?> CollectAsync(CancellationToken ct)
     {
-        var summary = await GetAsync("ISteamUser/GetPlayerSummaries/v2/", $"steamids={_id}", ct);
-        var player = summary.GetProperty("response").GetProperty("players").EnumerateArray().FirstOrDefault();
-        if (player.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Steam: resposta sem jogador (steamId64 errado?)");
+        Profile profile;
+        SteamGame? apiGame;
+        try
+        {
+            var summary = await GetAsync("ISteamUser/GetPlayerSummaries/v2/", $"steamids={_id}", ct);
+            var player = summary.GetProperty("response").GetProperty("players").EnumerateArray().FirstOrDefault();
+            if (player.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Steam: resposta sem jogador (steamId64 errado?)");
+
+            profile = new Profile(Str(player, "personaname"),
+                State(player.TryGetProperty("personastate", out var s) && s.TryGetInt32(out var si) ? si : 0),
+                Str(player, "avatarfull"));
+            apiGame = player.TryGetProperty("gameextrainfo", out var g) ? new SteamGame(g.GetString() ?? "", Str(player, "gameid")) : null;
+        }
+        // API fora do ar (timeout, 5xx) com o jogo ainda aberto: mantém o último dado em vez de apagar o "jogando agora".
+        catch (Exception) when (!ct.IsCancellationRequested && _profile is not null && _extras is not null && ResolveGame(null, _game, ReadRunningAppId()) is not null)
+        {
+            return Payload(_profile, _game);
+        }
 
         if (_extras is null || Environment.TickCount64 - _extrasStamp >= ExtrasEvery.TotalMilliseconds)
         {
@@ -52,18 +74,45 @@ public sealed class SteamPlugin : IPlugin
             _extrasStamp = Environment.TickCount64;
         }
 
-        return Json.ToElement(new
+        _profile = profile;
+        _game = ResolveGame(apiGame, _game, ReadRunningAppId());
+        return Payload(profile, _game);
+    }
+
+    private JsonElement Payload(Profile p, SteamGame? game) => Json.ToElement(new
+    {
+        name = p.Name,
+        state = p.State,
+        level = _extras!.Level,
+        avatarUrl = p.AvatarUrl,
+        game = game is null ? null : new { name = game.Name, appId = game.AppId },
+        library = _extras.Library,
+        recent = _extras.Recent,
+        friends = _extras.Friends,
+    });
+
+    /// <summary>
+    /// O jogo a mostrar. A API da Steam demora a atualizar a presença e às vezes falha: se ela não traz jogo mas o
+    /// <c>RunningAppID</c> da Steam no PC ainda é o do último jogo conhecido, ele continua aberto e o estado se mantém.
+    /// </summary>
+    public static SteamGame? ResolveGame(SteamGame? fromApi, SteamGame? last, int runningAppId)
+    {
+        if (fromApi is not null) return fromApi;
+        return last is not null && runningAppId != 0
+            && int.TryParse(last.AppId, NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id == runningAppId
+            ? last : null;
+    }
+
+    /// <summary>AppID do jogo que o cliente Steam deste PC está rodando agora (<c>0</c> = nenhum, ou sem leitura). Só lê.</summary>
+    private static int ReadRunningAppId()
+    {
+        if (!OperatingSystem.IsWindows()) return 0;
+        try
         {
-            name = Str(player, "personaname"),
-            state = State(player.TryGetProperty("personastate", out var s) && s.TryGetInt32(out var si) ? si : 0),
-            level = _extras.Level,
-            avatarUrl = Str(player, "avatarfull"),
-            game = player.TryGetProperty("gameextrainfo", out var g)
-                ? new { name = g.GetString() ?? "", appId = Str(player, "gameid") } : null,
-            library = _extras.Library,
-            recent = _extras.Recent,
-            friends = _extras.Friends,
-        });
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam");
+            return key?.GetValue("RunningAppID") is int id ? id : 0;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return 0; }
     }
 
     /// <summary><c>refresh</c> recarrega também nível, biblioteca, recentes e amigos (normalmente a cada 10 min).</summary>

@@ -47,7 +47,7 @@ Rodar como na Fase 1. Com `ATALAIA_DATA_DIR` apontando para uma pasta de teste, 
 | 12 | **App no tablet em build `-dev`** | Aviso de que não há release e o botão **Escolher APK…**: só aceita um arquivo que seja um APK; instala e mostra "App instalado" |
 | 13 | **QR** | A câmera do tablet abre a página da release (ou a lista de releases em build `-dev`) |
 | 14 | **Código:** com o tablet configurado | O código mostrado é o do menu da bandeja; ao tablet conectar, o passo conclui sozinho em 1 s e avança. Com `ATALAIA_TOKEN` definido, o código não aparece nem é copiado |
-| 15 | **Fontes** | As onze, ligar e desligar religa o agente sem perder o código. O que falta (clima, nobreak, Steam, Discord) aparece em coral com a variável a definir, nunca o valor |
+| 15 | **Fontes** | As dez, ligar e desligar religa o agente sem perder o código. O que falta (clima, nobreak, Steam, Discord) aparece em coral com a variável a definir, nunca o valor |
 | 16 | **Pronto:** ligar **Iniciar com o Windows**, reiniciar a sessão do Windows | O agente sobe sozinho na bandeja, sem abrir a janela (o onboarding já foi concluído). Desligar remove o valor `Atalaia` da chave Run |
 
 **O que ainda não foi provado** (precisa de Windows com permissão de administrador, tablet real ou release publicada): a criação da regra pelo processo

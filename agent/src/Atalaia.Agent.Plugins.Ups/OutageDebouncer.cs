@@ -27,6 +27,13 @@ public sealed class OutageDebouncer(TimeSpan shortOutage, TimeSpan groupWindow)
         return [];
     }
 
+    /// <summary>Descarta a falha aberta sem gerar evento (a volta foi deduzida por fora, com o PC desligado).</summary>
+    public void Abort()
+    {
+        _failAt = null;
+        _announced = false;
+    }
+
     /// <summary>Volta sem falha aberta: ignorada.</summary>
     public IReadOnlyList<UpsEvent> OnRestore(DateTime t)
     {

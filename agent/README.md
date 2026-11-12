@@ -56,8 +56,8 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
    configuração do app. Em build de desenvolvimento (`-dev`) não há release: você escolhe um APK do seu computador. O QR leva à página da release,
    para instalar sem cabo.
 4. **Código de pareamento:** mostra o código de 6 dígitos (só aqui e no menu da bandeja), copia, e conclui sozinho quando um tablet conecta (USB ou Wi-Fi).
-5. **Fontes de dados:** as onze fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
-   banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`, Claude sem a pasta). **Clima, Steam e Discord têm o botão Configurar**, com um
+5. **Fontes de dados:** as dez fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
+   banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`). **Clima, Steam e Discord têm o botão Configurar**, com um
    formulário por fonte (veja [Credenciais das fontes](#credenciais-das-fontes-pela-janela)): o que é segredo vai para um cofre criptografado
    com a sua conta do Windows e **nunca volta à tela** (só "Configurada", com Trocar e Remover).
 6. **Pronto:** resumo real de cada item, **Iniciar com o Windows** (valor `Atalaia` na chave `HKCU\...\Run`, só para o `AtalaiaAgent.exe` instalado) e
@@ -194,8 +194,6 @@ nunca no `appsettings.json`; veja o `.env.example`):
 | Chave | Significado |
 |---|---|
 | `Plugins:weather:latitude` / `longitude` | Local do clima (Open-Meteo), graus decimais com ponto. Sem isso o plugin fica em erro |
-| `Plugins:claude:configDir` | Pasta do Claude Code; vazio = `CLAUDE_CONFIG_DIR` ou `~/.claude` |
-| `Plugins:claude:livePlan` / `livePlanIntervalMin` | `true` consulta o plano com `claude -p` (~10 s e **consome cota real**), a cada 30 min por padrão. `false` usa o cache do Claude Code, que só vale se tiver até 15 min (senão o plano fica "sem dados"; o cache só se atualiza com o Claude Code em uso) |
 | `Plugins:steam:apiKey` / `steamId64` | Chave da Web API e SteamID64 (`ATALAIA_Plugins__steam__apiKey`) |
 | `Plugins:discord:clientId` / `clientSecret` | App do Discord (`ATALAIA_Plugins__discord__clientId`). Na primeira vez o Discord mostra um pop-up de autorização; o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json` |
 | `Plugins:notifications` | Só nome do app e contagem; exige liberar o acesso em Configurações > Privacidade > Notificações |
@@ -225,7 +223,7 @@ Página única, sem dependências, com um cartão por fonte (as 11) e controles 
   Sessões do mesmo executável viram uma linha só, como no mixer do Windows.
 - **Discord:** microfone mudo, áudio desligado (ensurdecer), volumes de entrada e saída, quem está falando.
 - **Notificações:** "Limpar tudo" (pede confirmação; não dá para desfazer).
-- **↻ em cada cartão** que suporta: coleta de novo agora (`weather`, `steam`, `claude`, `ups`, `notifications`).
+- **↻ em cada cartão** que suporta: coleta de novo agora (`weather`, `steam`, `ups`, `notifications`).
 - Eventos (queda de energia etc.), envio manual de ações e as mensagens brutas num painel recolhível.
 
 Os controles só aparecem quando o agente declara a ação no `hello`, e o efeito aparece na hora (a falha desfaz
@@ -244,7 +242,7 @@ Abrir o arquivo direto também funciona na maioria dos navegadores comuns. O tok
 
 O modo "simulador local" da própria página funciona sem o agente. A `test-client.html` é cópia exata de
 `docs/test-client.html` (contrato com o app do tablet) e só mostra as 6 fontes originais; use o `painel.html`
-para as 11 fontes e os controles.
+para as 10 fontes e os controles.
 
 ## Testar a capa da mídia
 

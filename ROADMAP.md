@@ -9,10 +9,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 
 ## Onde estamos
 
-- **Agente (Windows):** 11 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `claude` (a ser desativada, ver 0.1.2), `steam`, `discord`, `weather`, `notifications`),
+- **Agente (Windows):** 10 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `steam`, `discord`, `weather`, `notifications`),
   bandeja, janela de configuração (WinForms + WebView2) com onboarding de 6 passos, módulo USB (`adb reverse`), cofre de segredos, atualização
   automática.
-- **App (tablet):** 6 abas (Início, Sistema, Mídia, Discord, Jogo, Claude), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
+- **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
 - **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 está fechada.
 - **Issues abertas:** [#12](https://github.com/pedroserodio1/atalaia/issues/12) (Steam desmarca "jogando agora"),
@@ -27,10 +27,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | Versão | Tema | Tipo | Principais itens |
 |---|---|---|---|
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
-| **0.1.2** | Correções | patch | #12, #13, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
-| **0.2.0** | Primeira experiência | minor | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), provas pendentes |
+| **0.1.2** | Correções | patch | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
+| **0.2.0** | Primeira experiência | minor | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, adiada da 0.1.2), provas pendentes |
 | **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração |
-| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura da CPU e FPS |
+| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV e LoL |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
@@ -47,21 +47,18 @@ Não entrou: assinatura de código do Windows (decisão do mantenedor; o SmartSc
 
 Só correção compatível, sem mexer no protocolo nem na configuração.
 
-- [ ] **#12:** o status "jogando agora" da Steam não pode sumir enquanto o processo do jogo continua aberto. O dado velho do cache não deve
-  apagar o estado; confirmar contra o processo em execução (a fonte `activeWindow` já existe) antes de limpar.
-- [ ] **#13:** o agente não pode cair no boot quando a porta padrão está ocupada (inclusive iniciando com o Windows). Pool de portas com
-  fallback, erro só se todas falharem e a porta escolhida registrada para os clientes.
-  - Atenção: o tablet guarda `host:porta`. O USB acompanha sozinho (o módulo `adb reverse` já usa a porta real), mas o endereço de Wi-Fi muda.
-    A janela precisa mostrar a porta em uso e o onboarding deve avisar. Se a solução exigir o app descobrir a porta, isso vira mudança de
-    contrato e precisa ser combinada com o mantenedor antes.
+- [ ] **#12:** o status "jogando agora" da Steam não pode sumir enquanto o processo do jogo continua aberto. Causa: o app trata o dado como
+  velho após 15 s e a Steam é coletada a cada 30 s. Correção: limite de dado velho por fonte no app (`max(15 s, 2 × intervalMs` do `hello`)) e,
+  no agente, confirmar o jogo em execução pelo `RunningAppID` da Steam quando a API falhar. (A fonte `activeWindow` só vê a janela em primeiro
+  plano, então não serve para isso.)
 - [ ] **#16:** a primeira conexão por Wi-Fi não funciona; só conecta com o USB plugado. Causa ainda não investigada. Verificar, nesta ordem:
   `ListenOnLan` ligado, regra do Firewall (e o perfil de rede, Pública ou Privada), IP mostrado na janela, limite de tentativas errando por
   causa do código que muda, e o agente subindo antes de a rede estar pronta. É o primeiro defeito que a prova de Wi-Fi real (0.2.0) traria, então
   vale antecipá-la.
 - [ ] **#17:** o nobreak fica marcado "na bateria" para sempre quando a energia volta com o PC desligado (o evento de restauração nunca é gravado).
-  Deduzir a volta da rede pela carga da bateria subindo nas leituras de `status_history` (ideia do mantenedor), com regra anti-ruído (a carga
-  oscila 1%) e função pura testada; a tensão de entrada é um reforço possível, a confirmar com dados reais. O alerta do tablet deve sumir sozinho.
-- [ ] **Desativar a fonte Claude** (plugin `claude`, aba Claude e o bloco na coluna "agora") até existir uma fonte de dados mais confiável.
+  Deduzir a volta da rede nas leituras de `status_history`: tensão de entrada normal OU carga da bateria subindo (ideia do mantenedor), com regra
+  anti-ruído (a carga oscila 1%) e função pura testada; a tensão em bateria ainda é a confirmar com uma queda real. O alerta do tablet deve sumir sozinho.
+- [x] **Desativar a fonte Claude** (plugin `claude`, aba Claude e o bloco na coluna "agora") até existir uma fonte de dados mais confiável.
   Decisão do mantenedor: fica desligada de vez, sem opção de ligar, e some do onboarding e da aba Fontes de dados. O código pode ficar no
   repositório, mas o `hello` não deve declará-la e o app não deve desenhar a aba (restam 5). Os itens que dependem dela (tutorial da 0.2.0 e
   alerta de limite da 0.3.0) ficam suspensos. Voltar a ligar é uma decisão futura, quando houver fonte confiável.
@@ -115,9 +112,23 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
   guardado no tablet, (C) só documentar o `ATALAIA_TOKEN`. A (B) é a mais segura e permite revogar tablet, mas **muda o contrato** e precisa
   da aprovação do mantenedor; a (A) resolve rápido. O limite de tentativas erradas continua valendo em qualquer caso.
 
+### Porta ocupada no boot (#13, adiada da 0.1.2)
+
+- [ ] **#13:** o agente não pode cair no boot quando a porta padrão está ocupada (inclusive iniciando com o Windows). Hoje o `StartAsync`
+  falha (`AgentRuntime.cs`) e o `Program.cs` mostra uma caixa e encerra, sem bandeja. Pool de portas com fallback (faixa contígua a partir da
+  padrão), erro só se todas falharem, porta em uso mostrada na janela e na bandeja, e o onboarding avisando que o endereço de Wi-Fi mudou.
+  - O tablet guarda `host:porta` e assume 8765 quando só o IP é digitado (`Endpoint.parse`). O USB acompanha sozinho (o `adb reverse` já usa a
+    porta real). Decisão do mantenedor: o **app descobrir a porta**. Isso **muda o contrato** (`docs/protocolo-v1.md`), então precisa ser combinado e
+    escrito antes de implementar.
+  - A regra do Firewall é por porta única (`Firewall.cs`): com fallback, passa a ser uma faixa (o avaliador já entende faixas).
+
 ### Pequenas melhorias de instalação
 
 - [ ] App do tablet abrindo sozinho ao ligar o aparelho (hoje é só tela cheia e sempre acesa).
+- [ ] App do tablet abrindo sozinho **depois de instalado ou atualizado por USB**. Hoje o `adb install -r` deixa o app fechado. Depois de uma
+  instalação bem-sucedida o agente roda `adb shell am start -n org.atalaia.app/.MainActivity` (argumentos fixos, só o pacote do Atalaia),
+  no `AdbService.RunInstallAsync`, que serve à atualização automática e ao passo "App no tablet". Falhar ao abrir não deve virar erro de
+  instalação. É comportamento novo (`feat`), por isso fica na 0.2.0 e não na 0.1.2 (a esteira barra `feat` em patch).
 - [ ] Avisar na tela quando o código de acesso mudou depois de atualizar ou reiniciar o agente (o tablet precisa do código novo). Some se a #15
   for resolvida pelo pareamento.
 
@@ -153,6 +164,8 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   "Contribuições bem-vindas").
 - [ ] **Notificações do Windows** com texto legível (ainda a confirmar se o texto vem completo).
 - [ ] **Tráfego de rede** (`system.net`) na aba Sistema.
+- [ ] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
+  MINOR e compatível com o v1, mas é mudança de contrato: combinar com o mantenedor antes. Só uso; temperatura e frequência por núcleo ficam fora.
 
 ## 0.5.0: ações no PC
 

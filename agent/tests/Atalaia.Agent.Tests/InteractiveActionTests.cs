@@ -85,7 +85,7 @@ public class InteractiveActionTests
         Assert.True((await Run(s, "notifications", "clear_all")).Ok);
         await WaitAsync(s, "notifications", d => d.GetProperty("count").GetInt32() <= 1);   // pode chegar uma nova logo depois
 
-        foreach (var id in new[] { "weather", "steam", "claude", "ups", "notifications" })
+        foreach (var id in new[] { "weather", "steam", "ups", "notifications" })
             Assert.True((await Run(s, id, "refresh")).Ok, id);
         Assert.Equal("unknown_action", (await Run(s, "audio", "refresh")).Error);
         Assert.Equal("unknown_action", (await Run(s, "system", "refresh")).Error);

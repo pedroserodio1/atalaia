@@ -106,8 +106,7 @@ fun PanelRoot(app: PanelApp) {
                     1 -> SystemScreen(state, now, content)
                     2 -> MediaScreen(state, now, feedback, app.covers, app.clock, ::act, content)
                     3 -> DiscordScreen(state, now, feedback, app.clock, ::act, content)
-                    4 -> GameScreen(state, now, content)
-                    else -> ClaudeScreen(state, now, content)
+                    else -> GameScreen(state, now, content)
                 }
             }
         }
@@ -122,7 +121,6 @@ private fun TabBar(selected: Int, onSelect: (Int) -> Unit) {
         Tab(IconKind.MUSIC, Texts.TAB_MEDIA, selected == 2) { onSelect(2) }
         Tab(IconKind.HEADSET, Texts.TAB_DISCORD, selected == 3) { onSelect(3) }
         Tab(IconKind.GAMEPAD, Texts.TAB_GAME, selected == 4) { onSelect(4) }
-        Tab(IconKind.SPARK, Texts.TAB_CLAUDE, selected == 5) { onSelect(5) }
     }
 }
 
@@ -148,7 +146,7 @@ private fun Tab(icon: IconKind, label: String, on: Boolean, onClick: () -> Unit)
 private fun ConnectionBanner(c: ConnectionState, onConfigure: () -> Unit) {
     val text = Texts.connectionBanner(c) ?: return
     // Nestes estados o problema se resolve na configuração: a faixa inteira vira um botão para abri-la.
-    val fixable = c is ConnectionState.Stopped || c is ConnectionState.InvalidEndpoint || c is ConnectionState.TokenInvalid
+    val fixable = c is ConnectionState.Stopped || c is ConnectionState.InvalidEndpoint || c is ConnectionState.TokenInvalid || c is ConnectionState.Locked
     val problem = c !is ConnectionState.Connecting
     val shape = RoundedCornerShape(14.dp)
     Box(

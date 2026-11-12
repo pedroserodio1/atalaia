@@ -143,6 +143,29 @@ public class SteamTests
     [InlineData(99, "offline")]
     public void Estado_da_steam_vira_texto_estavel(int state, string expected) =>
         Assert.Equal(expected, SteamPlugin.State(state));
+
+    private static readonly SteamPlugin.SteamGame Ffxiv = new("FFXIV", "39210");
+
+    [Fact]
+    public void Jogo_da_api_sempre_vale()
+    {
+        var outro = new SteamPlugin.SteamGame("Outro", "1");
+        Assert.Equal(outro, SteamPlugin.ResolveGame(outro, Ffxiv, 0));
+    }
+
+    [Fact]
+    public void Api_sem_jogo_mas_o_processo_ainda_roda_mantem_o_ultimo_jogo() =>
+        Assert.Equal(Ffxiv, SteamPlugin.ResolveGame(null, Ffxiv, 39210));
+
+    [Theory]
+    [InlineData(0)]       // a Steam não roda mais nenhum jogo
+    [InlineData(1)]       // roda outro jogo, que a API ainda não mostrou
+    public void Api_sem_jogo_e_processo_que_nao_confere_limpa(int running) =>
+        Assert.Null(SteamPlugin.ResolveGame(null, Ffxiv, running));
+
+    [Fact]
+    public void Sem_jogo_anterior_nao_inventa_um() =>
+        Assert.Null(SteamPlugin.ResolveGame(null, null, 39210));
 }
 
 public class DiscordTests
@@ -224,10 +247,10 @@ public class DiscordTests
 public class OptionalSourcesServerTests
 {
     private static readonly string[] AllIds =
-        ["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "claude", "steam", "discord"];
+        ["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord"];
 
     [Fact]
-    public async Task Simulador_tem_os_onze_ids_e_todos_publicam()
+    public async Task Simulador_tem_os_dez_ids_e_todos_publicam()
     {
         await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
         using var c = await TestClient.ConnectAsync(s.WsUri);
@@ -240,8 +263,6 @@ public class OptionalSourcesServerTests
             Assert.True(Environment.TickCount64 < end, "alguma fonte simulada não publicou");
             await Task.Delay(30);
         }
-        s.Scheduler.Cache.TryGet("claude", out var claude);
-        Assert.Equal("live", claude!.Data.GetProperty("plan").GetProperty("source").GetString());
         s.Scheduler.Cache.TryGet("discord", out var discord);
         Assert.True(discord!.Data.GetProperty("channel").GetProperty("members").GetArrayLength() > 0);
     }

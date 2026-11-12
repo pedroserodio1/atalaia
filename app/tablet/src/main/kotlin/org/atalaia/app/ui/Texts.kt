@@ -13,7 +13,6 @@ object Texts {
     const val TAB_MEDIA = "Mídia"
     const val TAB_DISCORD = "Discord"
     const val TAB_GAME = "Jogo"
-    const val TAB_CLAUDE = "Claude"
 
     const val TAG_STALE = "velho"
     const val TAG_DISABLED = "desligado"
@@ -30,9 +29,6 @@ object Texts {
     const val PLAYING_TAG = "● jogando"
     const val IN_FOCUS_TAG = "em foco"
     const val NO_ACTIVITY = "sem atividade"
-    const val CLAUDE = "Claude"
-    const val CLAUDE_5H = "Sessão 5 h"
-    const val CLAUDE_WEEK = "Semana"
 
     const val SYSTEM = "Sistema"
     const val UPS = "Nobreak"
@@ -78,15 +74,6 @@ object Texts {
     const val FRIENDS_PLAYING = "jogando"
     const val RECENT = "Últimas 2 semanas"
     const val HIDDEN = "oculto no perfil"
-    const val CLAUDE_USAGE = "Uso do plano"
-    const val CLAUDE_LOCAL = "Neste PC"
-    const val CLAUDE_MODELS = "Modelos · 7 dias"
-    const val WINDOW_5H = "5 h"
-    const val WINDOW_24H = "24 h"
-    const val WINDOW_7D = "7 d"
-    const val RESPONSES = "respostas"
-    const val OUTPUT = "saída"
-    const val NO_PLAN = "Plano sem dados (só há o uso local)"
 
     fun steamState(s: String) = when (s) {
         "online" -> "online"
@@ -125,6 +112,7 @@ object Texts {
         is ConnectionState.Connecting -> "Conectando a ${s.endpoint}…"
         is ConnectionState.Unreachable -> "PC desligado ou inalcançável. Tentando de novo…"
         ConnectionState.TokenInvalid -> "Código inválido (muda a cada início do agente). Veja na bandeja."
+        ConnectionState.Locked -> "Muitas tentativas erradas: o PC bloqueou o tablet por um tempo. Tentando de novo sozinho…"
         is ConnectionState.VersionMismatch -> "Versão do protocolo incompatível com o agente."
     }
 

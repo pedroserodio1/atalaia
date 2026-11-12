@@ -12,7 +12,7 @@ import org.atalaia.core.protocol.UpsData
 import java.time.OffsetDateTime
 
 data class StateConfig(
-    /** Sem `update` por mais que isto, a fonte é considerada velha (o agente reenvia a cada 10 s). */
+    /** Sem `update` por mais que isto, a fonte é considerada velha (o agente reenvia a cada 10 s). Fonte com `intervalMs` maior usa 2 × o intervalo. */
     val staleAfterMs: Long = 15_000,
     /** `ups.updatedAt` mais antigo que isto vira "dado antigo". */
     val upsDataOldMs: Long = 5 * 60_000,
@@ -85,7 +85,9 @@ data class AppState(
         if (plugin?.status == PluginStatus.DISABLED) return Freshness.DISABLED
         val entry = sources[source]
             ?: return if (plugin?.status == PluginStatus.ERROR) Freshness.ERROR else Freshness.NO_DATA
-        if (nowMono - entry.collectedAtMono <= config.staleAfterMs) return Freshness.FRESH
+        // Fonte coletada em intervalo longo (Steam, 30 s) não pode ficar "velha" entre duas coletas: vale pelo menos 2 intervalos.
+        val limit = maxOf(config.staleAfterMs, (plugin?.intervalMs ?: 0) * 2L)
+        if (nowMono - entry.collectedAtMono <= limit) return Freshness.FRESH
         return if (plugin?.status == PluginStatus.ERROR) Freshness.ERROR else Freshness.STALE
     }
 

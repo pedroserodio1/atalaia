@@ -6,12 +6,12 @@ using Atalaia.Agent.Core;
 
 namespace Atalaia.Agent.Plugins.Simulator;
 
-/// <summary>Os 11 ids do protocolo (6 do núcleo + 5 opcionais) com dados falsos, no estilo do <c>simFrames()</c> da página de teste.</summary>
+/// <summary>Os 10 ids ativos do protocolo (6 do núcleo + 4 opcionais; a fonte `claude` está desativada desde a 0.1.2) com dados falsos, no estilo do <c>simFrames()</c> da página de teste.</summary>
 public static class SimulatorPlugins
 {
     public static IEnumerable<IPlugin> All() =>
         [new SimSystem(), new SimGpu(), new SimMedia(), new SimAudio(), new SimActiveWindow(), new SimUps(),
-         new SimWeather(), new SimNotifications(), new SimClaude(), new SimSteam(), new SimDiscord()];
+         new SimWeather(), new SimNotifications(), new SimSteam(), new SimDiscord()];
 }
 
 public abstract class SimBase(string id, string name, int intervalMs = 1000) : IPlugin

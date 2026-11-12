@@ -24,6 +24,7 @@ public sealed class UpsPlugin : IPlugin
     private OutageDebouncer _debouncer = null!;
     private long _lastEventId;
     private bool _onBattery;
+    private DateTime? _failAt;   // início da queda em andamento
 
     public string Id => "ups";
     public string Name => "Nobreak";
@@ -57,8 +58,15 @@ public sealed class UpsPlugin : IPlugin
         using var r = cmd.ExecuteReader();
         if (r.Read() && r.GetString(0) == FailText)
         {
-            _onBattery = true;
-            _debouncer.OnFail(ParseLocal(r.GetString(1)));   // queda em andamento: a volta não pode ser ignorada
+            var failAt = ParseLocal(r.GetString(1));
+            // sem evento de restauração: a rede pode ter voltado com o PC desligado (issue #17). Se as leituras
+            // provam isso, a falha velha não entra no debouncer (senão sairia um power_fail crítico a cada boot).
+            if (MainsInference.InferReturn(failAt, ReadReadingsSince(db, failAt)) is null)
+            {
+                _onBattery = true;
+                _failAt = failAt;
+                _debouncer.OnFail(failAt);   // queda em andamento: a volta não pode ser ignorada
+            }
         }
         return Task.CompletedTask;
     }
@@ -69,6 +77,7 @@ public sealed class UpsPlugin : IPlugin
     {
         using var db = Open();   // aberta e fechada a cada coleta
         ReadNewEvents(db);
+        CheckMainsReturn(db);
         foreach (var e in _debouncer.Tick(DateTime.Now)) _ctx.Events.Emit(e.Kind, e.Severity, e.Message);
 
         using var cmd = db.CreateCommand();
@@ -112,10 +121,43 @@ public sealed class UpsPlugin : IPlugin
 
             var at = ParseLocal(r.GetString(2));
             IReadOnlyList<UpsEvent> events;
-            if (text == FailText) { _onBattery = true; events = _debouncer.OnFail(at); }
-            else { _onBattery = false; events = _debouncer.OnRestore(at); }
+            if (text == FailText) { _onBattery = true; _failAt ??= at; events = _debouncer.OnFail(at); }
+            else { _onBattery = false; _failAt = null; events = _debouncer.OnRestore(at); }
             foreach (var e in events) _ctx.Events.Emit(e.Kind, e.Severity, e.Message);
         }
+    }
+
+    /// <summary>
+    /// Na bateria sem evento de restauração: se as leituras provam a rede, encerra a queda. O debouncer é
+    /// descartado (<c>Abort</c>), não passa por <c>OnRestore</c>, que poderia emitir um <c>power_fail</c> velho.
+    /// </summary>
+    private void CheckMainsReturn(SqliteConnection db)
+    {
+        if (!_onBattery || _failAt is not { } failAt) return;
+        if (MainsInference.InferReturn(failAt, ReadReadingsSince(db, failAt)) is null) return;
+
+        _onBattery = false;
+        _failAt = null;
+        _debouncer.Abort();
+        _ctx.Events.Emit("power_restored", "info", "Rede elétrica reestabelecida (voltou com o PC desligado)");
+    }
+
+    /// <summary>Leituras de <c>status_history</c> posteriores a <paramref name="failAt"/>, com os valores crus.</summary>
+    private static List<UpsReading> ReadReadingsSince(SqliteConnection db, DateTime failAt)
+    {
+        using var cmd = db.CreateCommand();
+        cmd.CommandText = "SELECT created_at, battery_charge, input_voltage FROM status_history " +
+                          "WHERE created_at > @since ORDER BY id";
+        cmd.Parameters.AddWithValue("@since", failAt.ToString(TimeFormat, CultureInfo.InvariantCulture));
+        var list = new List<UpsReading>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+        {
+            if (r.IsDBNull(0) || !DateTime.TryParseExact(r.GetString(0), TimeFormat, CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out var at)) continue;
+            list.Add(new UpsReading(at, Number(r, 1), Number(r, 2)));
+        }
+        return list;
     }
 
     private SqliteConnection Open()
