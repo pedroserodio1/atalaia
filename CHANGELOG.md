@@ -3,6 +3,21 @@
 Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.1.2] - 2026-11-12
+
+### Correções
+
+- Mantém o "jogando agora" da Steam enquanto o jogo segue aberto (#12) (#24)
+- Nobreak deixa de ficar "na bateria" quando a rede volta com o PC desligado (#17) (#26)
+- Tablet mostra o bloqueio por tentativas erradas e reconecta sozinho (#16) (#31)
+
+### Outros
+
+- Abre o ciclo 0.1.2
+- Ajusta o ROADMAP da 0.1.2 (#13 adiada para a 0.2.0, núcleos da CPU na 0.4.0) (#25)
+- ROADMAP da 0.2.0 ganha abrir o app depois da instalação por USB (#28)
+- Desativa a fonte Claude (agente e app) (#29)
+
 ## [0.1.1] - 2026-11-11
 
 ### Novidades
