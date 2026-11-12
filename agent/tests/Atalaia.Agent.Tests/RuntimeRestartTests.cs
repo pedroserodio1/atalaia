@@ -92,22 +92,83 @@ public class RuntimeRestartTests
         old.Dispose();
     }
 
+    /// <summary>Ocupa a porta pedida e as seguintes da faixa (<paramref name="count"/> portas, as que já estavam ocupadas por outro programa contam).</summary>
+    private static List<TcpListener> Occupy(int first, int count)
+    {
+        var held = new List<TcpListener>();
+        for (var p = first; p < first + count; p++)
+        {
+            var l = new TcpListener(IPAddress.Loopback, p);
+            try { l.Start(); held.Add(l); }
+            catch (SocketException) { /* já ocupada por outro programa: serve do mesmo jeito */ }
+        }
+        return held;
+    }
+
+    /// <summary>Uma porta livre cuja faixa inteira também está livre (para o teste ocupar só o que quer).</summary>
+    private static int FreeRangeStart()
+    {
+        for (var i = 0; i < 50; i++)
+        {
+            var first = FreePort();
+            var held = Occupy(first, PortRangeCount);
+            var all = held.Count == PortRangeCount;
+            foreach (var l in held) l.Stop();
+            if (all && first + PortRangeCount <= 65535) return first;
+        }
+        throw new InvalidOperationException("Não achei uma faixa de portas livre.");
+    }
+
+    private const int PortRangeCount = Atalaia.Agent.Host.Network.PortRange.Count;
+
+    [Fact]
+    public async Task Porta_ocupada_cai_para_a_proxima_da_faixa_e_o_tablet_conecta_nela()
+    {
+        var first = FreeRangeStart();
+        var busy = Occupy(first, 2);   // a porta pedida e a seguinte
+        try
+        {
+            await using var rt = await StartAsync(Cfg(first), code: "314159");
+
+            Assert.Equal(first + 2, rt.Port);
+            Assert.Equal(first, rt.FirstPort);   // o Firewall e o `adb reverse` partem do começo da faixa
+            Assert.Equal($"127.0.0.1:{first + 2}", rt.Address);
+            using var c = await TestClient.ConnectAsync(Ws(rt));
+            Assert.Equal("hello", (await c.HelloAsync("314159")).Type);
+        }
+        finally { foreach (var l in busy) l.Stop(); }
+    }
+
+    [Fact]
+    public async Task Faixa_inteira_ocupada_falha_dizendo_qual_e_a_faixa()
+    {
+        var first = FreeRangeStart();
+        var busy = Occupy(first, PortRangeCount);
+        try
+        {
+            var rt = new AgentRuntime(Cfg(first), simulate: true, new TokenStore.Result("123456", Created: true));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(rt.StartAsync);
+            Assert.Contains($"{first} a {first + PortRangeCount - 1}", ex.Message);
+            await rt.DisposeAsync();
+        }
+        finally { foreach (var l in busy) l.Stop(); }
+    }
+
     [Fact]
     public async Task Reinicio_que_falha_volta_para_a_configuracao_anterior_e_repassa_o_erro()
     {
         await using var rt = await StartAsync(Cfg(0), code: "999000");
-        var busy = new TcpListener(IPAddress.Loopback, 0);
-        busy.Start();
+        var first = FreeRangeStart();
+        var busy = Occupy(first, PortRangeCount);   // com a faixa toda ocupada não há onde cair
         try
         {
-            var busyPort = ((IPEndPoint)busy.LocalEndpoint).Port;
-            await Assert.ThrowsAnyAsync<Exception>(() => rt.RestartAsync(Cfg(busyPort)));
+            await Assert.ThrowsAnyAsync<Exception>(() => rt.RestartAsync(Cfg(first)));
 
-            Assert.NotEqual(busyPort, rt.Port);   // voltou para a configuração antiga (outra porta livre)
+            Assert.True(rt.Port < first || rt.Port >= first + PortRangeCount);   // voltou para a configuração antiga (outra porta livre)
             using var c = await TestClient.ConnectAsync(Ws(rt));
             Assert.Equal("hello", (await c.HelloAsync("999000")).Type);   // o agente continua de pé, com o mesmo código
         }
-        finally { busy.Stop(); }
+        finally { foreach (var l in busy) l.Stop(); }
     }
 
     [Fact]

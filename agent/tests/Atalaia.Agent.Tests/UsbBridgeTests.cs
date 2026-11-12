@@ -244,12 +244,34 @@ public class UsbBridgeTests
     [Fact]
     public void Reconhece_a_regra_na_saida_do_reverse_list()
     {
-        Assert.True(AdbBridge.HasReverse("(reverse) tcp:8765 tcp:8765\r\n\r\n", 8765));
-        Assert.True(AdbBridge.HasReverse("host-19 tcp:8765 tcp:8765\n", 8765));        // formato mais antigo
-        Assert.True(AdbBridge.HasReverse("(reverse) tcp:9000 tcp:9000\r\n(reverse) tcp:8765 tcp:8765\r\n", 8765));
-        Assert.False(AdbBridge.HasReverse("\r\n", 8765));
-        Assert.False(AdbBridge.HasReverse("(reverse) tcp:8765 tcp:9999\r\n", 8765));
-        Assert.False(AdbBridge.HasReverse("(reverse) tcp:87650 tcp:87650\r\n", 8765));
+        Assert.True(AdbBridge.HasReverse("(reverse) tcp:8765 tcp:8765\r\n\r\n", 8765, 8765));
+        Assert.True(AdbBridge.HasReverse("host-19 tcp:8765 tcp:8765\n", 8765, 8765));        // formato mais antigo
+        Assert.True(AdbBridge.HasReverse("(reverse) tcp:9000 tcp:9000\r\n(reverse) tcp:8765 tcp:8765\r\n", 8765, 8765));
+        Assert.True(AdbBridge.HasReverse("(reverse) tcp:8765 tcp:8767\r\n", 8765, 8767));   // o tablet em 8765, o PC em outra porta da faixa
+        Assert.False(AdbBridge.HasReverse("\r\n", 8765, 8765));
+        Assert.False(AdbBridge.HasReverse("(reverse) tcp:8765 tcp:9999\r\n", 8765, 8765));
+        Assert.False(AdbBridge.HasReverse("(reverse) tcp:87650 tcp:87650\r\n", 8765, 8765));
+    }
+
+    [Fact]
+    public void Porta_padrao_precisa_de_um_reverse_e_outra_porta_de_dois()
+    {
+        Assert.Equal([(8765, 8765)], AdbBridge.Pairs(8765));
+        Assert.Equal([(8765, 8767), (8767, 8767)], AdbBridge.Pairs(8767));   // quem digitou 127.0.0.1:8767 no app continua conectando
+        Assert.True(AdbBridge.HasAllReverses("(reverse) tcp:8765 tcp:8767\r\n(reverse) tcp:8767 tcp:8767\r\n", 8767));
+        Assert.False(AdbBridge.HasAllReverses("(reverse) tcp:8767 tcp:8767\r\n", 8767));
+    }
+
+    [Fact]
+    public async Task Agente_em_outra_porta_da_faixa_liga_a_porta_padrao_do_tablet_a_ela()
+    {
+        var adb = new FakeAdb { Devices = { ["AAA"] = "device" } };
+        var bridge = new AdbBridge(new UsbOptions(true, "", 3, ""), 8767, adb, NullLogger.Instance);
+        Assert.True((await bridge.TickAsync(Ct)).Devices[0].ReverseCreated);
+
+        Assert.Contains("-s AAA reverse tcp:8765 tcp:8767", adb.Calls);
+        Assert.Contains("-s AAA reverse tcp:8767 tcp:8767", adb.Calls);
+        Assert.False((await bridge.TickAsync(Ct)).Devices[0].ReverseCreated);   // já estão lá: nada a refazer
     }
 
     // ---------------------------------------------------------------- localizar o adb e configuração

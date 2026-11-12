@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Atalaia.Agent.Core;
+using Atalaia.Agent.Host.Network;
 using Atalaia.Agent.Host.Usb;
 using Serilog;
 
@@ -39,6 +40,9 @@ internal sealed class AgentRuntime(IConfiguration config, bool simulate, TokenSt
     public bool Simulate => simulate;
     public string Address { get; private set; } = "";
     public int Port { get; private set; }
+
+    /// <summary>A porta configurada, começo da faixa (<see cref="PortRange"/>). <see cref="Port"/> é a que ficou livre, de <see cref="FirstPort"/> em diante.</summary>
+    public int FirstPort { get; private set; }
     public bool ListenOnLan { get; private set; }
     public AgentHub Hub { get; private set; } = null!;
     public Scheduler Scheduler => _scheduler ?? throw new InvalidOperationException("O agente ainda não subiu.");
@@ -80,48 +84,60 @@ internal sealed class AgentRuntime(IConfiguration config, bool simulate, TokenSt
 
     private async Task StartCoreAsync(IConfiguration cfg)
     {
-        var port = cfg.GetValue("Agent:Port", 8765);
+        var first = cfg.GetValue("Agent:Port", PortRange.Default);
         var lan = cfg.GetValue("Agent:ListenOnLan", false);
         var maxSilenceMs = cfg.GetValue("Agent:MaxSilenceMs", 10000);
 
-        var builder = WebApplication.CreateSlimBuilder();
-        builder.Logging.ClearProviders();
-        builder.Host.UseSerilog(Log.Logger);
-        builder.WebHost.ConfigureKestrel(o => o.Listen(lan ? IPAddress.Any : IPAddress.Loopback, port));
-        var app = builder.Build();
-        var blobs = new BlobStore();
-        var loggers = app.Services.GetRequiredService<ILoggerFactory>();
-        var scheduler = new Scheduler(PluginRegistry.Build(cfg, simulate), new StateCache(), blobs, maxSilenceMs, loggers);
-        var hub = new AgentHub(scheduler, token.Token, AppInfo.Version, loggers.CreateLogger("Hub"));
-        app.MapAgent(hub, blobs);
-        try { await app.StartAsync(); }   // porta ocupada etc. estouram aqui
-        catch
+        // A porta configurada é o começo de uma faixa (PortRange): ocupada, tenta a próxima. Só falha se a faixa toda estiver ocupada.
+        Exception? taken = null;
+        foreach (var port in PortRange.From(first))
         {
-            await scheduler.DisposeAsync();
-            await app.DisposeAsync();
-            throw;
-        }
+            var builder = WebApplication.CreateSlimBuilder();
+            builder.Logging.ClearProviders();
+            builder.Host.UseSerilog(Log.Logger);
+            builder.WebHost.ConfigureKestrel(o => o.Listen(lan ? IPAddress.Any : IPAddress.Loopback, port));
+            var app = builder.Build();
+            var blobs = new BlobStore();
+            var loggers = app.Services.GetRequiredService<ILoggerFactory>();
+            var scheduler = new Scheduler(PluginRegistry.Build(cfg, simulate), new StateCache(), blobs, maxSilenceMs, loggers);
+            var hub = new AgentHub(scheduler, token.Token, AppInfo.Version, loggers.CreateLogger("Hub"));
+            app.MapAgent(hub, blobs);
+            try { await app.StartAsync(); }   // porta ocupada etc. estouram aqui
+            catch (Exception ex)
+            {
+                await scheduler.DisposeAsync();
+                await app.DisposeAsync();
+                if (!PortRange.IsPortTaken(ex)) throw;
+                taken = ex;
+                Log.Warning("Porta {Port} ocupada; tentando a próxima da faixa.", port);
+                continue;
+            }
 
-        _config = cfg;
-        _app = app;
-        _scheduler = scheduler;
-        Hub = hub;
-        hub.ClientsChanged += OnClientsChanged;
-        scheduler.Start();
-        Port = new Uri(app.Urls.First()).Port;
-        ListenOnLan = lan;
-        Address = $"{(lan ? "0.0.0.0" : "127.0.0.1")}:{Port}";
-        Log.Information("Agente rodando em {Address}{Mode}", Address, simulate ? " (simulado)" : "");
+            _config = cfg;
+            _app = app;
+            _scheduler = scheduler;
+            Hub = hub;
+            hub.ClientsChanged += OnClientsChanged;
+            scheduler.Start();
+            Port = new Uri(app.Urls.First()).Port;
+            FirstPort = first == 0 ? Port : first;   // 0 = o sistema escolheu (só nos testes)
+            ListenOnLan = lan;
+            Address = $"{(lan ? "0.0.0.0" : "127.0.0.1")}:{Port}";
+            Log.Information("Agente rodando em {Address}{Mode}", Address, simulate ? " (simulado)" : "");
 
-        // Módulo opcional (Usb:Enabled): mantém `adb reverse` para o tablet ligado por cabo. Desligado por padrão.
-        var usb = UsbOptions.From(cfg);
-        if (usb.Enabled)
-        {
-            var exe = AdbLocator.Resolve(usb.AdbPath, Environment.GetEnvironmentVariable, File.Exists) ?? "adb";
-            var bridge = new AdbBridge(usb, Port, new ProcessAdbRunner(exe), loggers.CreateLogger("Usb"));
-            _usbCts = new CancellationTokenSource();
-            _usbTask = Task.Run(() => bridge.RunAsync(_usbCts.Token));
+            // Módulo opcional (Usb:Enabled): mantém `adb reverse` para o tablet ligado por cabo. Desligado por padrão.
+            var usb = UsbOptions.From(cfg);
+            if (usb.Enabled)
+            {
+                var exe = AdbLocator.Resolve(usb.AdbPath, Environment.GetEnvironmentVariable, File.Exists) ?? "adb";
+                var bridge = new AdbBridge(usb, Port, new ProcessAdbRunner(exe), loggers.CreateLogger("Usb"));
+                _usbCts = new CancellationTokenSource();
+                _usbTask = Task.Run(() => bridge.RunAsync(_usbCts.Token));
+            }
+            return;
         }
+        throw new InvalidOperationException(
+            $"Todas as portas de {first} a {PortRange.Last(first)} estão em uso por outros programas. Feche o que usa essas portas ou escolha outra na janela.", taken);
     }
 
     private void OnClientsChanged() => ClientsChanged?.Invoke();
