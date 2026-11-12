@@ -122,6 +122,9 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
     porta real). Decisão do mantenedor: o **app descobrir a porta**. Isso **muda o contrato** (`docs/protocolo-v1.md`), então precisa ser combinado e
     escrito antes de implementar.
   - A regra do Firewall é por porta única (`Firewall.cs`): com fallback, passa a ser uma faixa (o avaliador já entende faixas).
+  - Feito no código (faixa de 10 portas, `8765-8774`): o agente cai na próxima porta livre, a regra do Firewall cobre a faixa, o `adb reverse` liga o
+    `tcp:8765` do tablet à porta real do PC, a janela e a bandeja mostram a porta em uso, e o app varre a faixa na rede local (contrato em
+    `docs/protocolo-v1.md`). **Falta provar** no tablet e no PC de verdade (cenário 13 de `app/docs/teste-manual.md`): por isso o item segue `[ ]`.
 
 ### Pequenas melhorias de instalação
 

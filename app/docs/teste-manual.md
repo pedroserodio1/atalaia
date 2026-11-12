@@ -152,6 +152,17 @@ powershell -ExecutionPolicy Bypass -File tools\measure-perf.ps1 -Minutes 30
 **Esperado** (referência medida em 10/11 com o agente simulado): memória (PSS) abaixo de ~60 MB e estável, CPU abaixo de ~3%,
 partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória: o teste longo (8 h) ainda não foi feito.
 
+## 13. Porta ocupada (faixa de portas)
+
+1. Com o agente fechado, ocupe a 8765 no PC com outro programa (por exemplo, `python -m http.server 8765`) e suba o agente.
+   **Esperado:** o agente sobe sem erro, a janela avisa que está na 8766 e o menu da bandeja mostra `...:8766`.
+2. **Wi-Fi:** com o endereço do PC sem porta no app (ou `:8765`), **esperado:** o app conecta sozinho, em poucos segundos, passando pela 8765
+   (o outro programa) até chegar na 8766. Depois de conectado, reinicie o app: ele deve ir direto na 8766.
+3. **USB:** com `Usb:Enabled` e o endereço `127.0.0.1` no app, **esperado:** conecta normalmente (o `adb reverse` leva a 8765 do tablet à 8766 do PC;
+   `adb reverse --list` mostra `tcp:8765 tcp:8766`).
+4. Ocupe as 10 portas (8765 a 8774) e suba o agente. **Esperado:** caixa de erro dizendo que a faixa inteira está em uso.
+5. Se o Firewall tinha regra só para a 8765, a janela deve pedir para liberar de novo (a regra nova é `8765-8774`).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
