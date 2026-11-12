@@ -142,6 +142,15 @@ Em **Fontes de dados** (e no passo 5 do onboarding), o botão **Configurar** de 
 | Steam | `Plugins:steam:apiKey` (obrigatória) e `steamId64` (exatamente 17 dígitos) | `apiKey` no cofre; `steamId64` no `settings.json` |
 | Discord | `Plugins:discord:clientId` e `clientSecret` (obrigatórios, sem espaços) | `clientSecret` no cofre; `clientId` (identificador público do aplicativo) no `settings.json` |
 
+- **Como conseguir.** Cada fonte com credencial (Steam, Discord, clima) e o nobreak têm um bloco **Como conseguir** na própria janela, com os passos
+  numerados e o que fazer quando der errado. O texto é fixo e embutido no agente (nada é baixado para exibi-lo) e é o mesmo das páginas
+  [`docs/fontes/`](../docs/fontes/); um teste confere que os dois não divergem. O botão **Abrir página** abre só um endereço de uma lista fechada, definida
+  no código (`SourceHelp`): a página da janela manda apenas o id da fonte, nunca o endereço.
+- **Testar conexão.** Confere a credencial na hora, **sem ligar a fonte nem gravar nada**, e responde a causa em português ("chave recusada", "perfil não
+  é público", "Discord fechado"). Usa o que está digitado e, no segredo em branco, o que já está guardado; campo fixado por variável de ambiente vale pelo
+  valor dela. Steam: `GetPlayerSummaries`; clima: uma consulta ao Open-Meteo; Discord (versão leve): o Discord para computador está aberto e o aplicativo
+  aceita o Client ID e o Client Secret, sem abrir o pedido de autorização; nobreak: o banco do software foi encontrado. Prazo de 8 s por chamada; o texto
+  do resultado nunca traz o valor digitado nem a URL.
 - **O cofre** é o arquivo `%LOCALAPPDATA%\AtalaiaAgent\secrets.dat`, inteiro cifrado com a **DPAPI do Windows no escopo do usuário atual**: só a mesma
   conta do Windows, neste PC, consegue lê-lo. Ele fica fora do repositório e do `settings.json`, e o agente o lê ao montar a configuração
   (acima do `settings.json`, **abaixo** do `.env` e das variáveis `ATALAIA_*`, que continuam mandando). Copiar o arquivo para outro PC ou outra
