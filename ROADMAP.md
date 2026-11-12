@@ -27,7 +27,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 |---|---|---|---|
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
-| **0.2.0** | Primeira experiência | minor, em andamento (`beta.1` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, adiada da 0.1.2), provas pendentes |
+| **0.2.0** | Primeira experiência | minor, em andamento (`beta.1` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, adiada da 0.1.2); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14) |
@@ -95,20 +95,20 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
 | **Nobreak** | Em que condição a fonte funciona (software e modelo compatíveis), ou "desligada por padrão". |
 | **Tablet (USB)** | Já existe ("Não aparece o tablet?"). Revisar para incluir o passo de autorizar o computador na tela do tablet. |
 
-### Confiança e provas pendentes (do relatório de verificação)
+### Confiança e provas (do relatório de verificação; provadas pelo mantenedor em 11/2026)
 
-- [ ] Provar de verdade o **Wi-Fi** e o **failover USB, Wi-Fi e USB** com os dois canais vivos, a queda silenciosa do Wi-Fi e uma ação em andamento
+- [x] Provar de verdade o **Wi-Fi** e o **failover USB, Wi-Fi e USB** com os dois canais vivos, a queda silenciosa do Wi-Fi e uma ação em andamento
   durante a troca (roteiro: cenários 4 a 7 de `app/docs/teste-manual.md`).
-- [ ] **Dados reais** (sem `--simulate`) conferidos no app: Windows, nobreak, Steam, Discord e clima.
-- [ ] Teste de memória de 8 h (precisa rodar de dia, com o PC ligado) e medição de quadros durante o arrasto.
-- [ ] Casos de borda do app ainda não vistos: perfil Steam oculto, mais de 4 membros na call, reordenar endereços, botão Colar.
-- [ ] Criação da regra do Firewall pelo UAC e WebView2 ausente / zoom 125% e 150% na janela.
+- [x] **Dados reais** (sem `--simulate`) conferidos no app: Windows, nobreak, Steam, Discord e clima.
+- [x] Teste de memória de 8 h (precisa rodar de dia, com o PC ligado) e medição de quadros durante o arrasto.
+- [x] Casos de borda do app ainda não vistos: perfil Steam oculto, mais de 4 membros na call, reordenar endereços, botão Colar.
+- [x] Criação da regra do Firewall pelo UAC e WebView2 ausente / zoom 125% e 150% na janela.
 
 ### Conexão sem redigitar o código
 
 - [x] **#15 (opção A feita na `0.2.0-beta.1`):** "Manter o mesmo código" na janela (cofre, DPAPI) e "Gerar novo" para revogar. A opção B
   (pareamento por segredo longo, "revogar tablet") segue na 0.3.0, junto do pareamento com validade.
-- [ ] **#15 (contexto):** hoje o código de 6 dígitos muda a cada início do agente e é preciso digitá-lo de novo no tablet, o que incomoda quem desliga o PC
+- [x] **#15 (contexto):** hoje o código de 6 dígitos muda a cada início do agente e é preciso digitá-lo de novo no tablet, o que incomoda quem desliga o PC
   todo dia. Opções em análise: (A) código persistente opcional guardado no cofre, (B) pareamento em que o primeiro código vira um segredo longo
   guardado no tablet, (C) só documentar o `ATALAIA_TOKEN`. A (B) é a mais segura e permite revogar tablet, mas **muda o contrato** e precisa
   da aprovação do mantenedor; a (A) resolve rápido. O limite de tentativas erradas continua valendo em qualquer caso.
@@ -130,8 +130,10 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
   instalação bem-sucedida o agente roda `adb shell am start -n org.atalaia.app/.MainActivity` (argumentos fixos, só o pacote do Atalaia),
   no `AdbService.RunInstallAsync`, que serve à atualização automática e ao passo "App no tablet". Falhar ao abrir não deve virar erro de
   instalação. É comportamento novo (`feat`), por isso fica na 0.2.0 e não na 0.1.2 (a esteira barra `feat` em patch).
+  Código e testes prontos; falta provar com o tablet (instalar por USB e ver o app abrir).
 - [ ] Avisar na tela quando o código de acesso mudou depois de atualizar ou reiniciar o agente (o tablet precisa do código novo). Some se a #15
   for resolvida pelo pareamento.
+  Código e testes prontos (`code.get` devolve `changed`, a janela mostra o aviso); falta ver o aviso na janela depois de reiniciar o agente.
 
 ## 0.3.0: tablet esperto
 

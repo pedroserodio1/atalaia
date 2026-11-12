@@ -266,6 +266,7 @@ public class AdbCommandsTests
         Assert.Equal(["-s", "ABC123", "install", "-r", @"C:\x\app.apk"], AdbCommands.Install("ABC123", @"C:\x\app.apk"));
         Assert.Equal(["-s", "ABC123", "uninstall", "org.atalaia.app"], AdbCommands.UninstallTablet("ABC123"));
         Assert.Equal(["-s", "ABC123", "shell", "dumpsys", "package", "org.atalaia.app"], AdbCommands.DumpPackage("ABC123"));
+        Assert.Equal(["-s", "ABC123", "shell", "am", "start", "-n", "org.atalaia.app/.MainActivity"], AdbCommands.StartTablet("ABC123"));
     }
 
     [Theory]
@@ -281,6 +282,7 @@ public class AdbCommandsTests
         Assert.False(AdbCommands.IsValidSerial(serial));
         Assert.Throws<ArgumentException>(() => AdbCommands.UninstallTablet(serial));
         Assert.Throws<ArgumentException>(() => AdbCommands.Install(serial, "a.apk"));
+        Assert.Throws<ArgumentException>(() => AdbCommands.StartTablet(serial));
     }
 
     [Theory]
@@ -450,6 +452,52 @@ public class AdbServiceTests
         var adb = new ScriptedAdb(l => l == "-s AAA shell dumpsys package org.atalaia.app" ? new(0, Dumpsys) : new(1, ""));
         Assert.Equal("0.1.1-beta.1", await Service(adb, @"C:\adb.exe").InstalledVersionAsync("AAA", CancellationToken.None));
         Assert.Null(await Service(new ScriptedAdb(_ => new(0, "Unable to find package")), @"C:\adb.exe").InstalledVersionAsync("AAA", CancellationToken.None));
+    }
+
+    private static Atalaia.Agent.Host.Install.ApkFile FakeApk()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"atalaia-teste-{Guid.NewGuid():N}.apk");
+        using (var zip = System.IO.Compression.ZipFile.Open(path, System.IO.Compression.ZipArchiveMode.Create))
+            zip.CreateEntry("AndroidManifest.xml");
+        try { return Atalaia.Agent.Host.Install.ApkFile.FromUserChoice(path); }
+        finally { File.Delete(path); }   // o ApkFile só guarda o caminho; o teste não lê o arquivo
+    }
+
+    [Fact]
+    public async Task Instalar_com_sucesso_abre_o_app_no_tablet()
+    {
+        var adb = new ScriptedAdb(l => l.Contains(" install ") ? new(0, "Success\n") : new(0, "Starting: Intent\n"));
+        var r = await Service(adb, @"C:\adb.exe").InstallAsync("AAA", FakeApk(), CancellationToken.None);
+
+        Assert.True(r.Ok);
+        Assert.Equal(2, adb.Calls.Count);
+        Assert.Equal("-s AAA shell am start -n org.atalaia.app/.MainActivity", adb.Calls[1]);
+    }
+
+    [Fact]
+    public async Task Instalar_com_falha_nao_tenta_abrir_o_app()
+    {
+        var adb = new ScriptedAdb(_ => new(1, "Failure [INSTALL_FAILED_OLDER_SDK]"));
+        var r = await Service(adb, @"C:\adb.exe").InstallAsync("AAA", FakeApk(), CancellationToken.None);
+
+        Assert.False(r.Ok);
+        Assert.Single(adb.Calls);
+    }
+
+    [Fact]
+    public async Task Falha_ao_abrir_nao_vira_erro_de_instalacao()
+    {
+        var failOpen = Service(new ScriptedAdb(l => l.Contains(" install ") ? new(0, "Success\n") : new(1, "Error: Activity not started")), @"C:\adb.exe");
+        Assert.True((await failOpen.InstallAsync("AAA", FakeApk(), CancellationToken.None)).Ok);
+
+        var throwOpen = new AdbService(() => @"C:\adb.exe", _ => null, _ => true, (_, _) => new InstallThenThrow());
+        Assert.True((await throwOpen.InstallAsync("AAA", FakeApk(), CancellationToken.None)).Ok);
+    }
+
+    private sealed class InstallThenThrow : IAdbRunner
+    {
+        public Task<AdbResult> RunAsync(IReadOnlyList<string> args, CancellationToken ct) =>
+            args.Contains("install") ? Task.FromResult(new AdbResult(0, "Success\n")) : throw new Win32Exception("sumiu");
     }
 
     [Fact]

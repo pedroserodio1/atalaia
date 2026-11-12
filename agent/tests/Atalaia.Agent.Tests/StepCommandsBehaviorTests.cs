@@ -483,6 +483,14 @@ public class CodeSourcesAndSummaryTests : StepTestBase
     }
 
     [Fact]
+    public async Task Aviso_de_codigo_novo_so_quando_o_codigo_foi_sorteado_de_novo()
+    {
+        Assert.True((await H.Data("code.get")).GetProperty("changed").GetBoolean());    // sem "manter": cada início sorteia
+        await H.Data("code.keep", new { enabled = true });
+        Assert.False((await H.Data("code.get")).GetProperty("changed").GetBoolean());   // mantido: o tablet segue valendo
+    }
+
+    [Fact]
     public async Task Gerar_novo_troca_o_codigo_e_atualiza_o_cofre_so_se_ele_e_mantido()
     {
         var d = await H.Data("code.renew");
