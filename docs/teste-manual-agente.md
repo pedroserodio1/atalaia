@@ -124,3 +124,25 @@ coordenada de verdade em issue, PR ou log.**
 
 **O que é coberto só por teste automático:** a validação campo a campo, a precedência (ambiente acima do cofre acima do `settings.json`), o desfazer em falha de religar e
 em valor sobreposto e o cofre com uma cifra falsa no lugar da DPAPI (a ida e volta da DPAPI de verdade também é testada, no Windows de quem roda).
+
+## Tutoriais e Testar conexão (0.2.0)
+
+Precisa das contas reais e de internet. Rode **sem** `--simulate`. **Nunca cole chave, `clientSecret` ou coordenada de verdade em issue, PR ou log.**
+Os textos de cada passo vêm dos sites reais: se algum não bate mais com a tela do serviço, anote o passo e o que mudou.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | **Fontes de dados**, fonte **Steam**, **Como conseguir** | Abre o bloco com 5 passos e "Se der errado"; abrir outro (Discord) fecha este; a consulta periódica não o fecha |
+| 2 | **Abrir a página da chave** | O navegador padrão abre a página da chave da Steam (e só ela); repita no Discord (Portal) e no Clima (mapa) |
+| 3 | Seguir o tutorial da Steam com a sua conta e **Configurar**, **Testar conexão** com chave e SteamID64 certos | "Tudo certo" (ou o aviso de perfil não público); nada foi gravado até clicar em Salvar |
+| 4 | Testar com a chave errada, depois com o SteamID64 de 17 dígitos que não existe | "A Steam recusou a chave" e depois "esse SteamID64 não existe" |
+| 5 | **Salvar**, abrir **Configurar** de novo, deixar a chave em branco e **Testar conexão** | Usa a chave guardada ("Tudo certo"); a chave nunca aparece na tela |
+| 6 | **Clima**: testar com coordenadas certas e com `-23,55` (vírgula) | "Tudo certo" e depois a mensagem de ponto decimal, sem chamar a rede |
+| 7 | **Discord** fechado: **Testar conexão** | "O Discord para computador está fechado" |
+| 8 | **Discord** aberto, Client ID e Client Secret certos | "Tudo certo", **sem** pop-up de autorização; com o segredo errado: "recusou o Client ID ou o Client Secret" |
+| 9 | **Nobreak**: **Como conseguir**, **Testar conexão** | "Tudo certo" se o software da Intelbras está instalado; senão a mensagem do banco não encontrado |
+| 10 | Desligar a internet e testar a Steam | "Não consegui falar com o serviço", em até ~8 s, sem a URL nem a chave no texto |
+| 11 | Zoom do Windows em 125% e 150% com o bloco aberto | O bloco cabe e não corta texto |
+
+**O que é coberto só por teste automático:** o texto de cada causa (rede falsa), a escolha entre o digitado e o guardado, o campo fixado por variável de ambiente, a
+lista fechada de endereços, e que o texto da janela e as páginas de `docs/fontes/` são iguais.

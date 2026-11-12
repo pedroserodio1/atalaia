@@ -30,9 +30,10 @@ function row(name, hint, ...controls) {
 
 function card(title, ...kids) { return h('div', { class: 'card' }, title ? h('div', { class: 'eyebrow' }, title) : null, ...kids); }
 
-function howto(title, items) {
-  return h('div', { class: 'card howto' }, h('div', { class: 'eyebrow' }, title),
-    items.map((text, i) => h('div', { class: 'tip' }, h('span', { class: 'num' }, String(i + 1)), h('div', null, text))));
+/** Passos numerados. `opts.inline`: dentro de outro cartão (sem a largura fixa do lado a lado); `opts.after`: nós depois dos passos. */
+function howto(title, items, opts = {}) {
+  return h('div', { class: 'card howto' + (opts.inline ? ' inline' : ''), hidden: opts.hidden ? true : null }, h('div', { class: 'eyebrow' }, title),
+    items.map((text, i) => h('div', { class: 'tip' }, h('span', { class: 'num' }, String(i + 1)), h('div', null, text))), opts.after);
 }
 
 /** Um passo: guarda os dados, desenha com paint(), e refaz a consulta de tempos em tempos. */
@@ -314,6 +315,47 @@ function codeStep() {
 
 // ---------------------------------------------------------------- 5 · Fontes de dados
 
+let helpOpen = null;       // id da fonte com o "Como conseguir" aberto (sobrevive ao redesenho da consulta periódica)
+const testResults = {};    // id da fonte → { ok, message } do último "Testar conexão" (some quando o formulário é salvo ou cancelado)
+
+/** O texto do resultado do teste. Atualizado no lugar, sem redesenhar a página (que apagaria o que foi digitado). */
+function showTestResult(out, r) {
+  out.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+  out.textContent = '● ' + r.message;
+}
+
+/** "Testar conexão": manda o que está digitado (segredo em branco usa o guardado) e mostra a causa em português. Não grava nada. */
+function testButton(s, getValues, out) {
+  const btn = h('button', { type: 'button', class: 'btn small' }, 'Testar conexão');
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; btn.textContent = 'Testando…'; out.className = 'hint'; out.textContent = '';
+    try { const r = await call('sources.test', s.fields ? { id: s.id, values: getValues() } : { id: s.id }); testResults[s.id] = r; showTestResult(out, r); }
+    catch (err) { out.className = 'hint warn'; out.textContent = '● ' + err.message; }
+    finally { btn.disabled = false; btn.textContent = 'Testar conexão'; }
+  });
+  return btn;
+}
+
+/** O "Como conseguir" da fonte: passos, o que fazer se der errado e o botão que abre a página do serviço (a página manda só o id; o endereço é do agente). */
+function helpBlock(s) {
+  const hp = s.help;
+  const out = h('div', { class: 'hint', role: 'status' });
+  if (!s.fields && testResults[s.id]) showTestResult(out, testResults[s.id]);
+  const open = hp.pageLabel
+    ? h('button', { type: 'button', class: 'btn small', onclick: () => call('sources.openPage', { id: s.id }).catch((e) => toast(e.message)) }, hp.pageLabel)
+    : null;
+  const test = !s.fields && hp.canTest ? testButton(s, () => ({}), out) : null;   // fonte sem formulário (nobreak): o teste fica aqui
+  return howto(hp.title, hp.steps, {
+    inline: true, hidden: helpOpen !== s.id,
+    after: [
+      h('div', { class: 'eyebrow sub' }, 'Se der errado'),
+      ...hp.ifWrong.map((t) => h('div', { class: 'hint' }, '• ' + t)),
+      open || test ? h('div', { class: 'btnrow' }, open, test) : null,
+      out,
+    ],
+  });
+}
+
 let editingSource = null;   // id da fonte com o formulário aberto: enquanto houver, a consulta periódica não redesenha (apagaria o que foi digitado)
 
 /**
@@ -336,19 +378,22 @@ function configForm(v, s) {
         : f.secret && f.configured ? h('div', { class: 'hint ok' }, '● Configurada. O valor nunca é mostrado; deixe em branco para manter.') : null);
   });
   const save = h('button', { type: 'button', class: 'btn small primary' }, 'Salvar');
+  const testOut = h('div', { class: 'hint', role: 'status' });
+  if (testResults[s.id]) showTestResult(testOut, testResults[s.id]);
+  const collect = () => { const values = {}; for (const f of s.fields) if (!f.fromEnv) values[f.name] = inputs[f.name].value; return values; };
+  const test = s.help && s.help.canTest ? testButton(s, collect, testOut) : null;
   const cancel = h('button', { type: 'button', class: 'btn small' }, 'Cancelar');
   const configured = s.fields.some((f) => f.configured && !f.fromEnv);
   const remove = configured ? h('button', { type: 'button', class: 'btn small' }, 'Remover') : null;
 
   const lock = (on) => { for (const b of [save, cancel, remove]) if (b) b.disabled = on; };
   save.addEventListener('click', async () => {
-    const values = {};
-    for (const f of s.fields) if (!f.fromEnv) values[f.name] = inputs[f.name].value;
+    const values = collect();
     error.textContent = ''; lock(true); save.textContent = 'Salvando…';
-    try { const data = await call('sources.configure', { id: s.id, values }); editingSource = null; v.set(data); }
+    try { const data = await call('sources.configure', { id: s.id, values }); editingSource = null; delete testResults[s.id]; v.set(data); }
     catch (err) { error.textContent = err.message; lock(false); save.textContent = 'Salvar'; }
   });
-  cancel.addEventListener('click', () => { editingSource = null; v.paint(); });
+  cancel.addEventListener('click', () => { editingSource = null; delete testResults[s.id]; v.paint(); });
   if (remove) {
     let armed = false;   // dois toques: o primeiro só pede a confirmação
     remove.addEventListener('click', async () => {
@@ -360,7 +405,7 @@ function configForm(v, s) {
   }
   return h('div', { class: 'cfg' }, fields, error,
     h('div', { class: 'hint' }, 'Só sai deste PC o que a própria fonte precisa. Segredos ficam criptografados com a sua conta do Windows, fora do arquivo de configuração.'),
-    h('div', { class: 'btnrow' }, save, cancel, remove));
+    h('div', { class: 'btnrow' }, save, test, cancel, remove), testOut);
 }
 
 function sourcesStep() {
@@ -375,8 +420,22 @@ function sourcesStep() {
           h('div', { class: 'hint' }, s.description),
           s.enabled ? s.needs.map((n) => h('div', { class: 'hint warn' }, '● ' + n)) : null,
           s.enabled && s.status === 'error' ? h('div', { class: 'hint warn' }, '● A fonte está com erro agora (o agente tenta de novo sozinho).') : null),
+        s.help ? h('button', { type: 'button', class: 'link', 'aria-expanded': helpOpen === s.id ? 'true' : 'false', onclick: (e) => {
+          // Só mostra ou esconde o bloco, sem redesenhar: o formulário aberto não pode perder o que foi digitado.
+          const btn = e.currentTarget;
+          const card = btn.closest('.card');
+          const block = btn.closest('.row').nextElementSibling;
+          if (!block || !block.classList.contains('howto')) return;
+          const show = block.hidden;
+          card.querySelectorAll('.howto.inline').forEach((b) => { b.hidden = true; });
+          card.querySelectorAll('button.link[aria-expanded]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+          block.hidden = !show;
+          helpOpen = show ? s.id : null;
+          btn.setAttribute('aria-expanded', show ? 'true' : 'false');
+        } }, 'Como conseguir') : null,
         s.fields && editingSource !== s.id ? h('button', { type: 'button', class: 'btn small', disabled: v.busy ? true : null, onclick: () => { editingSource = s.id; v.paint(); } }, 'Configurar') : null,
         toggle(s.name, s.enabled, (on) => v.run(on ? `Ligando ${s.name}…` : `Desligando ${s.name}…`, () => call('sources.set', { id: s.id, enabled: on })), v.busy)),
+        s.help ? helpBlock(s) : null,
         s.fields && editingSource === s.id ? configForm(v, s) : null])),
       h('div', { class: 'hint' }, 'Dá para mudar tudo isso depois em Fontes de dados.'),
       busyNote(v),

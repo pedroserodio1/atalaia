@@ -114,6 +114,9 @@ internal static class Program
     {
         var settings = SettingsStore.Default;
         string Repo() => RepositoryFrom(runtime.Config);
+        SourceProbe ProbeFor(string id) => new(k => runtime.Config[$"Plugins:{id}:{k}"], File.Exists, Directory.Exists, Environment.GetEnvironmentVariable,
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        var tester = new SourceTester(new HttpClient { Timeout = SourceTester.Timeout }, ProbeFor, SourceTester.DiscordIsOpen, () => DateTimeOffset.Now);
         return new StepServices(
             runtime,
             settings,
@@ -124,13 +127,13 @@ internal static class Program
             Apk: () => ApkProviderFor(runtime, AppInfo.Version),
             ReadAdapters: LanAddressProvider.Read,
             IsPortFree: PortValidator.IsFreeOnLoopback,
-            Probe: id => new SourceProbe(k => runtime.Config[$"Plugins:{id}:{k}"], File.Exists, Directory.Exists, Environment.GetEnvironmentVariable,
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            Probe: ProbeFor,
             Autostart: new AutostartService(new RegistryRunKey(), () => Environment.ProcessPath),
             PickAdb: () => Pick("Escolha o adb.exe (pasta platform-tools do Android)", "adb.exe|adb.exe"),
             PickApk: () => Pick("Escolha o APK do Atalaia para o tablet", "APK do Android (*.apk)|*.apk"),
             CopyText: Clipboard.SetText,
-            OpenExternal: MainWindow.OpenInBrowser);
+            OpenExternal: MainWindow.OpenInBrowser,
+            TestSource: tester.RunAsync);
     }
 
     private static ApkProvider ApkProviderFor(AgentRuntime runtime, string version) =>
