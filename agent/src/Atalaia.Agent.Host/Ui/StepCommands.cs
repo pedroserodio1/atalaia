@@ -335,6 +335,7 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
             ["code"] = s.Runtime.TokenCreated ? s.Runtime.Token : null,   // o código só sai nesta tela (e na bandeja); token fixo nunca
             ["fixed"] = !s.Runtime.TokenCreated,
             ["keep"] = KeepCode(),
+            ["changed"] = s.Runtime.TokenCreated && !KeepCode(),   // sorteado de novo neste início (ou por "Gerar novo"): o tablet precisa do código novo
             ["usbAddress"] = $"127.0.0.1:{port}",
             ["wifiAddress"] = chosen is null || !s.Runtime.ListenOnLan ? null : $"{chosen.Ip}:{port}",
             ["clients"] = new JsonArray([.. s.Runtime.Clients.Select(WindowCommands.ClientJson)]),
