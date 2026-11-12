@@ -57,7 +57,7 @@ internal sealed class AdbService(
             if (d.State == AdbDeviceState.Authorized && AdbCommands.IsValidSerial(d.Serial))
             {
                 var rv = await runner.RunAsync(AdbCommands.ReverseList(d.Serial), ct);
-                tunnel = rv.ExitCode == 0 && AdbBridge.HasReverse(rv.Output, agentPort);
+                tunnel = rv.ExitCode == 0 && AdbBridge.HasAllReverses(rv.Output, agentPort);
             }
             list.Add(new DeviceStatus(d, tunnel));
         }

@@ -43,7 +43,7 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
 
 1. **Rede e Firewall:** o endereço do PC na rede local (se há mais de uma placa, você escolhe), liga e desliga o Wi-Fi (`Agent:ListenOnLan`), muda
    a porta e libera o Firewall. A regra é criada por um processo elevado (`AtalaiaAgent.exe --firewall-rule <porta>`, que pede a permissão do
-   Windows na hora): uma regra de entrada **TCP só para a porta do agente, só no perfil Privado e só para a sub-rede local**, chamada `Atalaia-Agente`
+   Windows na hora): uma regra de entrada **TCP só para a faixa de portas do agente (`8765-8774`), só no perfil Privado e só para a sub-rede local**, chamada `Atalaia-Agente`
    (trocar a porta troca a regra, sem deixar sobras). O botão **Verificar** confere o que dá para garantir do PC: que o agente escuta na rede, que há
    regra para a porta e o tipo da rede. Ele **não** prova que o tablet entra (chamar o próprio IP não passa pelo Firewall): isso só fica provado
    quando o tablet conecta, no passo 4.
@@ -91,7 +91,8 @@ logs, `settings.json`, downloads e os dados do WebView2 passam a ficar nela.
 
 O menu da bandeja tem o endereço em uso,
 `Clientes conectados: N`, o **código de acesso** (6 dígitos), **Copiar código**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
-Se não conseguir subir (porta ocupada, por exemplo), aparece uma caixa de mensagem com o erro.
+Porta ocupada não derruba o agente: ele usa a próxima livre da faixa (a porta configurada e as 9 seguintes) e mostra a porta em uso na janela e
+na bandeja. Só se a faixa toda estiver ocupada, ou houver outro erro ao subir, aparece uma caixa de mensagem com o erro.
 
 Testes:
 
@@ -172,7 +173,7 @@ Chaves principais (padrões em `appsettings.json`):
 
 | Chave | Significado |
 |---|---|
-| `Agent:Port` | Porta do WebSocket e do HTTP da capa (8765) |
+| `Agent:Port` | Começo da faixa de 10 portas do WebSocket e do HTTP da capa (8765 a 8774); o agente usa a primeira livre |
 | `Agent:ListenOnLan` | `false` = `127.0.0.1`; `true` = `0.0.0.0` |
 | `Agent:MaxSilenceMs` | Reenvia o dado a cada tanto tempo mesmo sem mudança (10000) |
 | `Updates:AutoCheck` | Buscar atualizações sozinho (`true` por padrão; gravado pela janela, usado pela atualização automática) |
@@ -208,8 +209,8 @@ Plugin ligado sem a configuração necessária (por exemplo `steam` sem chave) a
 
 ## USB: tablet ligado por cabo (`Usb:*`)
 
-Com o módulo ligado, o agente roda `adb reverse tcp:<porta> tcp:<porta>` para cada aparelho autorizado, e assim o app
-no tablet alcança o agente em `127.0.0.1` sem Wi-Fi e sem `ListenOnLan`. A cada `Usb:PollSeconds` ele confere os
+Com o módulo ligado, o agente roda `adb reverse tcp:8765 tcp:<porta do agente>` para cada aparelho autorizado (se o agente caiu em outra porta da faixa, o tablet
+continua em `127.0.0.1:8765`), e assim o app no tablet alcança o agente em `127.0.0.1` sem Wi-Fi e sem `ListenOnLan`. A cada `Usb:PollSeconds` ele confere os
 aparelhos (`adb devices`) e a regra (`adb reverse --list`) e refaz o que faltar, o que cobre o cabo replugado e o servidor
 do `adb` reiniciado. Só usa `devices`, `reverse --list` e `reverse`; não instala nada nem toca no aparelho.
 Aparelho `unauthorized` ou `offline` é só registrado no log (aceite a depuração USB na tela do tablet).

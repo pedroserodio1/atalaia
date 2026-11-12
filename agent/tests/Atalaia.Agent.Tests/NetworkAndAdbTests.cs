@@ -105,7 +105,9 @@ public class FirewallTests
         Assert.Equal("Atalaia-Agente", r.Name);
         Assert.True(r.Enabled && r.Inbound && r.Allow);
         Assert.Equal(6, r.Protocol);
-        Assert.Equal("8765", r.LocalPorts);
+        Assert.Equal("8765-8774", r.LocalPorts);   // a faixa toda, para o agente poder cair numa porta vizinha
+        Assert.Equal(FirewallState.Open, Eval([r]));
+        Assert.Equal(FirewallState.NoRule, FirewallEvaluator.Evaluate([r], 8775, FwProfiles.Private, @"C:\Atalaia\AtalaiaAgent.exe"));
         Assert.Equal((int)FwProfiles.Private, r.Profiles);
         Assert.Null(r.Program);
         Assert.Equal("LocalSubnet", FirewallRuleSpec.RemoteAddresses);
@@ -262,7 +264,8 @@ public class AdbCommandsTests
     {
         Assert.Equal(["devices", "-l"], AdbCommands.Devices());
         Assert.Equal(["-s", "ABC123", "reverse", "--list"], AdbCommands.ReverseList("ABC123"));
-        Assert.Equal(["-s", "ABC123", "reverse", "tcp:8765", "tcp:8765"], AdbCommands.Reverse("ABC123", 8765));
+        Assert.Equal(["-s", "ABC123", "reverse", "tcp:8765", "tcp:8765"], AdbCommands.Reverse("ABC123", 8765, 8765));
+        Assert.Equal(["-s", "ABC123", "reverse", "tcp:8765", "tcp:8767"], AdbCommands.Reverse("ABC123", 8765, 8767));
         Assert.Equal(["-s", "ABC123", "install", "-r", @"C:\x\app.apk"], AdbCommands.Install("ABC123", @"C:\x\app.apk"));
         Assert.Equal(["-s", "ABC123", "uninstall", "org.atalaia.app"], AdbCommands.UninstallTablet("ABC123"));
         Assert.Equal(["-s", "ABC123", "shell", "dumpsys", "package", "org.atalaia.app"], AdbCommands.DumpPackage("ABC123"));

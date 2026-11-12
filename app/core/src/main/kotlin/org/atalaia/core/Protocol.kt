@@ -7,6 +7,9 @@ package org.atalaia.core
 object Protocol {
     const val VERSION = 1
     const val DEFAULT_PORT = 8765
+
+    /** A porta configurada do agente é o começo de uma faixa deste tamanho (docs/protocolo-v1.md, "Transporte"). */
+    const val PORT_RANGE_SIZE = 10
     const val WS_PATH = "/ws"
 
     /** Fechamento 4400: versão do protocolo incompatível. */

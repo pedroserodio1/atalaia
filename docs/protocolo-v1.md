@@ -8,6 +8,15 @@ acrescenta as decisões tomadas depois (marcadas com **[decidido]**).
 
 - WebSocket em `ws://<host>:8765/ws` (porta configurável). Mensagens de texto, JSON, UTF-8.
 - HTTP na mesma porta só para a capa da mídia (ver "Capa").
+- **Faixa de portas [decidido]:** a porta configurada (padrão 8765) é o **início de uma faixa de 10 portas contíguas** (8765 a 8774).
+  O agente escuta na primeira livre da faixa; só falha se todas estiverem ocupadas. O cliente que usa a porta padrão **na rede local**
+  tenta a faixa **em ordem**, passando para a próxima só quando a conexão é recusada ou quando o servidor não aceita o WebSocket (não é
+  um agente), e guarda a porta que funcionou. Falha de outro tipo (prazo esgotado, queda) não avança. Uma porta diferente da padrão,
+  escolhida de propósito, vale sozinha. Como o `hello` do cliente leva o token, ele só sai depois de o upgrade do WebSocket em `/ws` ser
+  aceito; o app só fala com endereços de rede local.
+- **Faixa de portas e USB [decidido]:** o `adb reverse` liga a porta padrão do tablet (`tcp:8765`) à porta real do PC
+  (`tcp:<real>`), então o app no USB (loopback) continua em `127.0.0.1:8765`, sem varrer a faixa, mesmo quando o agente caiu em outra
+  porta dela. Se a porta configurada não é a padrão, o agente cria também `tcp:<porta> tcp:<porta>`.
 - Mensagem de entrada maior que 64 KB: fechar com 1009. **[decidido]**
 
 ## Envelope

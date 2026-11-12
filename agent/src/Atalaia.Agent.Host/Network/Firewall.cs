@@ -38,14 +38,15 @@ internal static class FirewallRuleSpec
     /// <summary>Um nome só, para a regra trocar de porta sem deixar sobras. Sem espaços (aparece assim no painel do Windows).</summary>
     public const string RuleName = "Atalaia-Agente";
 
-    public const string Description = "Atalaia: permite o tablet acessar o agente por esta porta, só na rede local (perfil Privado).";
+    public const string Description = "Atalaia: permite o tablet acessar o agente por estas portas, só na rede local (perfil Privado).";
 
-    /// <summary>A regra: entrada, TCP, só a porta do agente, só perfil Privado, só de endereços da própria sub-rede.</summary>
+    /// <summary>A regra: entrada, TCP, só a faixa de portas do agente (<see cref="PortRange"/>), só perfil Privado, só de endereços da própria sub-rede.</summary>
+    /// <param name="port">A porta configurada, o começo da faixa.</param>
     public static FwRule Create(int port)
     {
         if (port is < PortValidator.Min or > PortValidator.Max) throw new ArgumentOutOfRangeException(nameof(port), "Porta fora de 1024 a 65535.");
         return new FwRule(RuleName, Enabled: true, Inbound: true, Allow: true, Protocol: 6,
-            LocalPorts: port.ToString(CultureInfo.InvariantCulture), Profiles: (int)FwProfiles.Private, Program: null);
+            LocalPorts: PortRange.Text(port), Profiles: (int)FwProfiles.Private, Program: null);
     }
 
     /// <summary>Restringe a regra ao endereço local da rede (<c>LocalSubnet</c>): o tablet está na mesma rede, a internet não.</summary>
@@ -100,7 +101,7 @@ internal interface IFirewall
     /// <summary>As regras e o perfil de agora; <c>null</c> se o Windows não deixou ler.</summary>
     FirewallSnapshot? Read();
 
-    /// <summary>Cria a regra do agente para a porta (pede permissão de administrador ao usuário). Falha com <see cref="FirewallException"/>, cujo texto já é para o usuário.</summary>
+    /// <summary>Cria a regra do agente para a faixa de portas que começa em <paramref name="port"/> (pede permissão de administrador ao usuário). Falha com <see cref="FirewallException"/>, cujo texto já é para o usuário.</summary>
     Task CreateRuleAsync(int port, CancellationToken ct);
 }
 

@@ -177,8 +177,10 @@ class AgentConnection(
      * Uma [Session] rodando num endereço. Quem ainda não foi escolhida como ativa (uma sonda) guarda as mensagens que chegam
      * e só as entrega quando passa a ser a ativa, para o app não ver duas conexões ao mesmo tempo.
      */
-    private inner class Link(val index: Int, val endpoint: Endpoint, live: Boolean) {
-        val session = Session(transport, clock, sessionConfig)
+    private inner class Link(val index: Int, endpoint: Endpoint, live: Boolean) {
+        /** O endereço de verdade: com a porta da faixa em que o agente respondeu (ver [candidatePorts]). */
+        @Volatile var endpoint: Endpoint = endpoint
+        @Volatile var session = Session(transport, clock, sessionConfig)
         val settled = CompletableDeferred<Settled>()   // pronta ou terminou antes disso
         val ended = CompletableDeferred<SessionEnd>()  // terminou
         lateinit var job: Job
@@ -213,17 +215,47 @@ class AgentConnection(
     private fun CoroutineScope.startLink(index: Int, endpoint: Endpoint, token: String, live: Boolean): Link {
         val link = Link(index, endpoint, live)
         link.job = launch {
-            val end = link.session.run(
-                url = endpoint.wsUrl,
-                token = token,
-                onReady = { hello -> link.settled.complete(Settled.Ready(hello)) },
-                onMessage = { link.deliver(it) },
-            )
+            val ports = candidatePorts(endpoint)
+            var tried = 0
+            var end: SessionEnd
+            while (true) {
+                val ep = endpoint.copy(port = ports[tried])
+                link.endpoint = ep
+                link.session = Session(transport, clock, sessionConfig)
+                var ready = false
+                end = link.session.run(
+                    url = ep.wsUrl,
+                    token = token,
+                    onReady = { hello -> ready = true; knownPort[endpoint.host] = ep.port; link.settled.complete(Settled.Ready(hello)) },
+                    onMessage = { link.deliver(it) },
+                )
+                // Só passa para a próxima porta da faixa se esta nem chegou a ser um agente (recusou ou não é WebSocket).
+                if (ready || !isNotAgent(end) || ++tried >= ports.size) break
+            }
             link.settled.complete(Settled.Failed(end))   // sem efeito se já ficou pronta
             link.ended.complete(end)
         }
         return link
     }
+
+    /** A porta que respondeu como agente da última vez, por host: a próxima conexão começa por ela. */
+    private val knownPort = ConcurrentHashMap<String, Int>()
+
+    /**
+     * As portas a tentar neste endereço, em ordem (docs/protocolo-v1.md, "Transporte"). Na rede local, a porta padrão é o começo da faixa
+     * de [Protocol.PORT_RANGE_SIZE] portas: o agente escuta na primeira livre. Uma porta escolhida de propósito vale sozinha, e no USB
+     * (loopback) o `adb reverse` já leva a 8765 do tablet à porta certa do PC.
+     */
+    private fun candidatePorts(endpoint: Endpoint): List<Int> {
+        if (endpoint.port != Protocol.DEFAULT_PORT || endpoint.isLoopback) return listOf(endpoint.port)
+        val range = (Protocol.DEFAULT_PORT until Protocol.DEFAULT_PORT + Protocol.PORT_RANGE_SIZE).toList()
+        val known = knownPort[endpoint.host]?.takeIf { it in range }
+        return if (known == null) range else listOf(known) + range.filter { it != known }
+    }
+
+    /** Recusou a conexão ou respondeu sem aceitar o WebSocket: não é um agente. Qualquer outra falha (prazo, queda) para a busca. */
+    private fun isNotAgent(end: SessionEnd) =
+        end is SessionEnd.Failure && (end.error is java.net.ConnectException || end.error is java.net.ProtocolException)
 
     // ---------------------------------------------------------------- laço principal
 

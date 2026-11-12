@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using Atalaia.Agent.Host.Network;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -126,7 +127,7 @@ public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, I
 
     public async Task RunAsync(CancellationToken ct)
     {
-        logger.LogInformation("USB: mantendo adb reverse tcp:{Port} (a cada {Poll} s)", port, options.PollSeconds);
+        logger.LogInformation("USB: mantendo adb reverse tcp:{Tablet} para a porta {Port} do PC (a cada {Poll} s)", PortRange.Default, port, options.PollSeconds);
         while (!ct.IsCancellationRequested)
         {
             try { await TickAsync(ct); }
@@ -180,23 +181,29 @@ public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, I
             }
 
             var list = await runner.RunAsync(["-s", serial, "reverse", "--list"], ct);
-            if (list.ExitCode == 0 && HasReverse(list.Output, port))
+            var missing = list.ExitCode == 0 ? Pairs(port).Where(p => !HasReverse(list.Output, p.Tablet, p.Host)).ToList() : Pairs(port).ToList();
+            if (missing.Count == 0)
             {
-                LogState(serial, "ready", $"USB: aparelho {serial} com reverse tcp:{port} ativo.");
+                LogState(serial, "ready", $"USB: aparelho {serial} com reverse tcp:{PortRange.Default} para o PC (porta {port}) ativo.");
                 reports.Add(new DeviceReport(serial, state, false, false));
                 continue;
             }
 
-            var made = await runner.RunAsync(["-s", serial, "reverse", $"tcp:{port}", $"tcp:{port}"], ct);
-            if (made.ExitCode == 0)
+            AdbResult? failed = null;
+            foreach (var (tablet, host) in missing)
             {
-                logger.LogInformation("USB: reverse tcp:{Port} criado para {Serial}.", port, serial);
+                var made = await runner.RunAsync(["-s", serial, "reverse", $"tcp:{tablet}", $"tcp:{host}"], ct);
+                if (made.ExitCode == 0) logger.LogInformation("USB: reverse tcp:{Tablet} para tcp:{Host} criado para {Serial}.", tablet, host, serial);
+                else failed = made;
+            }
+            if (failed is null)
+            {
                 _lastState[serial] = "ready";
                 reports.Add(new DeviceReport(serial, state, true, false));
             }
             else
             {
-                LogState(serial, "reverse-failed", $"USB: não consegui criar o reverse para {serial}: {made.Output.Trim()}");
+                LogState(serial, "reverse-failed", $"USB: não consegui criar o reverse para {serial}: {failed.Output.Trim()}");
                 reports.Add(new DeviceReport(serial, state, false, true));
             }
         }
@@ -240,17 +247,28 @@ public sealed class AdbBridge(UsbOptions options, int port, IAdbRunner runner, I
         return list;
     }
 
-    /// <summary>A saída de <c>reverse --list</c> tem a linha <c>(reverse) tcp:PORTA tcp:PORTA</c> (aparelho → PC, mesma porta)?</summary>
-    public static bool HasReverse(string output, int port)
+    /// <summary>
+    /// Os reverses que o tablet precisa: <c>tcp:8765</c> (a porta que o app usa) chega à porta real do PC, que pode ser outra da faixa
+    /// (<see cref="PortRange"/>); e, se a porta configurada não é a padrão, ela chega a si mesma (quem digitou <c>127.0.0.1:porta</c> no app).
+    /// </summary>
+    public static IReadOnlyList<(int Tablet, int Host)> Pairs(int hostPort) =>
+        hostPort == PortRange.Default ? [(PortRange.Default, hostPort)] : [(PortRange.Default, hostPort), (hostPort, hostPort)];
+
+    /// <summary>A saída de <c>reverse --list</c> tem a linha <c>(reverse) tcp:TABLET tcp:PC</c>?</summary>
+    public static bool HasReverse(string output, int tabletPort, int hostPort)
     {
-        var want = $"tcp:{port}";
+        var wantTablet = $"tcp:{tabletPort}";
+        var wantHost = $"tcp:{hostPort}";
         foreach (var raw in output.Split('\n'))
         {
             var t = raw.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (t.Length >= 2 && t[^2] == want && t[^1] == want) return true;
+            if (t.Length >= 2 && t[^2] == wantTablet && t[^1] == wantHost) return true;
         }
         return false;
     }
+
+    /// <summary>Todos os reverses de <see cref="Pairs"/> existem?</summary>
+    public static bool HasAllReverses(string output, int hostPort) => Pairs(hostPort).All(p => HasReverse(output, p.Tablet, p.Host));
 
     private void LogState(string serial, string state, string message)
     {
