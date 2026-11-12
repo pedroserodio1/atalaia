@@ -19,7 +19,7 @@ internal sealed class Tray : ApplicationContext
         var open = new ToolStripMenuItem("Abrir Atalaia", null, (_, _) => window.Show()) { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) };
         var status = new ToolStripMenuItem($"Rodando em {runtime.Address}{(runtime.Simulate ? " (simulado)" : "")}") { Enabled = false };
         var clients = new ToolStripMenuItem("Clientes conectados: 0") { Enabled = false };
-        // Código de 6 dígitos gerado a cada início: aparece aqui (só na tela do PC) para digitar no tablet. Token fixo nunca aparece.
+        // Código de 6 dígitos (novo a cada início, ou o mesmo se "manter o código" está ligado): aparece aqui (só na tela do PC) para digitar no tablet. Token fixo nunca aparece.
         var code = new ToolStripMenuItem(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}" : "Token fixo (ATALAIA_TOKEN)") { Enabled = false };
         var copy = new ToolStripMenuItem(runtime.TokenCreated ? "Copiar código" : "Copiar token", null, (_, _) => Clipboard.SetText(runtime.Token));
         var logs = new ToolStripMenuItem("Abrir pasta de logs", null, (_, _) =>
@@ -31,7 +31,11 @@ internal sealed class Tray : ApplicationContext
 
         var menu = new ContextMenuStrip();
         menu.Items.AddRange([open, new ToolStripSeparator(), status, clients, code, new ToolStripSeparator(), copy, logs, new ToolStripSeparator(), exit]);
-        menu.Opening += (_, _) => clients.Text = $"Clientes conectados: {runtime.Hub.ClientCount}";
+        menu.Opening += (_, _) =>
+        {
+            clients.Text = $"Clientes conectados: {runtime.Hub.ClientCount}";
+            if (runtime.TokenCreated) code.Text = $"Código de acesso: {runtime.Token}";   // "Gerar novo" troca o código com o agente rodando
+        };
 
         _icon = new NotifyIcon
         {
@@ -42,7 +46,7 @@ internal sealed class Tray : ApplicationContext
         };
         _icon.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) window.Show(); };
         if (runtime.TokenCreated)   // o balão nunca mostra o código (fica no histórico de notificações)
-            _icon.ShowBalloonTip(8000, "Atalaia", "Novo código de acesso de 6 dígitos. Veja no menu do ícone da bandeja.", ToolTipIcon.Info);
+            _icon.ShowBalloonTip(8000, "Atalaia", "Código de acesso de 6 dígitos. Veja no menu do ícone da bandeja.", ToolTipIcon.Info);
     }
 
     /// <summary>Fecha a janela e encerra o agente. Só na thread da interface.</summary>

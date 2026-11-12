@@ -47,6 +47,7 @@ Rodar como na Fase 1. Com `ATALAIA_DATA_DIR` apontando para uma pasta de teste, 
 | 12 | **App no tablet em build `-dev`** | Aviso de que não há release e o botão **Escolher APK…**: só aceita um arquivo que seja um APK; instala e mostra "App instalado" |
 | 13 | **QR** | A câmera do tablet abre a página da release (ou a lista de releases em build `-dev`) |
 | 14 | **Código:** com o tablet configurado | O código mostrado é o do menu da bandeja; ao tablet conectar, o passo conclui sozinho em 1 s e avança. Com `ATALAIA_TOKEN` definido, o código não aparece nem é copiado |
+| 14b | **Manter o código** (passo do código ou tela Conexão) | Ligar **Manter o mesmo código** não muda o código mostrado; reiniciar o agente (Sair e abrir) mostra o **mesmo** código e o tablet reconecta sem digitar. **Gerar novo** pede um segundo toque, troca o código e derruba o tablet, que mostra "Código inválido" até digitar o novo (o menu da bandeja já mostra o novo). Desligar a opção volta ao código novo a cada início. `secrets.dat` não tem o código em texto puro |
 | 15 | **Fontes** | As dez, ligar e desligar religa o agente sem perder o código. O que falta (clima, nobreak, Steam, Discord) aparece em coral com a variável a definir, nunca o valor |
 | 16 | **Pronto:** ligar **Iniciar com o Windows**, reiniciar a sessão do Windows | O agente sobe sozinho na bandeja, sem abrir a janela (o onboarding já foi concluído). Desligar remove o valor `Atalaia` da chave Run |
 
