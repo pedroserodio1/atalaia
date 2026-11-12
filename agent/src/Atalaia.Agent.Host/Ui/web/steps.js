@@ -252,6 +252,23 @@ function appStep() {
 
 function groupCode(code) { return code.length === 6 ? code.slice(0, 3) + ' ' + code.slice(3) : code; }
 
+let renewArmed = false;   // "Gerar novo" em dois toques: derruba os tablets conectados
+
+/** "Manter o mesmo código" e "Gerar novo", abaixo do código. Os dois só existem com código sorteado (token fixo não passa por aqui). */
+function codeKeepControls(d, v) {
+  const disarm = () => { renewArmed = false; };
+  return [
+    row('Manter o mesmo código', d.keep ? 'O tablet não precisa do código de novo depois de reiniciar o agente.' : 'Hoje o código muda a cada início do agente.',
+      toggle('Manter o mesmo código', d.keep, (on) => { disarm(); v.run('Gravando…', () => call('code.keep', { enabled: on })); }, v.busy)),
+    h('div', { class: 'btnrow' },
+      h('button', { class: 'btn small', disabled: v.busy ? true : null, onclick: () => {
+        if (!renewArmed) { renewArmed = true; v.paint(); return; }
+        disarm(); v.run('Gerando o código novo…', () => call('code.renew'));
+      } }, renewArmed ? 'Confirmar: os tablets caem' : 'Gerar novo')),
+    renewArmed ? h('div', { class: 'hint' }, 'O código atual deixa de valer e todo tablet conectado precisa do novo.') : null,
+  ];
+}
+
 function codeStep() {
   let copied = false;
   let advanced = false;
@@ -271,8 +288,9 @@ function codeStep() {
             : h('div', { class: 'card codecard' },
               h('div', { class: 'eyebrow' }, 'Código de acesso'),
               h('div', { class: 'code', 'aria-label': 'Código ' + d.code.split('').join(' ') }, groupCode(d.code)),
-              h('div', { class: 'hint' }, 'Muda toda vez que o agente reinicia. Depois de tentativas erradas, o agente limita novas tentativas.'),
-              h('div', { class: 'btnrow' }, h('button', { class: 'btn small', onclick: () => call('code.copy').then(() => { copied = true; v.paint(); setTimeout(() => { copied = false; v.paint(); }, 2000); }).catch((e) => toast(e.message)) }, copied ? 'Copiado ✓' : 'Copiar código'))),
+              h('div', { class: 'hint' }, d.keep ? 'Fica o mesmo entre reinícios do agente. Depois de tentativas erradas, o agente limita novas tentativas.' : 'Muda toda vez que o agente reinicia, a menos que você escolha manter. Depois de tentativas erradas, o agente limita novas tentativas.'),
+              h('div', { class: 'btnrow' }, h('button', { class: 'btn small', onclick: () => call('code.copy').then(() => { copied = true; v.paint(); setTimeout(() => { copied = false; v.paint(); }, 2000); }).catch((e) => toast(e.message)) }, copied ? 'Copiado ✓' : 'Copiar código')),
+              ...codeKeepControls(d, v)),
           card(connected ? 'Tablet conectado' : 'Esperando o tablet',
             row('USB', d.usbAddress, pill(channelOf('usb') ? 'Conectado' : 'Aguardando', channelOf('usb') ? 'ok' : '')),
             row('Wi-Fi', d.wifiAddress || 'desligado (ligue no passo Rede e Firewall)', pill(channelOf('wifi') ? 'Conectado' : d.wifiAddress ? 'Aguardando' : 'Desligado', channelOf('wifi') ? 'ok' : '')),

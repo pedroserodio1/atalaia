@@ -101,11 +101,15 @@ dotnet test
 
 ## Código de acesso e pareamento
 
-- **A cada início**, o agente gera um **código de 6 dígitos** novo (sorteio criptográfico, só em memória: não grava arquivo).
-  Um balão avisa que há código novo (o balão não mostra o código).
+- **Por padrão, a cada início**, o agente gera um **código de 6 dígitos** novo (sorteio criptográfico, só em memória: não grava arquivo).
+  O balão da bandeja não mostra o código.
+- **Manter o mesmo código** (opção na janela, tela Conexão, ou no passo do código do onboarding; `Access:KeepCode` no `settings.json`): o
+  código passa a ficar guardado no cofre (`secrets.dat`, DPAPI) e o tablet não precisa dele de novo depois de reiniciar o agente. Ligar guarda o
+  código de agora (quem já o digitou continua entrando); desligar apaga o guardado. **Gerar novo** sorteia outro código e religa o agente: os
+  tablets conectados caem e só entram com o código novo (é como se revoga o acesso). O limite de tentativas abaixo vale do mesmo jeito.
 - Para parear o tablet ou a página de teste: o código aparece no menu do ícone da bandeja (**Código de acesso: 042917**) e
-  na saída do `--console`; **Copiar código** põe na área de transferência. **Ao reiniciar o agente o código muda** e o
-  tablet precisa do novo (o app avisa "Código inválido" e abre a configuração com um toque na faixa).
+  na saída do `--console`; **Copiar código** põe na área de transferência. **Ao reiniciar o agente o código muda**, a não ser que
+  "Manter o mesmo código" esteja ligado; se mudou, o tablet precisa do novo (o app avisa "Código inválido" e abre a configuração com um toque na faixa).
 - `ATALAIA_TOKEN` (variável de ambiente ou `.env`) **fixa** o token: nesse caso ele não muda a cada início, não aparece no
   menu (só "Token fixo") e pode ter qualquer tamanho. Veja `.env.example`. O `agent.json` das versões anteriores não é mais usado.
 - **Limite de tentativas erradas** (porque 6 dígitos são só 1 milhão de combinações): quem vem pela rede tem 5 erros por endereço;

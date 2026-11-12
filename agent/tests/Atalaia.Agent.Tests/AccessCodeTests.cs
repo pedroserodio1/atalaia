@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Atalaia.Agent.Core;
 using Atalaia.Agent.Host;
+using Atalaia.Agent.Host.Settings;
 
 namespace Atalaia.Agent.Tests;
 
@@ -42,6 +43,57 @@ public class AccessCodeTests
         Assert.False(r.Created);
         Assert.NotEqual("", TokenStore.Load(Config("")).Token);   // vazio não conta: volta a gerar o código
         Assert.True(TokenStore.Load(Config("   ")).Created);
+    }
+
+    // ---------------------------------------------------------------- código mantido (cofre)
+
+    private static IConfiguration Kept(string? saved, string? token = null) =>
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        { ["Access:KeepCode"] = "true", ["Access:Code"] = saved, ["TOKEN"] = token }).Build();
+
+    [Fact]
+    public void Manter_o_codigo_usa_o_guardado_no_cofre()
+    {
+        var r = TokenStore.Load(Kept("042917"));
+        Assert.Equal("042917", r.Token);
+        Assert.True(r.Created);   // continua sendo um código que a janela pode mostrar e copiar
+    }
+
+    [Fact]
+    public void Manter_o_codigo_sem_nada_guardado_sorteia_e_grava_so_no_cofre_cifrado()
+    {
+        using var dir = new TempDir();
+        var vault = new SecretVault(dir.File("secrets.dat"), new FakeProtector());
+        var first = TokenStore.Load(Kept(null), vault).Token;
+        Assert.Matches(new Regex(@"^\d{6}$"), first);
+        Assert.Equal(first, vault.Read()["Access:Code"]);
+        Assert.DoesNotContain(first, File.ReadAllText(dir.File("secrets.dat")));   // cifrado: o texto puro não está no arquivo
+        Assert.Equal(first, TokenStore.Load(Kept(vault.Read()["Access:Code"]), vault).Token);   // o próximo início reaproveita
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("12345")]
+    [InlineData("1234567")]
+    [InlineData("12a456")]
+    public void Codigo_guardado_estragado_e_sorteado_de_novo(string saved)
+    {
+        using var dir = new TempDir();
+        var vault = new SecretVault(dir.File("secrets.dat"), new FakeProtector());
+        var r = TokenStore.Load(Kept(saved), vault);
+        Assert.Matches(new Regex(@"^\d{6}$"), r.Token);
+        Assert.Equal(r.Token, vault.Read()["Access:Code"]);
+    }
+
+    [Fact]
+    public void Sem_a_opcao_o_codigo_guardado_e_ignorado_e_ATALAIA_TOKEN_manda_sobre_tudo()
+    {
+        var off = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Access:Code"] = "042917" }).Build();
+        Assert.True(Enumerable.Range(0, 20).Select(_ => TokenStore.Load(off).Token).Distinct().Count() > 1);   // sorteia a cada carga: não usa o guardado
+
+        var fixedWins = TokenStore.Load(Kept("042917", token: "meu-token-fixo"));
+        Assert.Equal("meu-token-fixo", fixedWins.Token);
+        Assert.False(fixedWins.Created);
     }
 
     [Fact]

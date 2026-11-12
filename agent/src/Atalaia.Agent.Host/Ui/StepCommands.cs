@@ -72,6 +72,8 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
 
         r.Register("code.get", _ => CodeGet());
         r.Register("code.copy", _ => CodeCopy());
+        r.Register("code.keep", a => CodeKeep(Bool(a, "enabled")));
+        r.Register("code.renew", _ => CodeRenew());
 
         r.Register("sources.get", _ => SourcesGet());
         r.Register("sources.set", a => SourcesSet(CommandRouter.Text(a, "id", 32), Bool(a, "enabled")));
@@ -332,6 +334,7 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         {
             ["code"] = s.Runtime.TokenCreated ? s.Runtime.Token : null,   // o código só sai nesta tela (e na bandeja); token fixo nunca
             ["fixed"] = !s.Runtime.TokenCreated,
+            ["keep"] = KeepCode(),
             ["usbAddress"] = $"127.0.0.1:{port}",
             ["wifiAddress"] = chosen is null || !s.Runtime.ListenOnLan ? null : $"{chosen.Ip}:{port}",
             ["clients"] = new JsonArray([.. s.Runtime.Clients.Select(WindowCommands.ClientJson)]),
@@ -343,6 +346,39 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         if (!s.Runtime.TokenCreated) throw new CommandException("fixed_token", "O token fixo (ATALAIA_TOKEN) não é copiado pela janela.");
         s.CopyText(s.Runtime.Token);
         return Task.FromResult<JsonNode?>(null);
+    }
+
+    private bool KeepCode() => s.Settings.Read()["Access"]?["KeepCode"] is JsonValue v && v.TryGetValue<bool>(out var b) && b;
+
+    /// <summary>
+    /// Liga ou desliga "manter o mesmo código". Ligar guarda o código de agora no cofre (o tablet que já o digitou continua entrando);
+    /// desligar apaga o guardado. Não religa o agente: o código em uso não muda.
+    /// </summary>
+    private Task<JsonNode?> CodeKeep(bool enabled)
+    {
+        if (!s.Runtime.TokenCreated) throw new CommandException("fixed_token", "O token fixo (ATALAIA_TOKEN) já não muda entre reinícios.");
+        s.Vault.Update(d => d[TokenStore.SavedKey] = enabled ? s.Runtime.Token : null);
+        s.Settings.Set(TokenStore.KeepKey, enabled);
+        return CodeGet();
+    }
+
+    /// <summary>Sorteia outro código e religa o agente: os tablets conectados caem e só entram com o código novo (é a forma de revogar).</summary>
+    private async Task<JsonNode?> CodeRenew()
+    {
+        if (!s.Runtime.TokenCreated) throw new CommandException("fixed_token", "O token fixo (ATALAIA_TOKEN) só muda na variável de ambiente.");
+        var code = TokenStore.NewCode();
+        var oldCode = s.Runtime.Token;
+        if (KeepCode()) s.Vault.Update(d => d[TokenStore.SavedKey] = code);
+        s.Runtime.ReplaceToken(new TokenStore.Result(code, true));
+        try { await s.ApplyConfig(); }
+        catch (Exception ex)
+        {
+            if (KeepCode()) s.Vault.Update(d => d[TokenStore.SavedKey] = oldCode);   // não subiu: volta o código anterior
+            s.Runtime.ReplaceToken(new TokenStore.Result(oldCode, true));
+            _log.LogError(ex, "Não foi possível religar o agente com o código novo.");
+            throw new CommandException("restart_failed", "Não foi possível gerar o código novo. O anterior continua valendo.");
+        }
+        return await CodeGet();
     }
 
     // ================================================================ fontes de dados
