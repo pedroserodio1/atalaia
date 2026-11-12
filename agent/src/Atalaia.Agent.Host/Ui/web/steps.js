@@ -86,14 +86,14 @@ function firewallRow(d, view) {
 }
 
 function portRow(d, view) {
-  const input = h('input', { type: 'text', class: 'input', value: String(d.port), 'aria-label': 'Porta', inputmode: 'numeric', maxlength: '5' });
+  const input = h('input', { type: 'text', class: 'input', value: String(d.firstPort), 'aria-label': 'Porta', inputmode: 'numeric', maxlength: '5' });
   const apply = () => {
     const port = Number(input.value.trim());
     if (!Number.isInteger(port)) { toast('Digite só números na porta.'); return; }
     view.run('Religando o agente na porta nova…', () => call('network.setPort', { port }));
   };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
-  return row('Porta', 'Padrão 8765 · de 1024 a 65535', input,
+  return row('Porta', 'Padrão 8765 · de 1024 a 65535 · se estiver ocupada, o agente usa a próxima, até 10 portas seguidas', input,
     h('button', { class: 'btn small', disabled: view.busy ? true : null, onclick: apply }, 'Aplicar'));
 }
 
@@ -108,6 +108,7 @@ function networkStep() {
       }, h('span', { class: 'mono' }, a.ip), ' · ', a.name, a.gateway ? '' : ' (sem gateway)')))
       : null;
     return [
+      d.port !== d.firstPort ? h('div', { class: 'notice' }, `A porta ${d.firstPort} está ocupada por outro programa, então o agente está usando a ${d.port}. O app do tablet procura sozinho nas portas seguintes. Se você digitou o endereço com a porta no tablet, ajuste para ${d.port}.`) : null,
       h('div', { class: 'cols' },
         h('div', { class: 'card narrow' },
           h('div', { class: 'eyebrow' }, 'Endereço do PC na rede'),

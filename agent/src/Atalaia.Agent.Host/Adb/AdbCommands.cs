@@ -21,9 +21,9 @@ internal static class AdbCommands
 
     public static IReadOnlyList<string> ReverseList(string serial) => ["-s", CheckSerial(serial), "reverse", "--list"];
 
-    /// <summary>O mesmo que o módulo USB faz: aparelho → PC na mesma porta.</summary>
-    public static IReadOnlyList<string> Reverse(string serial, int port) =>
-        ["-s", CheckSerial(serial), "reverse", $"tcp:{port.ToString(CultureInfo.InvariantCulture)}", $"tcp:{port.ToString(CultureInfo.InvariantCulture)}"];
+    /// <summary>O mesmo que o módulo USB faz: a porta do tablet chega à porta do PC. Pelo protocolo, o tablet usa <c>8765</c> e o PC pode estar em outra porta da faixa.</summary>
+    public static IReadOnlyList<string> Reverse(string serial, int tabletPort, int hostPort) =>
+        ["-s", CheckSerial(serial), "reverse", $"tcp:{tabletPort.ToString(CultureInfo.InvariantCulture)}", $"tcp:{hostPort.ToString(CultureInfo.InvariantCulture)}"];
 
     /// <summary>Instala por cima (<c>-r</c>), mantendo os dados do app se a assinatura for a mesma.</summary>
     public static IReadOnlyList<string> Install(string serial, string apkPath) => ["-s", CheckSerial(serial), "install", "-r", apkPath];

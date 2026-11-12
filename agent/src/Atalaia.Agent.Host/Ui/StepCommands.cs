@@ -100,6 +100,7 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
             })]),
             ["selectedIp"] = chosen?.Ip,
             ["port"] = port,
+            ["firstPort"] = s.Runtime.FirstPort,   // a configurada; "port" é a que ficou livre na faixa
             ["listenOnLan"] = s.Runtime.ListenOnLan,
             ["wifiAddress"] = chosen is null ? null : $"{chosen.Ip}:{port}",
             ["usbAddress"] = $"127.0.0.1:{port}",
@@ -116,10 +117,10 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
 
     private async Task<JsonNode?> NetworkSetPort(int port)
     {
-        var problem = PortValidator.Check(port, s.Runtime.Port, s.IsPortFree);
+        var problem = PortValidator.Check(port, s.Runtime.FirstPort, s.IsPortFree);
         if (problem != PortProblem.None) throw new CommandException("invalid_port", PortValidator.Message(problem));
-        if (port != s.Runtime.Port)
-            await ApplyAsync(root => SettingsStore.SetPath(root, "Agent:Port", port), () => s.Runtime.Port == port,
+        if (port != s.Runtime.FirstPort)
+            await ApplyAsync(root => SettingsStore.SetPath(root, "Agent:Port", port), () => s.Runtime.FirstPort == port,
                 "A porta está fixada por uma variável de ambiente (ATALAIA_Agent__Port): remova-a para mudar por aqui.");
         return await NetworkGet();
     }
@@ -134,7 +135,7 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
 
     private async Task<JsonNode?> FirewallCreate()
     {
-        try { await s.Firewall.CreateRuleAsync(s.Runtime.Port, CancellationToken.None); }
+        try { await s.Firewall.CreateRuleAsync(s.Runtime.FirstPort, CancellationToken.None); }
         catch (FirewallException ex) { throw new CommandException("firewall_failed", ex.Message); }
         return await NetworkGet();
     }

@@ -33,6 +33,7 @@ internal sealed class Tray : ApplicationContext
         menu.Items.AddRange([open, new ToolStripSeparator(), status, clients, code, new ToolStripSeparator(), copy, logs, new ToolStripSeparator(), exit]);
         menu.Opening += (_, _) =>
         {
+            status.Text = $"Rodando em {runtime.Address}{(runtime.Simulate ? " (simulado)" : "")}";   // a porta pode ter mudado (faixa de portas)
             clients.Text = $"Clientes conectados: {runtime.Hub.ClientCount}";
             if (runtime.TokenCreated) code.Text = $"Código de acesso: {runtime.Token}";   // "Gerar novo" troca o código com o agente rodando
         };
