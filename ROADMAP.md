@@ -76,14 +76,19 @@ O que fazer:
 
 - [ ] Em cada fonte com credencial, um bloco **"Como conseguir"** dentro do próprio formulário (o componente `howto` já existe no passo de USB),
   com passos numerados, curtos, em português, e o que fazer quando der errado. Abre pelo botão de ajuda do campo, sem sair da janela.
+  Código e testes prontos (botão **Como conseguir** na linha de cada fonte; Steam, Discord, clima e nobreak); falta ver na janela de verdade.
 - [ ] Os mesmos tutoriais na aba **Fontes de dados** das configurações (não só no onboarding) e em `docs/` (uma página por serviço, para
   quem prefere ler no navegador). Texto escrito uma vez e reaproveitado; exemplos com valores falsos (`FAKEKEY0123456789ABCDEF`).
+  As páginas estão em `docs/fontes/` (um teste confere que são iguais ao texto da janela); a aba usa o mesmo componente do onboarding. Falta ver na janela.
 - [ ] Botão **"Testar conexão"** por fonte: valida a credencial na hora e devolve a causa em português ("chave recusada", "perfil privado",
   "Discord fechado") em vez de a fonte só ficar em erro.
+  Código e testes (rede falsa) prontos. O teste do Discord é a versão leve (aberto + Client ID e Secret aceitos, sem o pop-up de autorização). **Falta provar com
+  credenciais reais** (Steam, Discord e Open-Meteo): roteiro em `docs/teste-manual-agente.md`.
 - [ ] Botão **"Abrir página"** que leva ao site certo. Hoje o `LinkPolicy` só aceita links de `https://github.com/{repositório}/...`; abrir
   `steamcommunity.com` e `discord.com/developers` exige **uma lista fechada e pequena de endereços**, definida no código (nunca vinda de
   configuração nem de conteúdo remoto). Mudança sensível de segurança: revisar com o mantenedor.
-- [ ] Texto dos tutoriais é fixo, embutido no agente. Nada é baixado de fora para exibi-los.
+  Decidido: mapa fixo no C# (`SourceHelp`), a página manda só o id da fonte (`sources.openPage`) e o `LinkPolicy` **não muda**. Falta provar abrindo o navegador de verdade.
+- [x] Texto dos tutoriais é fixo, embutido no agente. Nada é baixado de fora para exibi-los.
 
 Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites reais antes de publicar, porque as telas deles mudam):
 
@@ -233,7 +238,7 @@ A `1.0.0` é declarada pelo mantenedor quando:
 2. **PC no cabo ou no Wi-Fi:** define se o Wake-on-LAN é viável.
 3. **Qual modelo de plugin entra primeiro** (assembly .NET ou processo separado).
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
-5. **Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`): quais domínios entram e como isso fica no `LinkPolicy`.
+5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
 6. **Porta do agente (#13):** o app precisa descobrir a porta nova, ou ela é só mostrada na janela?
 7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação): aprovar antes de qualquer código.
 
