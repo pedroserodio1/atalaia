@@ -89,6 +89,7 @@ class FakeAgent {
     var answerHello = true
     var answerPings = true
     var closeOnHello: Int? = null
+    var closeReason = "fechado"
     var sendOnSubscribe: List<String> = emptyList()
     var onAction: (FakeSocket, JsonObject) -> Unit = { _, _ -> }
 
@@ -97,7 +98,7 @@ class FakeAgent {
         val data = o["data"]!!.jsonObject
         when (o["type"]!!.jsonPrimitive.content) {
             "hello" -> when {
-                closeOnHello != null -> s.serverClose(closeOnHello!!, "fechado")
+                closeOnHello != null -> s.serverClose(closeOnHello!!, closeReason)
                 answerHello -> s.serverSend(helloJson(protocol))
             }
             "subscribe" -> sendOnSubscribe.forEach { s.serverSend(it) }

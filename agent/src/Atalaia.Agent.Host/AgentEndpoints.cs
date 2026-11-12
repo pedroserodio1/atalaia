@@ -32,7 +32,7 @@ public static class AgentEndpoints
         app.MapGet("/cover/{hash}", (HttpContext ctx, string hash) =>
         {
             Cors(ctx);
-            switch (hub.Authenticate(BearerToken(ctx.Request), ctx.Connection.RemoteIpAddress))
+            switch (hub.Authenticate(BearerToken(ctx.Request), ctx.Connection.RemoteIpAddress, "capa"))
             {
                 case AuthResult.Locked: return Results.StatusCode(StatusCodes.Status429TooManyRequests);
                 case AuthResult.Wrong: return Results.StatusCode(StatusCodes.Status401Unauthorized);

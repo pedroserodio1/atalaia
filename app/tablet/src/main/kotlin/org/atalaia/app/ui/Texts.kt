@@ -112,6 +112,7 @@ object Texts {
         is ConnectionState.Connecting -> "Conectando a ${s.endpoint}…"
         is ConnectionState.Unreachable -> "PC desligado ou inalcançável. Tentando de novo…"
         ConnectionState.TokenInvalid -> "Código inválido (muda a cada início do agente). Veja na bandeja."
+        ConnectionState.Locked -> "Muitas tentativas erradas: o PC bloqueou o tablet por um tempo. Tentando de novo sozinho…"
         is ConnectionState.VersionMismatch -> "Versão do protocolo incompatível com o agente."
     }
 

@@ -146,7 +146,7 @@ private fun Tab(icon: IconKind, label: String, on: Boolean, onClick: () -> Unit)
 private fun ConnectionBanner(c: ConnectionState, onConfigure: () -> Unit) {
     val text = Texts.connectionBanner(c) ?: return
     // Nestes estados o problema se resolve na configuração: a faixa inteira vira um botão para abri-la.
-    val fixable = c is ConnectionState.Stopped || c is ConnectionState.InvalidEndpoint || c is ConnectionState.TokenInvalid
+    val fixable = c is ConnectionState.Stopped || c is ConnectionState.InvalidEndpoint || c is ConnectionState.TokenInvalid || c is ConnectionState.Locked
     val problem = c !is ConnectionState.Connecting
     val shape = RoundedCornerShape(14.dp)
     Box(

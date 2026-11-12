@@ -71,7 +71,7 @@ public sealed class AgentHub
     /// Confere o token de quem vem de <paramref name="remote"/> e aplica o limite de tentativas erradas. Loopback (USB via
     /// <c>adb reverse</c>, o próprio PC) e origem desconhecida (testes) não têm limite. Bloqueado nem chega a avaliar o token.
     /// </summary>
-    public AuthResult Authenticate(string? candidate, IPAddress? remote)
+    public AuthResult Authenticate(string? candidate, IPAddress? remote, string via = "")
     {
         if (remote is null || IPAddress.IsLoopback(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote))
             return ValidateToken(candidate) ? AuthResult.Ok : AuthResult.Wrong;
@@ -82,6 +82,8 @@ public sealed class AgentHub
 
         if (_throttle.Failure(key) is { } locked)
             _logger.LogWarning("Muitas tentativas erradas de {Remote}: bloqueado por {Seconds} s.", key, (int)locked.TotalSeconds);
+        else
+            _logger.LogInformation("Código errado de {Remote} ({Via}).", key, via);   // mostra de onde vêm as tentativas que levam ao bloqueio
         return AuthResult.Wrong;
     }
 
@@ -152,7 +154,7 @@ public sealed class AgentHub
 
         var token = data.ValueKind == JsonValueKind.Object && data.TryGetProperty("token", out var t) && t.ValueKind == JsonValueKind.String
             ? t.GetString() : null;
-        var auth = Authenticate(token, remote);
+        var auth = Authenticate(token, remote, "ws");
         if (auth != AuthResult.Ok)
         {
             await conn.CloseAsync(Unauthorized, auth == AuthResult.Locked ? "locked" : "unauthorized");
