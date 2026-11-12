@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.1`).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.2`).
 - **Issues abertas:** [#13](https://github.com/pedroserodio1/atalaia/issues/13) (agente crasha com a porta ocupada),
   [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
@@ -27,7 +27,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 |---|---|---|---|
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
-| **0.2.0** | Primeira experiência | minor, em andamento (`beta.1` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, adiada da 0.1.2); provas e #15 (opção A) feitas |
+| **0.2.0** | Primeira experiência | minor, em andamento (`beta.2` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, adiada da 0.1.2); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14) |
