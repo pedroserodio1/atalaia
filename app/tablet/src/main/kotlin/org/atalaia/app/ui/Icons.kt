@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.Dp
 
-enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, SPARK }
+enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD }
 
 /** Ícones simples desenhados em uma grade de 24 × 24, sem biblioteca de ícones (menos memória no tablet). */
 @Composable
@@ -88,9 +88,6 @@ private fun DrawScope.draw(kind: IconKind, c: Color) {
             line(c, 6.5f, 12f, 9.5f, 12f)
             drawCircle(c, 1f, Offset(16f, 11f))
             drawCircle(c, 1f, Offset(18f, 13f))
-        }
-        IconKind.SPARK -> {
-            line(c, 12f, 3f, 14f, 10f, 21f, 12f, 14f, 14f, 12f, 21f, 10f, 14f, 3f, 12f, 10f, 10f, 12f, 3f)
         }
         IconKind.TRASH -> {
             line(c, 4f, 7f, 20f, 7f)

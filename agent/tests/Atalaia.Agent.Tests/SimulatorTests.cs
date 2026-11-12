@@ -52,13 +52,13 @@ public class SimulatorTests
     }
 
     [Fact]
-    public async Task As_onze_fontes_do_simulador_aparecem_no_hello_e_publicam_dados()
+    public async Task As_dez_fontes_do_simulador_aparecem_no_hello_e_publicam_dados()
     {
         await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
         using var c = await TestClient.ConnectAsync(s.WsUri);
         var hello = await c.HelloAsync();
         var ids = hello.Data.GetProperty("plugins").EnumerateArray().Select(p => p.GetProperty("id").GetString()).ToList();
-        Assert.Equal(["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "claude", "steam", "discord"], ids);
+        Assert.Equal(["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord"], ids);
         foreach (var id in ids) await WaitSnapshotAsync(s, id!, _ => true);
     }
 
