@@ -44,6 +44,12 @@ sealed interface ConnectionState {
     /** Fechamento 4401 repetido: o token está errado. Só volta a tentar quando a configuração mudar ou em [AgentConnection.retryNow]. */
     data object TokenInvalid : ConnectionState
 
+    /**
+     * O agente bloqueou este tablet por tentativas erradas (4401 com razão `locked`): vale por um tempo, mesmo com o código certo.
+     * Tenta de novo sozinho; tentar durante o bloqueio não o prolonga.
+     */
+    data object Locked : ConnectionState
+
     /** Fechamento 4400, ou `hello` com `protocol` diferente de 1. */
     data class VersionMismatch(val agentProtocol: Int?) : ConnectionState
 }
@@ -230,6 +236,7 @@ class AgentConnection(
             val order = endpoints.indices.filter { it != avoid } + listOfNotNull(avoid.takeIf { it >= 0 })
             var link: Link? = null
             var hello: Incoming.Hello? = null
+            var locked = false
 
             for (i in order) {
                 _state.value = if (attempts == 0) ConnectionState.Connecting(endpoints[i]) else ConnectionState.Unreachable(attempts)
@@ -249,6 +256,7 @@ class AgentConnection(
                                 retry.receive(); attempts = 0; avoid = -1; unauthorized = 0
                                 continue@pass
                             }
+                            end is SessionEnd.Closed && end.code == Protocol.CLOSE_UNAUTHORIZED && end.reason == Protocol.CLOSE_REASON_LOCKED -> locked = true
                             end is SessionEnd.Closed && end.code == Protocol.CLOSE_UNAUTHORIZED -> unauthorized++
                             else -> unauthorized = 0
                         }
@@ -258,9 +266,18 @@ class AgentConnection(
             }
 
             if (link == null) {
-                if (unauthorized >= 2) {
+                // Outro endereço que respondeu "errado" junto com um bloqueado também prova que o código está errado.
+                if (unauthorized >= 2 || (unauthorized >= 1 && locked)) {
                     _state.value = ConnectionState.TokenInvalid
                     retry.receive(); unauthorized = 0; attempts = 0; avoid = -1
+                    continue
+                }
+                if (locked) {
+                    // O agente bloqueou este tablet (muitos erros logo depois de o código mudar): espera e tenta de novo sozinho.
+                    _state.value = ConnectionState.Locked
+                    unauthorized = 0
+                    withTimeoutOrNull(backoffMs.last()) { retry.receive() }   // retryNow() ou uma configuração nova encurtam a espera
+                    avoid = -1
                     continue
                 }
                 // Uma segunda chance antes de declarar o token inválido: 4401 também vale para "hello não chegou em 10 s".

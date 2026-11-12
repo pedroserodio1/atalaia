@@ -151,6 +151,51 @@ class AgentConnectionTest {
     }
 
     @Test
+    fun bloqueio_do_agente_nao_e_token_invalido_e_reconecta_sozinho_depois() = runTest {
+        val x = ctx()
+        x.agent.closeOnHello = 4401
+        x.agent.closeReason = "locked"   // o agente bloqueou o tablet por tentativas erradas
+        x.c.start(ep, "certo")
+        runCurrent()
+        assertEquals(ConnectionState.Locked, x.state)
+        assertEquals(1, x.t.sockets.size)   // sem "segunda chance": ela só gastaria tentativas
+        advanceTimeBy(14_000)
+        assertEquals(1, x.t.sockets.size)   // espera o tempo inteiro
+        x.agent.closeOnHello = null   // o bloqueio acabou
+        advanceTimeBy(1_001)
+        runCurrent()
+        assertInstanceOf(ConnectionState.Connected::class.java, x.state)
+    }
+
+    @Test
+    fun retryNow_encurta_a_espera_do_bloqueio() = runTest {
+        val x = ctx()
+        x.agent.closeOnHello = 4401
+        x.agent.closeReason = "locked"
+        x.c.start(ep, "certo")
+        runCurrent()
+        assertEquals(ConnectionState.Locked, x.state)
+        x.agent.closeOnHello = null
+        x.c.retryNow()
+        runCurrent()
+        assertInstanceOf(ConnectionState.Connected::class.java, x.state)
+    }
+
+    @Test
+    fun bloqueio_que_volta_como_codigo_errado_vira_token_invalido() = runTest {
+        val x = ctx()
+        x.agent.closeOnHello = 4401
+        x.agent.closeReason = "locked"
+        x.c.start(ep, "errado")
+        runCurrent()
+        assertEquals(ConnectionState.Locked, x.state)
+        x.agent.closeReason = "unauthorized"   // acabou o bloqueio, mas o código está errado
+        advanceTimeBy(15_001)
+        runCurrent()
+        assertEquals(ConnectionState.TokenInvalid, x.state)
+    }
+
+    @Test
     fun um_4401_isolado_nao_declara_token_invalido() = runTest {
         val x = ctx()
         x.agent.closeOnHello = 4401
