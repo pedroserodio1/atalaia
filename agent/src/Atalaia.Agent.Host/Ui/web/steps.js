@@ -254,6 +254,11 @@ function groupCode(code) { return code.length === 6 ? code.slice(0, 3) + ' ' + c
 
 let renewArmed = false;   // "Gerar novo" em dois toques: derruba os tablets conectados
 
+/** Aviso de que o código foi sorteado de novo (reinício ou atualização do agente): quem já pareou precisa digitar o novo no tablet. */
+function codeChangedNotice(d) {
+  return d.changed ? h('div', { class: 'notice' }, 'O código de acesso mudou neste início do agente. Se o tablet não conectar, digite o código novo. Para não precisar disso, ligue "Manter o mesmo código".') : null;
+}
+
 /** "Manter o mesmo código" e "Gerar novo", abaixo do código. Os dois só existem com código sorteado (token fixo não passa por aqui). */
 function codeKeepControls(d, v) {
   const disarm = () => { renewArmed = false; };
@@ -289,6 +294,7 @@ function codeStep() {
               h('div', { class: 'eyebrow' }, 'Código de acesso'),
               h('div', { class: 'code', 'aria-label': 'Código ' + d.code.split('').join(' ') }, groupCode(d.code)),
               h('div', { class: 'hint' }, d.keep ? 'Fica o mesmo entre reinícios do agente. Depois de tentativas erradas, o agente limita novas tentativas.' : 'Muda toda vez que o agente reinicia, a menos que você escolha manter. Depois de tentativas erradas, o agente limita novas tentativas.'),
+              codeChangedNotice(d),
               h('div', { class: 'btnrow' }, h('button', { class: 'btn small', onclick: () => call('code.copy').then(() => { copied = true; v.paint(); setTimeout(() => { copied = false; v.paint(); }, 2000); }).catch((e) => toast(e.message)) }, copied ? 'Copiado ✓' : 'Copiar código')),
               ...codeKeepControls(d, v)),
           card(connected ? 'Tablet conectado' : 'Esperando o tablet',

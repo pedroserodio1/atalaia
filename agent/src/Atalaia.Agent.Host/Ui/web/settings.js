@@ -42,6 +42,7 @@ function codeCard() {
           h('div', { class: 'eyebrow' }, 'Código de acesso'),
           h('div', { class: 'code' }, groupCode(d.code)),
           h('div', { class: 'hint' }, d.keep ? 'Digite no tablet. Fica o mesmo entre reinícios do agente.' : 'Digite no tablet. Muda a cada vez que o agente reinicia, a menos que você escolha manter.'),
+          codeChangedNotice(d),
           h('div', { class: 'btnrow' },
             h('button', { class: 'btn small', onclick: () => call('code.copy').then(() => { copied = true; v.paint(); setTimeout(() => { copied = false; v.paint(); }, 2000); }).catch((e) => toast(e.message)) }, copied ? 'Copiado ✓' : 'Copiar código')),
           ...codeKeepControls(d, v)),
@@ -117,13 +118,13 @@ function availableCard(v, d) {
     working ? h('div', { class: 'job' },
       h('div', { class: 'name' }, PHASE_TEXT[d.state] + (d.state === 'downloading' ? ` ${pct}%` : '')),
       d.state === 'installing' ? null : progressBar(d.state === 'verifying' ? 100 : pct),
-      d.state === 'installing' ? h('div', { class: 'notice' }, 'O Atalaia vai fechar e abrir de novo sozinho. Ao reiniciar o código de acesso muda: o tablet vai precisar do código novo (ele aparece no menu do ícone da bandeja e na tela Conexão).') : null) : null,
+      d.state === 'installing' ? h('div', { class: 'notice' }, 'O Atalaia vai fechar e abrir de novo sozinho. Se "Manter o mesmo código" estiver desligado, o código de acesso muda ao reiniciar e o tablet vai precisar do código novo (ele aparece no menu do ícone da bandeja e na tela Conexão).') : null) : null,
     d.staged && !working ? h('div', { class: 'hint ok' }, '● Já baixada e conferida. Será instalada quando você fechar o Atalaia pelo menu da bandeja (Sair).') : null,
     working ? null : h('div', { class: 'btnrow' },
       h('button', { class: 'btn primary', onclick: () => v.run('Iniciando…', () => call('updates.install')) }, 'Baixar e instalar'),
       h('button', { class: 'btn small', onclick: () => call('link.open', { url: a.url }).catch((e) => toast(e.message)) }, 'Ver no GitHub'),
       h('button', { class: 'link', onclick: () => v.run('Gravando…', () => call('updates.skip')) }, 'Lembrar depois')),
-    working ? null : h('div', { class: 'hint' }, 'Depois de instalar, o agente reinicia e o código de acesso muda. O arquivo vem da release do GitHub e é conferido (SHA-256) antes de ser executado.'));
+    working ? null : h('div', { class: 'hint' }, 'Depois de instalar, o agente reinicia (e o código de acesso muda, a menos que "Manter o mesmo código" esteja ligado). O arquivo vem da release do GitHub e é conferido (SHA-256) antes de ser executado.'));
 }
 
 function channelPicker(v, d) {

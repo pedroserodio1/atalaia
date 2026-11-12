@@ -51,3 +51,4 @@ Valem para qualquer mudança no repositório.
 - `dotnet test` (em `agent/`) e `./gradlew :core:test` (em `app/`) precisam passar. Se não conseguiu rodar algo, diga isso, e
   não afirme que passou.
 - Teste que depende de hardware, rede ou tablet que você não tem: diga o que **não** foi verificado.
+- Fez algo do `ROADMAP.md` ou subiu a versão? Marque o item como feito e atualize o status (veja `.claude/rules/roadmap.md`).

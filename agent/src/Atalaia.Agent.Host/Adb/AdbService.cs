@@ -73,8 +73,23 @@ internal sealed class AdbService(
         return r.ExitCode == 0 ? TabletPackage.ParseVersionName(r.Output) : null;
     }
 
-    public Task<InstallResult> InstallAsync(string serial, Install.ApkFile apk, CancellationToken ct) =>
-        RunInstallAsync(AdbCommands.Install(serial, apk.Path), ct);
+    /// <summary>Instala e, se deu certo, abre o app no tablet (o <c>install -r</c> deixa o app fechado). Falhar ao abrir não é erro de instalação.</summary>
+    public async Task<InstallResult> InstallAsync(string serial, Install.ApkFile apk, CancellationToken ct)
+    {
+        var result = await RunInstallAsync(AdbCommands.Install(serial, apk.Path), ct);
+        if (result.Outcome == InstallOutcome.Success) await TryStartTabletAsync(serial, ct);
+        return result;
+    }
+
+    private async Task TryStartTabletAsync(string serial, CancellationToken ct)
+    {
+        try
+        {
+            var runner = RunnerOrNull(Quick);
+            if (runner is not null) await runner.RunAsync(AdbCommands.StartTablet(serial), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException) { }   // o app já está instalado; abrir é só conveniência
+    }
 
     public async Task<InstallResult> UninstallTabletAsync(string serial, CancellationToken ct)
     {

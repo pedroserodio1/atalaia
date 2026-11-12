@@ -31,6 +31,10 @@ internal static class AdbCommands
     /// <summary>Remove o app do Atalaia (e a configuração dele no tablet). Só o pacote do Atalaia, nunca outro.</summary>
     public static IReadOnlyList<string> UninstallTablet(string serial) => ["-s", CheckSerial(serial), "uninstall", TabletPackage];
 
+    /// <summary>Abre o app do Atalaia no tablet. Argumentos fixos: só a activity principal do pacote do Atalaia.</summary>
+    public static IReadOnlyList<string> StartTablet(string serial) =>
+        ["-s", CheckSerial(serial), "shell", "am", "start", "-n", $"{TabletPackage}/.MainActivity"];
+
     public static IReadOnlyList<string> DumpPackage(string serial) => ["-s", CheckSerial(serial), "shell", "dumpsys", "package", TabletPackage];
 
     /// <summary>O número de série vem do <c>adb devices</c> (e, depois, da página): só caracteres de série de verdade.</summary>
