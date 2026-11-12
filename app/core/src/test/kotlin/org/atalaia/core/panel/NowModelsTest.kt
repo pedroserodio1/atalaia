@@ -71,8 +71,10 @@ class NowModelsTest {
         assertNull(gameLine(x.s, x.now()))   // processo vazio
         x.feed(upd("steam", """{"name":"J","state":"online","game":{"name":"Jogo","appId":"1"}}"""))
         assertInstanceOf(GameLine.Playing::class.java, gameLine(x.s, x.now()))
-        advanceTimeBy(15_001)
-        assertNull(gameLine(x.s, x.now()))   // o jogo some quando a Steam para de mandar
+        advanceTimeBy(45_000)   // a Steam coleta a cada 30 s: entre duas coletas o jogo continua
+        assertInstanceOf(GameLine.Playing::class.java, gameLine(x.s, x.now()))
+        advanceTimeBy(15_001)   // 2 × 30 s sem dado novo: aí sim a Steam parou de mandar
+        assertNull(gameLine(x.s, x.now()))
     }
 
     // ---------------------------------------------------------------- mídia
