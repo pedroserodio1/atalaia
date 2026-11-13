@@ -108,6 +108,12 @@ object Texts {
 
     const val POWER_ALERT_TITLE = "Sem energia da rede"
 
+    const val AUTO_SWITCH_TITLE = "Troca de tela"
+    const val AUTO_SWITCH_HINT = "Vai sozinho para a aba Jogo ou Discord e volta ao Início depois de 5 min sem toque."
+    const val AUTO_SWITCH_LABEL = "Trocar de aba sozinho"
+
+    fun onOff(on: Boolean): String = if (on) "Ligado" else "Desligado"
+
     const val OFF_TITLE = "PC desligado"
     const val OFF_HINT = "O que mostrar quando o PC fica desligado ou inalcançável por mais de 1 minuto."
     const val OFF_MODE = "Mostrar"

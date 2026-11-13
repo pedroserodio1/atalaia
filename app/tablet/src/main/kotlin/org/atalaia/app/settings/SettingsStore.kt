@@ -106,6 +106,11 @@ class SettingsStore(context: Context) {
         }
         set(v) { prefs.edit().putString("offMode", v.mode.name).putInt("offStart", v.nightStartHour).putInt("offEnd", v.nightEndHour).apply() }
 
+    /** Trocar de aba sozinho (jogo, call, volta ao Início); ligado por padrão. */
+    var autoSwitch: Boolean
+        get() = prefs.getBoolean("autoSwitch", true)
+        set(v) { prefs.edit().putBoolean("autoSwitch", v).apply() }
+
     val token: String? get() = vault.load()
 
     fun saveToken(token: String): Boolean = vault.save(token)
