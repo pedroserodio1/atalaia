@@ -15,6 +15,7 @@ import org.atalaia.core.connection.AgentConnection
 import org.atalaia.core.connection.Clock
 import org.atalaia.core.connection.ConnectionState
 import org.atalaia.core.protocol.Decoded
+import org.atalaia.core.protocol.GpuData
 import org.atalaia.core.protocol.Incoming
 import org.atalaia.core.protocol.Severity
 import org.atalaia.core.protocol.Sources
@@ -28,6 +29,10 @@ import org.atalaia.core.protocol.UpsData
 class AppStateStore(private val clock: Clock = Clock.System) {
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state
+
+    /** Limites dos alertas (configuração do tablet). Valem a partir da próxima leitura de `system` ou `gpu`. */
+    @Volatile var limits: Limits = Limits()
+    private val limitTracker = LimitTracker()
 
     /** Começa a coletar da conexão. Chame antes de `AgentConnection.start`: o fluxo de mensagens não guarda histórico. */
     fun attach(scope: CoroutineScope, connection: AgentConnection): Job =
@@ -62,6 +67,9 @@ class AppStateStore(private val clock: Clock = Clock.System) {
         val decoded = Sources.decode(source, raw)
         if (decoded is Decoded.Invalid) return   // formato inesperado: mantém o dado anterior
         val data = (decoded as? Decoded.Ok)?.data
+        // Fora do `update` (que pode repetir a lambda): o tempo acima do limite é contado pela chegada do dado, no relógio do tablet.
+        val isLimitSource = data is SystemData || data is GpuData
+        if (isLimitSource) limitTracker.observe(data, limits, now)
 
         _state.update { s ->
             val old = s.sources[source]
@@ -85,7 +93,10 @@ class AppStateStore(private val clock: Clock = Clock.System) {
             val cpu = (data as? SystemData)?.cpu?.percent
             val history = if (cpu != null) (s.cpuHistory + cpu).takeLast(CPU_HISTORY) else s.cpuHistory
 
-            s.copy(sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history)
+            s.copy(
+                sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history,
+                limitAlerts = if (isLimitSource) limitTracker.active() else s.limitAlerts,
+            )
         }
     }
 

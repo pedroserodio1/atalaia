@@ -37,6 +37,7 @@ import org.atalaia.core.panel.mediaLine
 import org.atalaia.core.protocol.UpsData
 import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
+import org.atalaia.core.state.limitAlerts
 import java.time.LocalDateTime
 
 /** Relógio do tablet: acorda só na virada do minuto. */
@@ -71,13 +72,15 @@ private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
     // espaço novo e nada se mexe quando liga ou desliga (a faixa de antes tomava 48 dp e empurrava o layout).
     val power = state.upsAlert
     val alert = power != null
+    // Limite estourado (GPU, RAM, disco): só a borda e a linha de baixo ficam coral; a queda de energia, que é pior, tem prioridade.
+    val limits = if (alert) emptyList() else limitAlerts(state, now)
     val fg = if (alert) Palette.OnCoral else Palette.Text
     val muted = if (alert) Palette.OnCoral else Palette.TextMuted
     // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel).
     PanelCard(
         Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }) },
         container = if (alert) Palette.Coral else Palette.Panel,
-        line = if (alert) Palette.Coral else Palette.Border,
+        line = if (alert || limits.isNotEmpty()) Palette.Coral else Palette.Border,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             MonoText(Pt.date(time.toLocalDate()), muted)
@@ -89,6 +92,8 @@ private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
                 // O aviso toma o lugar da linha do jogo enquanto durar: é o que mais importa nessa hora.
                 val battery = state.dataOf<UpsData>("ups")?.batteryPercent
                 BodyText(Texts.POWER_ALERT_TITLE + (battery?.let { " · $it%" } ?: ""), Palette.OnCoral, 15)
+            } else if (limits.isNotEmpty()) {
+                BodyText(Texts.limitAlertLine(limits), Palette.Coral, 15)
             } else {
                 when (val line = gameLine(state, now)) {
                     is GameLine.Playing -> { BodyText(Texts.PLAYING_TAG, Palette.Mint, 13); BodyText(line.name, sp = 15) }

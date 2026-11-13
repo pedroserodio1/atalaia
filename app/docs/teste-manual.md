@@ -172,6 +172,24 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
    boot depois do desbloqueio; isso não foi medido.)
 4. Anote a versão do Android do aparelho: do Android 10 em diante o sistema bloqueia e o app não abre sozinho (isso é esperado, não é defeito).
 
+## 15. Alertas de limite (GPU, RAM, disco)
+
+Padrões: GPU 85 °C, RAM 90 %, disco 90 %. O alerta só liga depois de **10 s seguidos** acima do limite e só desliga ao cair **5 pontos abaixo** dele.
+
+1. Abra a configuração (toque longo no relógio). **Esperado:** o cartão "Alertas de limite" mostra os três limites com − e +, alvo de toque confortável,
+   e cabe na tela sem cortar (role se for preciso). − abaixo do mínimo mostra "Desligado"; + volta ao mínimo.
+2. Com o agente real, baixe o limite da **RAM** para o valor mais baixo (70 %) e toque em **Salvar**. **Esperado:** em até ~10 s o cartão do relógio ganha borda
+   coral e a linha de baixo vira "RAM no fim · NN%" (no lugar do jogo), em qualquer aba. O número bate com o Gerenciador de Tarefas.
+3. Suba o limite da RAM acima do uso e salve. **Esperado:** o alerta sai na próxima leitura (poucos segundos) e a linha volta ao jogo ou à janela em foco.
+4. Repita com **disco** (limite no mínimo, se algum disco passa de 70 %) e com a **GPU** (limite no mínimo, com a GPU sob carga, ou jogando). Com dois alertas
+   ao mesmo tempo, **esperado:** o primeiro aparece com "+1" (ordem: GPU, RAM, disco).
+5. Deixe o uso oscilando em torno do limite (por exemplo, RAM em 88 a 92 % com limite 90). **Esperado:** o alerta não fica piscando: liga uma vez e só sai
+   quando o uso cai uns 5 pontos abaixo.
+6. Desligue um limite ("Desligado") e salve. **Esperado:** esse alerta nunca aparece. Feche e abra o app: **os limites escolhidos continuam**.
+7. Com um alerta ligado, simule a queda de energia (cenário 10, ou o nobreak `--simulate`). **Esperado:** o cartão fica **coral cheio** com o aviso de energia
+   (tem prioridade); ao voltar a energia, o alerta de limite reaparece se ainda valer.
+8. Com um alerta ligado, feche o agente. **Esperado:** o alerta some quando o dado fica velho (o painel mostra "velho" ou "PC desligado"), sem ficar fingindo.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -188,3 +206,4 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
 | 10 Queda de energia | | |
 | 11 Dados reais | | |
 | 12 Desempenho | | |
+| 15 Alertas de limite | | |

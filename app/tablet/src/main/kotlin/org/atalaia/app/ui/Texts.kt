@@ -5,6 +5,8 @@ package org.atalaia.app.ui
 
 import org.atalaia.core.connection.ActionOutcome
 import org.atalaia.core.connection.ConnectionState
+import org.atalaia.core.state.LimitAlert
+import org.atalaia.core.state.LimitKind
 
 /** Todos os textos da tela num lugar só (português do Brasil). */
 object Texts {
@@ -104,6 +106,27 @@ object Texts {
     const val CONFIG_TAP = "Toque aqui."
 
     const val POWER_ALERT_TITLE = "Sem energia da rede"
+
+    const val LIMITS_TITLE = "Alertas de limite"
+    const val LIMITS_HINT = "Avisa no relógio quando passa do limite por 10 s. Abaixo do mínimo, desliga."
+    const val LIMIT_GPU = "GPU quente"
+    const val LIMIT_RAM = "RAM no fim"
+    const val LIMIT_DISK = "Disco cheio"
+    const val LIMIT_OFF = "Desligado"
+
+    /** Valor de um limite na configuração: "85 °C", "90%" ou "Desligado". */
+    fun limitValue(value: Int?, unit: String): String = if (value == null) LIMIT_OFF else "$value$unit"
+
+    /** Linha do cartão do relógio: o primeiro alerta e quantos mais há. */
+    fun limitAlertLine(alerts: List<LimitAlert>): String {
+        val a = alerts.first()
+        val text = when (a.kind) {
+            LimitKind.GPU_TEMP -> "$LIMIT_GPU · ${a.value} °C"
+            LimitKind.RAM -> "$LIMIT_RAM · ${a.value}%"
+            LimitKind.DISK -> "$LIMIT_DISK ${a.label} · ${a.value}%"
+        }
+        return if (alerts.size > 1) "$text +${alerts.size - 1}" else text
+    }
 
     fun connectionBanner(s: ConnectionState): String? = when (s) {
         is ConnectionState.Connected -> null

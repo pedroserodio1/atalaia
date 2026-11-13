@@ -71,6 +71,8 @@ data class AppState(
     val epoch: Long = 0,
     /** Últimos 60 valores de `system.cpu.percent` (um por segundo no ritmo normal do agente), do mais antigo ao mais novo. */
     val cpuHistory: List<Int> = emptyList(),
+    /** Limites estourados (GPU, RAM, disco), já com o anti-ruído; a tela filtra dado velho com [limitAlerts]. */
+    val limitAlerts: List<LimitAlert> = emptyList(),
 ) {
     inline fun <reified T : SourceData> dataOf(source: String): T? = sources[source]?.data as? T
 
