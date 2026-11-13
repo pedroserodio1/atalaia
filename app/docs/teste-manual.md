@@ -163,6 +163,14 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
 4. Ocupe as 10 portas (8765 a 8774) e suba o agente. **Esperado:** caixa de erro dizendo que a faixa inteira está em uso.
 5. Se o Firewall tinha regra só para a 8765, a janela deve pedir para liberar de novo (a regra nova é `8765-8774`).
 
+## 14. Abrir sozinho ao ligar o tablet
+
+1. Com o app instalado e já configurado, desligue o tablet e ligue de novo (ou reinicie). **Esperado:** depois que o Android termina de ligar, o painel abre
+   sozinho, em tela cheia, e conecta ao agente sem toque.
+2. Reinicie com o PC desligado. **Esperado:** o app abre e fica no estado de espera ("PC desligado ou inalcançável"), sem erro, e conecta quando o agente subir.
+3. Com o tablet bloqueado por PIN/padrão, reinicie. **Esperado:** o app abre depois do desbloqueio (antes disso o Android não entrega o aviso de boot concluído).
+4. Anote a versão do Android do aparelho: do Android 10 em diante o sistema bloqueia e o app não abre sozinho (isso é esperado, não é defeito).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
