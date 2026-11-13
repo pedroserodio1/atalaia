@@ -56,15 +56,9 @@ object Texts {
     const val DISCORD_CLOSED = "Discord fechado"
     const val VOICE_CHANNEL = "Canal de voz"
     const val NOT_IN_CALL = "Fora de um canal de voz"
-    const val MIC_ON = "Mic ligado"
-    const val MIC_MUTED = "Mic mudo"
-    const val DEAF_OFF = "Áudio ligado"
-    const val DEAF_ON = "Áudio desligado"
     const val MIC_VOLUME = "Microfone"
     const val OUT_VOLUME = "Saída"
-    const val SPEAKING = "falando"
-    const val MUTED_TAG = "mudo"
-    const val DEAF_TAG = "surdo"
+
 
     const val STEAM = "Steam"
     const val NOT_PLAYING = "Não está jogando"
