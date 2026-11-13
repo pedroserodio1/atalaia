@@ -259,6 +259,20 @@ O app deduz o download de `system.net.rxKbps`: **30 Mbps ou mais por 2 min segui
 7. Desligue o aviso na configuração ("Desligado"). **Esperado:** nunca aparece.
 8. Anote: o número que o app vê (aba Sistema) bate com a velocidade do download? (A conta depende de o PC medir `rxKbps` de forma estável, o que não foi provado no Wi-Fi.)
 
+## 20. PIN da configuração
+
+PIN opcional, desligado por padrão: 4 a 6 dígitos pedidos ao abrir a configuração (menos na primeira configuração, sem endereço ou sem código).
+
+1. Abra a configuração (toque longo no relógio). No cartão "PIN da configuração", digite um PIN de 4 a 6 dígitos e toque em **Salvar**. Tente um PIN com 3 dígitos: **esperado:** recusa com a mensagem.
+2. Volte ao painel e toque longo no relógio. **Esperado:** aparece o teclado numérico (teclas grandes, cabe sem cortar nos 505 dp), com bolinhas para os dígitos e "Cancelar". Digite o PIN e toque em **OK**:
+   a configuração abre. **Cancelar** volta ao painel.
+3. Erre o PIN uma vez: **esperado:** "PIN errado" e as bolinhas esvaziam. Erre **5 vezes seguidas**: **esperado:** "Muitas tentativas. Tente de novo em N s." com contagem, teclas apagadas por 30 s.
+   Saia e toque de novo durante a espera: a espera **continua** (não zera por fechar a tela). Passados os 30 s, o PIN certo abre.
+4. Com o agente fechado e a tela de PC desligado (cenário 16), segure o dedo na tela escura: **esperado:** pede o PIN (e o brilho volta ao normal enquanto o teclado está na tela). A faixa de erro de
+   conexão ("Código inválido...") também pede o PIN ao ser tocada.
+5. Troque o PIN (digite outro e salve) e confirme que só o novo vale. Toque em **Remover o PIN** e salve: **esperado:** a configuração volta a abrir direto.
+6. Reinstalar o app (primeira configuração, sem endereço ou sem código): **esperado:** não pede PIN. Esqueceu o PIN: o caminho é reinstalar pela janela do agente ("Desinstalar e instalar"), o que apaga a configuração do app.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -280,3 +294,4 @@ O app deduz o download de `system.net.rxKbps`: **30 Mbps ou mais por 2 min segui
 | 17 Troca de tela por contexto | | |
 | 18 Discord: tela mais clara | | |
 | 19 Aviso de download | | |
+| 20 PIN da configuração | | |

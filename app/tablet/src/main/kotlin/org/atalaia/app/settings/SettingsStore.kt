@@ -10,6 +10,7 @@ import android.util.Base64
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.panel.OffMode
 import org.atalaia.core.panel.OffSettings
+import org.atalaia.core.settings.Pin
 import org.atalaia.core.state.LimitSpec
 import org.atalaia.core.state.LimitSpecs
 import org.atalaia.core.state.Limits
@@ -110,6 +111,23 @@ class SettingsStore(context: Context) {
     var autoSwitch: Boolean
         get() = prefs.getBoolean("autoSwitch", true)
         set(v) { prefs.edit().putBoolean("autoSwitch", v).apply() }
+
+    /** PIN opcional da configuração: só sal e hash ficam guardados (nunca o PIN). */
+    val hasPin: Boolean get() = prefs.contains("pinHash")
+
+    fun setPin(pin: String) {
+        val salt = Pin.newSalt()
+        prefs.edit().putString("pinSalt", Base64.encodeToString(salt, Base64.NO_WRAP))
+            .putString("pinHash", Base64.encodeToString(Pin.hash(pin, salt), Base64.NO_WRAP)).apply()
+    }
+
+    fun clearPin() { prefs.edit().remove("pinSalt").remove("pinHash").apply() }
+
+    fun checkPin(pin: String): Boolean {
+        val salt = prefs.getString("pinSalt", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        val hash = prefs.getString("pinHash", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        return Pin.verify(pin, salt, hash)
+    }
 
     val token: String? get() = vault.load()
 

@@ -49,6 +49,7 @@ import org.atalaia.core.settings.ConfigDraft
 import org.atalaia.core.panel.OffMode
 import org.atalaia.core.panel.OffSettings
 import org.atalaia.core.settings.Edit
+import org.atalaia.core.settings.Pin
 import org.atalaia.core.state.LimitSpecs
 
 /**
@@ -64,6 +65,9 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     var limits by remember { mutableStateOf(app.settings.limits) }
     var off by remember { mutableStateOf(app.settings.offScreen) }
     var autoSwitch by remember { mutableStateOf(app.settings.autoSwitch) }
+    var pinText by remember { mutableStateOf("") }
+    var removePin by remember { mutableStateOf(false) }
+    val hadPin = remember { app.settings.hasPin }
     var showToken by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -79,12 +83,14 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     fun save() {
         val problem = ConfigDraft.canSave(endpoints, token, hadToken)
         if (problem != null) { error = problem; return }
+        if (pinText.isNotEmpty() && !Pin.isValid(pinText)) { error = Texts.PIN_INVALID; return }
         val clean = ConfigDraft.cleanToken(token)
         if (!app.configure(endpoints, clean.ifEmpty { null })) { error = Texts.CONFIG_TOKEN_NOT_SAVED; return }
         app.settings.limits = limits
         app.store.limits = limits
         app.settings.offScreen = off
         app.settings.autoSwitch = autoSwitch
+        if (removePin) app.settings.clearPin() else if (pinText.isNotEmpty()) app.settings.setPin(pinText)
         onClose()
     }
 
@@ -175,6 +181,18 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 MonoText(Texts.AUTO_SWITCH_TITLE)
                 MonoText(Texts.AUTO_SWITCH_HINT, sp = 12)
                 LimitRow(Texts.AUTO_SWITCH_LABEL, Texts.onOff(autoSwitch), autoSwitch, !autoSwitch, { autoSwitch = false }, { autoSwitch = true })
+            }
+            PanelCard(Modifier.fillMaxWidth()) {
+                MonoText(Texts.PIN_TITLE)
+                MonoText(if (hadPin) Texts.PIN_SET_HINT else Texts.PIN_HINT, sp = 12)
+                Box(Modifier.height(8.dp))
+                Field(
+                    pinText, { pinText = it.filter { c -> c in '0'..'9' }.take(Pin.MAX); removePin = false; error = null }, Texts.PIN_PLACEHOLDER,
+                    Modifier.fillMaxWidth(), KeyboardType.NumberPassword, ImeAction.Done, PasswordVisualTransformation(), onDone = {},
+                )
+                if (hadPin) {
+                    ActionButton(if (removePin) Texts.PIN_KEEP else Texts.PIN_REMOVE, false, Modifier.fillMaxWidth().padding(top = 8.dp)) { removePin = !removePin; if (removePin) pinText = "" }
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (app.settings.endpoints.isNotEmpty() && hadToken) ActionButton(Texts.CONFIG_CANCEL, false, Modifier.weight(1f), onClose)
