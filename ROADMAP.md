@@ -194,6 +194,9 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   download; quando cai abaixo de 2 Mbps por 30 s, o cartão do relógio mostra "Download terminou" (borda menta) por 10 min ou até um toque. Reconectar zera a contagem. Sem mudança de contrato.
   Falta provar no tablet (cenário 19 de `app/docs/teste-manual.md`). **Cópia de arquivos: fora da 0.3.0** (pede leitura de disco nova), vai para a 0.4.0 junto com "Tráfego de rede".
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
+  Código e testes prontos (ramo `feat/app-pin`): PIN opcional (desligado por padrão) de 4 a 6 dígitos, definido ou removido no cartão "PIN da configuração"; pedido em toda entrada na configuração
+  (toque longo no relógio, faixa de erro de conexão e toque longo na tela de PC desligado), menos na primeira configuração. Guarda só sal e hash PBKDF2, nunca o PIN; cinco erros seguidos trancam
+  por 30 s. Esqueceu o PIN: reinstalar o app (janela do agente, "Desinstalar e instalar"). Falta provar no tablet (cenário 20 de `app/docs/teste-manual.md`), inclusive o teclado nos 505 dp.
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo
   novo, então só entra se o mantenedor aprovar a mudança de contrato.
 
