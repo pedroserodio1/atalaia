@@ -63,6 +63,9 @@ class ContextRouter(
     /** Registra um toque na tela. */
     fun touch(now: Long) { lastTouch = now }
 
+    /** Há quanto tempo ninguém toca na tela (desde o início, se nunca tocaram); 0 antes da primeira leitura. Serve à tela Atração. */
+    fun sinceTouch(now: Long): Long = if (started < 0) 0 else now - maxOf(lastTouch, started)
+
     /**
      * A aba para onde ir, ou `null` para ficar. [enabled] é a opção do usuário; com [visible] falso (configuração ou tela de PC
      * desligado) o roteador só acompanha o estado, sem trocar, e os degraus que passarem nesse tempo são descartados.

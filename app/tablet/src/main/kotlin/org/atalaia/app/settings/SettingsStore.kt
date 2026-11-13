@@ -107,6 +107,11 @@ class SettingsStore(context: Context) {
         }
         set(v) { prefs.edit().putString("offMode", v.mode.name).putInt("offStart", v.nightStartHour).putInt("offEnd", v.nightEndHour).apply() }
 
+    /** Tela de espera (relógio, estado do PC e jogado hoje) depois de 10 min sem toque; ligada por padrão. */
+    var attract: Boolean
+        get() = prefs.getBoolean("attract", true)
+        set(v) { prefs.edit().putBoolean("attract", v).apply() }
+
     /** Trocar de aba sozinho (jogo, call, volta ao Início); ligado por padrão. */
     var autoSwitch: Boolean
         get() = prefs.getBoolean("autoSwitch", true)

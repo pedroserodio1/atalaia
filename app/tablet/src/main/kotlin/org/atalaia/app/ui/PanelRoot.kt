@@ -51,6 +51,10 @@ import org.atalaia.core.connection.ConnectionState
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import org.atalaia.core.panel.ContextRouter
+import org.atalaia.core.panel.GameLine
+import org.atalaia.core.panel.PlayTimeToday
+import org.atalaia.core.panel.attractWanted
+import org.atalaia.core.panel.gameLine
 import org.atalaia.core.panel.OffView
 import org.atalaia.core.panel.PanelTab
 import org.atalaia.core.settings.Pin
@@ -105,6 +109,12 @@ fun PanelRoot(app: PanelApp) {
     LaunchedEffect(state, now, configuring, askingPin, dim) {
         router.update(state, now, PanelTab.entries[tab], autoSwitch, visible = !configuring && !askingPin && !dim)?.let { tab = it.ordinal }
     }
+    // Tela de espera: o tempo jogado hoje é somado aqui (em memória, a cada passada do relógio) e a Atração entra com o PC ligado, sem toque e sem nada pedindo atenção.
+    val playToday = remember { PlayTimeToday() }
+    LaunchedEffect(now) { playToday.tick(gameLine(state, now) is GameLine.Playing, now, time.toLocalDate()) }
+    val attractOn = remember(configuring) { app.settings.attract }
+    var attractTouches by remember { mutableIntStateOf(0) }   // lido abaixo para o toque na Atração recompor na hora (sem esperar o próximo passo do relógio)
+    val attract = attractOn && attractTouches >= 0 && !configuring && !askingPin && !dim && attractWanted(state, now, router.sinceTouch(now))
     if (configuring) {
         ConfigScreen(app) { configuring = false }
         return
@@ -115,6 +125,10 @@ fun PanelRoot(app: PanelApp) {
     }
     if (dim) {
         OffScreen(offLook, time.toLocalTime()) { requestConfig() }
+        return
+    }
+    if (attract) {
+        AttractScreen(state, now, time, playToday) { router.touch(app.clock.monotonicMs()); attractTouches++ }
         return
     }
     val scope = rememberCoroutineScope()

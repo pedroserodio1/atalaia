@@ -273,6 +273,20 @@ PIN opcional, desligado por padrão: 4 a 6 dígitos pedidos ao abrir a configura
 5. Troque o PIN (digite outro e salve) e confirme que só o novo vale. Toque em **Remover o PIN** e salve: **esperado:** a configuração volta a abrir direto.
 6. Reinstalar o app (primeira configuração, sem endereço ou sem código): **esperado:** não pede PIN. Esqueceu o PIN: o caminho é reinstalar pela janela do agente ("Desinstalar e instalar"), o que apaga a configuração do app.
 
+## 21. Tela Atração (relógio, estado do PC e jogado hoje)
+
+Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a uma tela de espera. Ligada por padrão; desliga na configuração (cartão "Troca de tela", linha "Relógio após 10 min parado").
+
+1. Deixe o painel parado por 10 min, sem tocar. **Esperado:** a tela vira o relógio grande com a data, "PC ligado" e, se houve jogo, "Jogado hoje · N min". Sem animação, no brilho normal.
+2. Toque em qualquer ponto. **Esperado:** o painel volta na hora (e não reabre a espera antes de mais 10 min sem toque).
+3. Jogue uns 20 min pela Steam (com o tablet parado). **Esperado:** na espera aparece "● jogando" com o nome do jogo e "Jogado hoje" crescendo (confira o total contra o relógio).
+4. Pausa longa sem conexão (feche o agente por uns minutos e suba de novo): **esperado:** o tempo sem conexão **não** entra no "Jogado hoje". Reiniciar o app zera a conta (isso é esperado, não é defeito).
+5. A virada da meia-noite zera o "Jogado hoje" (deixe o tablet ligado de um dia para o outro com a espera ativa).
+6. A espera **não** aparece por cima de: queda de energia (cenário 10), alerta de limite (cenário 15) ou call de voz no Discord. Com um desses ativos e 10 min parado, o painel fica.
+7. Sem conexão com o PC, a espera não entra (vale a tela de PC desligado, cenário 16).
+8. Desligue "Relógio após 10 min parado" na configuração e salve. **Esperado:** a espera nunca aparece.
+9. Anote a bateria e a temperatura do tablet depois de uma noite com a espera ativa (a tela fica acesa com o relógio).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -295,3 +309,4 @@ PIN opcional, desligado por padrão: 4 a 6 dígitos pedidos ao abrir a configura
 | 18 Discord: tela mais clara | | |
 | 19 Aviso de download | | |
 | 20 PIN da configuração | | |
+| 21 Tela Atração | | |

@@ -65,6 +65,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     var limits by remember { mutableStateOf(app.settings.limits) }
     var off by remember { mutableStateOf(app.settings.offScreen) }
     var autoSwitch by remember { mutableStateOf(app.settings.autoSwitch) }
+    var attract by remember { mutableStateOf(app.settings.attract) }
     var pinText by remember { mutableStateOf("") }
     var removePin by remember { mutableStateOf(false) }
     val hadPin = remember { app.settings.hasPin }
@@ -90,6 +91,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
         app.store.limits = limits
         app.settings.offScreen = off
         app.settings.autoSwitch = autoSwitch
+        app.settings.attract = attract
         if (removePin) app.settings.clearPin() else if (pinText.isNotEmpty()) app.settings.setPin(pinText)
         onClose()
     }
@@ -181,6 +183,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 MonoText(Texts.AUTO_SWITCH_TITLE)
                 MonoText(Texts.AUTO_SWITCH_HINT, sp = 12)
                 LimitRow(Texts.AUTO_SWITCH_LABEL, Texts.onOff(autoSwitch), autoSwitch, !autoSwitch, { autoSwitch = false }, { autoSwitch = true })
+                LimitRow(Texts.ATTRACT_LABEL, Texts.onOff(attract), attract, !attract, { attract = false }, { attract = true })
             }
             PanelCard(Modifier.fillMaxWidth()) {
                 MonoText(Texts.PIN_TITLE)

@@ -23,6 +23,8 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
   fora dele o painel segue normal), **relógio** sempre ou **tela apagada** (preta, brilho mínimo, tela ainda ligada). Voltou a conectar, volta o painel. Segurar na tela abre a configuração.
 - **Aviso de download:** tráfego de rede do PC a partir de 30 Mbps (configurável) por 2 min seguidos conta como download; quando cai abaixo de 2 Mbps por 30 s o relógio mostra "Download terminou"
   por 10 min ou até um toque. Deduzido só de `system.net.rxKbps`, sem mudar o protocolo.
+- **Tela Atração:** com o PC conectado e 10 min sem toque, o painel vira um relógio com a data, o estado do PC e "Jogado hoje" (tempo com `steam.game` ativo visto pelo tablet, só em memória); um toque sai.
+  Não entra por cima de queda de energia, alerta de limite ou call. Desliga na configuração.
 - **Troca de tela por contexto:** jogo da Steam que abre leva à aba Jogo; call no Discord (sem jogo aberto) leva à aba Discord; depois de 5 min sem toque volta ao Início (menos se a aba
   é a do contexto ainda ativo). Só reage a um começo (reconectar com jogo ou call em andamento não puxa a tela, nem quem está mexendo). Ligada por padrão; desliga na configuração.
 - **PIN da configuração (opcional):** 4 a 6 dígitos pedidos ao abrir a configuração (menos na primeira); guarda só sal e hash, cinco erros seguidos trancam por 30 s. Esqueceu: reinstalar o app.
@@ -78,7 +80,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (237 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (248 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.
