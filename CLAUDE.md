@@ -7,7 +7,8 @@
   e os fluxos prontos em `.claude/skills/` (`/novo-plugin-agente`, `/fonte-no-app`, `/verificar-contribuicao`).
 - `probe_tests/` é a sondagem antiga (PcProbe): somente leitura, não edite. Não leia nem imprima `.env`.
 - Dúvida ou conflito entre os documentos e o código que funciona: pergunte antes de decidir.
-- Commits só quando pedido, em Conventional Commits, sem linhas de atribuição.
+- Commits: pode commitar por conta própria toda mudança concluída que faça sentido como um commit (regras em `.claude/rules/projeto.md`, seção Git).
+  Conventional Commits, sem linhas de atribuição. Push, PR e tag continuam só quando pedido.
 - Ramos, versões e releases: leia `docs/versionamento-e-releases.md`. Resumo: `main` = estável (tag `vX.Y.Z`), `development` = beta
   (tag `vX.Y.Z-beta.N`), trabalho em `beta/X.Y.Z` e sub-ramos (`feat/`, `fix/`, `docs/`, `chore/`), tudo por PR com CI verde. Merge:
   squash para `beta/X.Y.Z`, merge commit para `development` e `main`. Versão: SemVer (patch = correção compatível, minor = recurso

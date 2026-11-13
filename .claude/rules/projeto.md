@@ -41,7 +41,12 @@ Valem para qualquer mudança no repositório.
 ## Git
 - Commits em Conventional Commits, em português (`feat(agent): ...`, `fix(app): ...`, `docs: ...`, `test: ...`).
 - **Sem linhas de atribuição** nas mensagens (`Co-Authored-By`, "Generated with ...").
-- Não commite sem o usuário pedir. Nunca altere a configuração do git nem use `push --force` em branch compartilhada.
+- **Pode commitar sem pedir.** Toda mudança concluída que faça sentido como um commit (um assunto só, código e testes e a marcação do
+  `ROADMAP.md` juntos) vai num commit, sem esperar o usuário mandar. Antes: testes do que mexeu passando e o diff conferido (nada de segredo,
+  dado pessoal nem arquivo que não é do assunto). Adicione os arquivos pelo nome, nunca `git add -A`. Assuntos diferentes, commits diferentes
+  (e, se a mudança não é do assunto do ramo, ramo próprio saído do ramo do ciclo).
+- **Continua só quando o usuário pedir:** `push`, abrir PR, tag, trocar a configuração do git, `push --force`, reescrever histórico
+  (`amend`, `rebase`, `reset --hard`) de commit que já saiu da máquina, e qualquer commit em `main` ou `development`.
 - Nunca inclua `appsettings.Local.json`, `.env`, `local.properties`, chaves ou builds.
 - Ramos, versões e releases seguem `docs/versionamento-e-releases.md`: trabalho em `beta/X.Y.Z` (sub-ramos por squash), `development`
   recebe o ciclo (merge commit) e gera betas (`vX.Y.Z-beta.N`), `main` só recebe estável (`vX.Y.Z`). Nada de commit direto em
