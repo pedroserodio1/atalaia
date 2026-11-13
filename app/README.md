@@ -59,6 +59,10 @@ derrubar o app no tablet.
 3. Em build de debug, dá para configurar por `adb`:
    `adb shell am start -n org.atalaia.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "..."`
    (ignorado em release).
+4. **Abre sozinho ao ligar o tablet:** o app declara `RECEIVE_BOOT_COMPLETED` (permissão normal, sem aviso) e um `BootReceiver` que só abre a tela
+   e termina, sem serviço em segundo plano. Funciona no Android 8.1 (o alvo). **Do Android 10 em diante o sistema impede abrir uma tela a partir do segundo
+   plano**, e o app simplesmente não abre sozinho (nada quebra: é só tocar no ícone). Para esses aparelhos seria preciso "Exibir sobre outros apps"
+   (`SYSTEM_ALERT_WINDOW`) ou ser o app inicial do aparelho, o que não está feito.
 
 ## Testes e verificação
 
