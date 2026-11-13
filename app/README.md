@@ -63,6 +63,8 @@ derrubar o app no tablet.
    e termina, sem serviço em segundo plano. Funciona no Android 8.1 (o alvo). **Do Android 10 em diante o sistema impede abrir uma tela a partir do segundo
    plano**, e o app simplesmente não abre sozinho (nada quebra: é só tocar no ícone). Para esses aparelhos seria preciso "Exibir sobre outros apps"
    (`SYSTEM_ALERT_WINDOW`) ou ser o app inicial do aparelho, o que não está feito.
+   **Demora:** o painel abre uns 25 a 30 s depois de o Android terminar de ligar, porque o aviso de boot é entregue aos apps um por vez (medido no T68).
+   **Tire a tela de bloqueio** (Configurações, Segurança, Bloqueio de tela, Nenhum): com ela ligada, o painel abre atrás dela e é preciso deslizar para ver.
 
 ## Testes e verificação
 
