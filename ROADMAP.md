@@ -27,10 +27,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, em andamento (`beta.5` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração |
+| **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
 | **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
-| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS |
-| **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14) |
+| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
+| **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV e LoL |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
 
@@ -158,6 +158,17 @@ Comportamentos que fazem o painel "se virar" sozinho. Quase tudo usa dados que o
 - [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
   com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
+- [ ] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
+  ações são acréscimos opcionais ao `discord` do v1, então MINOR, mas é mudança de contrato: combinar com o mantenedor antes.
+  - [ ] **Qualidade da conexão:** assinar `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostrar "Conectado · 38 ms" no cabeçalho do canal.
+    Campo novo e opcional (`null` quando não há leitura).
+  - [ ] **Modo de voz:** o `GET_VOICE_SETTINGS` já traz `mode.type` (`PUSH_TO_TALK` ou `VOICE_ACTIVITY`) e o plugin ignora. Mostrar a etiqueta e uma ação para
+    alternar o modo (pelo mesmo `SET_VOICE_SETTINGS`).
+  - [ ] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`. Ação com **confirmação na própria tela** (regra do app).
+  - [ ] **Escopos:** a doc não diz quais escopos cada comando de voz exige. Provar com o Discord real; se pedir escopo novo, atualizar o tutorial
+    (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
+- [ ] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
+  com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
 - [ ] **Aviso de download ou cópia terminando no PC.**
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo
@@ -189,6 +200,13 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
 - [ ] **Tráfego de rede** (`system.net`) na aba Sistema.
 - [ ] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
   MINOR e compatível com o v1, mas é mudança de contrato: combinar com o mantenedor antes. Só uso; temperatura e frequência por núcleo ficam fora.
+- [ ] **Discord: volume e mudo por pessoa.** `SET_USER_VOICE_SETTINGS` (`volume` de 0 a 200, `mute`; `pan` fica fora). Tocar num membro abre o controle dele.
+  Exige o plugin publicar o id do membro (decidir com o mantenedor se vai o id do Discord ou um identificador opaco, já que passa pela rede local), duas
+  ações novas (`set_user_volume`, `toggle_user_mute`) e id desconhecido devolvendo `unknown_session` ou `invalid_args`. Mesma regra do slider: envia ao soltar.
+- [ ] **Discord: avatar dos membros.** O RPC traz só o hash do avatar (`user.avatar`); a imagem vem do CDN do Discord. O app **não** busca nada da internet: o
+  agente baixa, reduz (~64 px) e serve pelo `GET /cover/{hash}` que já existe (mesmo hash de 16 caracteres do SHA-256), e o membro ganha um `avatarHash`
+  opcional. Cuidados: o agente só fala com **um endereço fixo** do CDN, definido no código (nunca vindo do conteúdo); falha de rede mantém a inicial no círculo;
+  no app, `inSampleSize` e cache pequeno (poucos avatares), nada de `Bitmap` grande. A conferir: formato da URL do avatar e se vale guardar em disco ou só em memória.
 
 ## 0.5.0: ações no PC
 
@@ -202,6 +220,9 @@ declarada por plugin, confirmada para o que for destrutivo) e só depois impleme
   (Native Messaging ou endpoint local autenticado), distribuição e instalação da extensão, e o esforço de suportar Firefox. Sem expor porta
   nova na rede local. Fora do escopo: Zoom, Teams, compartilhamento de tela, chat, participantes e gravação.
 - [ ] **Mixer por jogo** e cenas por jogo.
+- [ ] **Discord: entrar em canal pelo tablet.** `GET_GUILDS`, `GET_CHANNELS` e `SELECT_VOICE_CHANNEL`. Fica aqui porque é ação sobre o PC e combina com o Deck
+  (um botão "entrar no canal X"). Lista fixa de ações, nada de id livre vindo do tablet: o agente só entra em canal que ele mesmo listou. Tratar o erro `5003`
+  (já está em outro canal; `force` só com aprovação do usuário, então fica de fora). Sair da call já chega na `0.3.0`.
 
 ## 0.6.0: plataforma aberta
 
@@ -239,6 +260,8 @@ A `1.0.0` é declarada pelo mantenedor quando:
   extensão do Meet; avaliar depois da `0.5.0`.
 - Google Tasks, aniversários, Gmail, fotos como protetor de tela, Tailscale, amigos da Steam em jogo, AniList, Jellyfin, Letterboxd,
   resets e timers do FFXIV, modo foco.
+- Discord, avaliado e deixado de fora do RPC: `NOTIFICATION_CREATE` (escopo `rpc.notifications.read`; entrega o texto das mensagens, o que o projeto não envia)
+  e eventos de mensagem (`MESSAGE_*`, `messages.read` não funciona com `rpc_token` e só vale para canais assinados).
 - Anúncio por mDNS (ou IP fixo no roteador).
 - Suporte a Firefox na extensão.
 - Assinatura de código do Windows.
@@ -252,7 +275,8 @@ A `1.0.0` é declarada pelo mantenedor quando:
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
 5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
 6. ~~**Porta do agente (#13)**~~ Decidido: faixa de 10 portas, o app a percorre sozinho na rede local (`docs/protocolo-v1.md`).
-7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação): aprovar antes de qualquer código.
+7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord`): aprovar antes de qualquer código.
+8. **Discord por pessoa (`0.4.0`):** publicar o id do Discord do membro ou um identificador opaco, e se o avatar fica só em memória ou também em disco.
 
 ## Diferenças em relação ao documento de funcionalidades
 
