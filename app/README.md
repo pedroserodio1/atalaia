@@ -10,8 +10,8 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 
 - **Coluna "agora"** (em todas as telas): relógio, canal ativo (USB, Wi-Fi ou sem conexão), jogo ou janela em foco, mídia com
   controles.
-- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord e Jogo (Steam). Na aba Discord o cabeçalho do canal mostra "N na call", quem fala fica com o nome em menta
-  (a lista não se reordena) e o próprio usuário leva "você" (por nome; com apelido no servidor a marca não aparece).
+- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord e Jogo (Steam). Na aba Discord a faixa da esquerda tem os botões de microfone e fones (ensurdecer desliga o microfone também) e os volumes em pé; a lista da call fica à direita, com o número de pessoas
+  no cabeçalho e os estados por ícone (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo).
 - **Conexão:** lista de endereços em ordem de prioridade (padrão: USB em `127.0.0.1`, depois o IP do PC no Wi-Fi). Uma conexão
   por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 5 s e volta quando ele fica pronto.
 - **Segurança:** só aceita endereços de loopback e rede local; o token fica cifrado no Keystore e não é exibido de volta.
@@ -75,7 +75,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (225 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (219 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.

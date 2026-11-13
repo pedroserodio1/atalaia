@@ -230,16 +230,19 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 6. Com a configuração aberta, ou com a tela de PC desligado (cenário 16), nada troca; ao sair delas, também não.
 7. Repita a medição de quadros do arrasto (cenário 12): o toque na raiz não pode piorar o slider do mixer.
 
-## 18. Discord: tela mais clara (contagem, quem fala, você)
+## 18. Discord: tela com faixa de controles e ícones
 
-1. Com `--simulate`: o cabeçalho do canal mostra "Geral · Servidor de teste" e "4 na call" à direita. Quem fala tem o anel menta, o texto "falando" e o **nome em menta**. A ordem
-   da lista **não muda** quando a fala passa de um para outro. O simulador não marca "você" (o `user` dele não está na lista).
-2. Com o Discord real: entre sozinho, depois com 5 ou mais pessoas. **Esperado:** a contagem acompanha ("1 na call", "5 na call") e a lista rola sem cortar o cartão de cima, também
-   com a faixa de conexão à mostra. Confira nos 505 dp reais do tablet (não por `screenHeightDp`).
-3. Com o Discord real: o seu nome aparece com "você". Repita com **apelido no servidor** e anote: esperado hoje é **sem a marca** (o nome do membro vira o apelido e não bate com `user`).
-   Duas pessoas com o mesmo nome na call: ninguém é marcado.
-4. Nome de canal ou de servidor bem longo: o título corta com "…" e "N na call" continua visível.
-5. Aviso de dado velho ou de ação recusada no cabeçalho do canal (feche o agente com a call aberta): o texto de aviso toma o lugar da contagem, como no resto do app.
+1. Com `--simulate`: à esquerda, dois botões redondos no alto (microfone e fones) e, embaixo, dois volumes **em pé** (microfone e saída, cada um com o ícone em cima e a porcentagem embaixo). À direita, a lista
+   da call com o nome do canal e o ícone de pessoas com o número no cabeçalho. Quem fala tem o anel menta, o nome em menta e o ícone de som; a ordem da lista **não muda** quando a fala passa de um para outro.
+2. Botões: toque no microfone e confira que o ícone vira "cortado" em coral e o Discord realmente muta; faça o mesmo nos fones. **Com os fones desligados, o botão do microfone também aparece cortado** (ensurdecer
+   cala o microfone no Discord). Religar os fones: anote se o microfone volta sozinho ou continua mudo no Discord, e se o botão mostra o mesmo que o Discord (esse comportamento não foi provado).
+3. Volumes em pé: arraste com o dedo e solte; o valor só é enviado ao soltar, o número mostra o valor durante o arrasto e a tela não volta ao valor antigo enquanto o agente não confirma. Um toque no traço também
+   envia. Confira se o dedo acerta o traço (a área de toque tem 48 dp de largura). O microfone vai até 100% e a saída até 200%.
+4. Membros: mudo mostra o microfone cortado; surdo mostra o microfone **e** os fones cortados; sem texto "mudo" ou "surdo". Fale numa call real e confira o som no seu avatar.
+5. Com o Discord real: entre sozinho, depois com 5 ou mais pessoas. **Esperado:** o número acompanha, a lista rola sem cortar e cabe uns 6 membros sem rolar nos 505 dp reais do tablet (confira com a faixa
+   de conexão à mostra também, não por `screenHeightDp`).
+6. Nome de canal ou de servidor bem longo: o título corta com "…" e o número continua visível.
+7. Feche o agente com a call aberta: o aviso de dado velho (ou de ação recusada) toma o lugar do número no cabeçalho. Com o Discord fechado, aparece só "Discord fechado" em tela cheia.
 
 ## Resultado
 

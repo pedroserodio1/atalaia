@@ -15,9 +15,10 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 
-enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD }
+enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS }
 
 /** Ícones simples desenhados em uma grade de 24 × 24, sem biblioteca de ícones (menos memória no tablet). */
 @Composable
@@ -42,6 +43,44 @@ private fun DrawScope.fill(color: Color, vararg points: Float) {
         close()
     }
     drawPath(p, color)
+}
+
+/**
+ * Ícones do Tabler Icons (MIT, v3.19.0; licença em `app/third-party/tabler-icons-LICENSE.txt`), no contorno original de 24 × 24 com
+ * traço de 2. Só estes seis foram copiados, em vez de uma biblioteca de ícones inteira (peso no APK e memória do tablet). Os
+ * caminhos são lidos uma vez e guardados.
+ */
+private val tablerPaths: Map<IconKind, List<String>> = mapOf(
+    IconKind.MIC to listOf(
+        "M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z", "M5 10a7 7 0 0 0 14 0", "M8 21l8 0", "M12 17l0 4",
+    ),
+    IconKind.MIC_OFF to listOf(
+        "M3 3l18 18", "M9 5a3 3 0 0 1 6 0v5a3 3 0 0 1 -.13 .874m-2 2a3 3 0 0 1 -3.87 -2.872v-1",
+        "M5 10a7 7 0 0 0 10.846 5.85m2 -2a6.967 6.967 0 0 0 1.152 -3.85", "M8 21l8 0", "M12 17l0 4",
+    ),
+    IconKind.HEADPHONES to listOf(
+        "M4 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z",
+        "M15 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z", "M4 15v-3a8 8 0 0 1 16 0v3",
+    ),
+    IconKind.HEADPHONES_OFF to listOf(
+        "M3 3l18 18", "M4 13m0 2a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-1a2 2 0 0 1 -2 -2z",
+        "M17 13h1a2 2 0 0 1 2 2v1m-.589 3.417c-.361 .36 -.86 .583 -1.411 .583h-1a2 2 0 0 1 -2 -2v-3",
+        "M4 15v-3c0 -2.21 .896 -4.21 2.344 -5.658m2.369 -1.638a8 8 0 0 1 11.287 7.296v3",
+    ),
+    IconKind.VOLUME to listOf(
+        "M15 8a5 5 0 0 1 0 8", "M17.7 5a9 9 0 0 1 0 14",
+        "M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5",
+    ),
+    IconKind.USERS to listOf(
+        "M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0", "M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2", "M16 3.13a4 4 0 0 1 0 7.75", "M21 21v-2a4 4 0 0 0 -3 -3.85",
+    ),
+)
+
+private val tablerCache = HashMap<IconKind, List<Path>>()
+
+private fun DrawScope.tabler(kind: IconKind, color: Color) {
+    val paths = tablerCache.getOrPut(kind) { tablerPaths.getValue(kind).map { PathParser().parsePathString(it).toPath() } }
+    paths.forEach { drawPath(it, color, style = Stroke(2f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
 }
 
 private fun DrawScope.draw(kind: IconKind, c: Color) {
@@ -89,6 +128,7 @@ private fun DrawScope.draw(kind: IconKind, c: Color) {
             drawCircle(c, 1f, Offset(16f, 11f))
             drawCircle(c, 1f, Offset(18f, 13f))
         }
+        IconKind.MIC, IconKind.MIC_OFF, IconKind.HEADPHONES, IconKind.HEADPHONES_OFF, IconKind.VOLUME, IconKind.USERS -> tabler(kind, c)
         IconKind.TRASH -> {
             line(c, 4f, 7f, 20f, 7f)
             line(c, 6f, 7f, 7f, 20f, 17f, 20f, 18f, 7f)

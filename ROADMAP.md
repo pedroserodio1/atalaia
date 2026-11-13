@@ -183,10 +183,11 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
     (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
 - [ ] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
   com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
-  Código e testes prontos (ramo `feat/app-discord-tela`): "N na call" no cabeçalho do canal (o título cede espaço, o número não é espremido), quem fala com o nome em menta além do anel e do
-  "falando" (a lista **não** se reordena), e "você" no próprio usuário. A marca é por nome (`user` do `discord` contra o `name` do membro) e só aparece se exatamente um membro casa;
-  com apelido no servidor ela **não** aparece. Acertar isso pede um campo novo e opcional no membro (`self: true` ou o id): fica como pendência de "Discord: sinais e controles novos",
-  que muda o contrato. Falta provar no tablet de verdade (cenário 18 de `app/docs/teste-manual.md`), com a call real, 5 ou mais pessoas e a altura de 505 dp.
+  Código e testes prontos (ramo `feat/app-discord-tela`): layout novo com a faixa de controles à esquerda (botões redondos de microfone e fones no alto, volumes em pé embaixo) e a lista da call à
+  direita, com a altura toda; o número de pessoas no cabeçalho do canal (ícone e número); estados por **ícone** (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo)
+  no lugar dos textos "falando", "mudo" e "surdo"; ensurdecer mostra o microfone desligado também (como no Discord). Ícones do Tabler (MIT), só seis copiados, sem biblioteca. Sem a marca "você":
+  decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Falta provar no tablet de verdade (cenário 18 de `app/docs/teste-manual.md`), com a call real, 5 ou mais
+  pessoas e a altura de 505 dp, e conferir o slider em pé no dedo.
 - [ ] **Aviso de download ou cópia terminando no PC.**
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo

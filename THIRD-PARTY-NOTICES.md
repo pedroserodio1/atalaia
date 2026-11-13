@@ -42,6 +42,13 @@ Só nos testes do app (não entram no APK): JUnit Jupiter 6.1.3 (**EPL-2.0**), k
 OkHttp MockWebServer 4.12.0 (Apache-2.0). O JUnit usa a EPL-2.0, que tem restrições de combinação com a GPL, e por isso ele só é
 usado para rodar os testes: não é distribuído junto com o programa.
 
+## Ícones (MIT)
+
+- **Tabler Icons** v3.19.0, Copyright (c) 2020-2024 Paweł Kuna ([tabler/tabler-icons](https://github.com/tabler/tabler-icons)), licença MIT.
+  Só seis ícones do estilo outline (microfone, microfone cortado, fones, fones cortados, volume e pessoas) têm o desenho copiado em
+  `app/tablet/src/main/kotlin/org/atalaia/app/ui/Icons.kt`; não há dependência da biblioteca. A licença original está em
+  [`app/third-party/tabler-icons-LICENSE.txt`](app/third-party/tabler-icons-LICENSE.txt).
+
 ## Fontes (SIL Open Font License 1.1)
 
 As fontes ficam em [`app/third-party/`](app/third-party/) com as licenças originais. A janela do agente usa as mesmas fontes, copiadas em
