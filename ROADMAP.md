@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.4`).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.5`).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos).
@@ -26,7 +26,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 |---|---|---|---|
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
-| **0.2.0** | Primeira experiência | minor, em andamento (`beta.4` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet; provas e #15 (opção A) feitas |
+| **0.2.0** | Primeira experiência | minor, em andamento (`beta.5` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14) |
@@ -73,20 +73,20 @@ longitude do clima, mas **não ensina onde pegar nada disso nem o que configurar
 
 O que fazer:
 
-- [ ] Em cada fonte com credencial, um bloco **"Como conseguir"** dentro do próprio formulário (o componente `howto` já existe no passo de USB),
+- [x] Em cada fonte com credencial, um bloco **"Como conseguir"** dentro do próprio formulário (o componente `howto` já existe no passo de USB),
   com passos numerados, curtos, em português, e o que fazer quando der errado. Abre pelo botão de ajuda do campo, sem sair da janela.
-  Código e testes prontos (botão **Como conseguir** na linha de cada fonte; Steam, Discord, clima e nobreak); falta ver na janela de verdade.
-- [ ] Os mesmos tutoriais na aba **Fontes de dados** das configurações (não só no onboarding) e em `docs/` (uma página por serviço, para
+  Código e testes prontos (botão **Como conseguir** na linha de cada fonte; Steam, Discord, clima e nobreak). Provado pelo mantenedor na janela, em 11/2026.
+- [x] Os mesmos tutoriais na aba **Fontes de dados** das configurações (não só no onboarding) e em `docs/` (uma página por serviço, para
   quem prefere ler no navegador). Texto escrito uma vez e reaproveitado; exemplos com valores falsos (`FAKEKEY0123456789ABCDEF`).
-  As páginas estão em `docs/fontes/` (um teste confere que são iguais ao texto da janela); a aba usa o mesmo componente do onboarding. Falta ver na janela.
-- [ ] Botão **"Testar conexão"** por fonte: valida a credencial na hora e devolve a causa em português ("chave recusada", "perfil privado",
+  As páginas estão em `docs/fontes/` (um teste confere que são iguais ao texto da janela); a aba usa o mesmo componente do onboarding. Provado pelo mantenedor, em 11/2026.
+- [x] Botão **"Testar conexão"** por fonte: valida a credencial na hora e devolve a causa em português ("chave recusada", "perfil privado",
   "Discord fechado") em vez de a fonte só ficar em erro.
-  Código e testes (rede falsa) prontos. O teste do Discord é a versão leve (aberto + Client ID e Secret aceitos, sem o pop-up de autorização). **Falta provar com
-  credenciais reais** (Steam, Discord e Open-Meteo): roteiro em `docs/teste-manual-agente.md`.
-- [ ] Botão **"Abrir página"** que leva ao site certo. Hoje o `LinkPolicy` só aceita links de `https://github.com/{repositório}/...`; abrir
+  Código e testes (rede falsa) prontos. O teste do Discord é a versão leve (aberto + Client ID e Secret aceitos, sem o pop-up de autorização). Provado pelo mantenedor com
+  credenciais reais, em 11/2026 (roteiro em `docs/teste-manual-agente.md`). Fica no botão **Configurar** de cada fonte.
+- [x] Botão **"Abrir página"** que leva ao site certo. Hoje o `LinkPolicy` só aceita links de `https://github.com/{repositório}/...`; abrir
   `steamcommunity.com` e `discord.com/developers` exige **uma lista fechada e pequena de endereços**, definida no código (nunca vinda de
   configuração nem de conteúdo remoto). Mudança sensível de segurança: revisar com o mantenedor.
-  Decidido: mapa fixo no C# (`SourceHelp`), a página manda só o id da fonte (`sources.openPage`) e o `LinkPolicy` **não muda**. Falta provar abrindo o navegador de verdade.
+  Decidido: mapa fixo no C# (`SourceHelp`), a página manda só o id da fonte (`sources.openPage`) e o `LinkPolicy` **não muda**. Provado pelo mantenedor, em 11/2026.
 - [x] Texto dos tutoriais é fixo, embutido no agente. Nada é baixado de fora para exibi-los.
 
 Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites reais antes de publicar, porque as telas deles mudam):
@@ -132,17 +132,18 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
 
 ### Pequenas melhorias de instalação
 
-- [ ] App do tablet abrindo sozinho ao ligar o aparelho (hoje é só tela cheia e sempre acesa).
-  Código pronto: `BootReceiver` (`RECEIVE_BOOT_COMPLETED`, abre a tela e termina, sem serviço). Vale no Android 8.1 do tablet; do Android 10 em diante o
-  sistema bloqueia. **Falta provar** reiniciando o tablet de verdade (cenário 14 de `app/docs/teste-manual.md`).
-- [ ] App do tablet abrindo sozinho **depois de instalado ou atualizado por USB**. Hoje o `adb install -r` deixa o app fechado. Depois de uma
+- [x] App do tablet abrindo sozinho ao ligar o aparelho (feito na `0.2.0-beta.5`).
+  `BootReceiver` (`RECEIVE_BOOT_COMPLETED`, abre a tela e termina, sem serviço). Provado no tablet de verdade (Android 8.1) em 11/2026: o painel abre sozinho,
+  mas **leva uns 25 a 30 s depois de o Android ligar** (o aviso de boot é entregue aos apps um por vez e o tablet é lento) e **a tela de bloqueio precisa estar
+  desligada**, senão o painel fica atrás dela. Do Android 10 em diante o sistema bloqueia (não afeta o alvo).
+- [x] App do tablet abrindo sozinho **depois de instalado ou atualizado por USB**. Hoje o `adb install -r` deixa o app fechado. Depois de uma
   instalação bem-sucedida o agente roda `adb shell am start -n org.atalaia.app/.MainActivity` (argumentos fixos, só o pacote do Atalaia),
   no `AdbService.RunInstallAsync`, que serve à atualização automática e ao passo "App no tablet". Falhar ao abrir não deve virar erro de
   instalação. É comportamento novo (`feat`), por isso fica na 0.2.0 e não na 0.1.2 (a esteira barra `feat` em patch).
-  Código e testes prontos; falta provar com o tablet (instalar por USB e ver o app abrir).
-- [ ] Avisar na tela quando o código de acesso mudou depois de atualizar ou reiniciar o agente (o tablet precisa do código novo). Some se a #15
+  Provado pelo mantenedor no tablet, em 11/2026.
+- [x] Avisar na tela quando o código de acesso mudou depois de atualizar ou reiniciar o agente (o tablet precisa do código novo). Some se a #15
   for resolvida pelo pareamento.
-  Código e testes prontos (`code.get` devolve `changed`, a janela mostra o aviso); falta ver o aviso na janela depois de reiniciar o agente.
+  `code.get` devolve `changed` e a janela mostra o aviso. Provado pelo mantenedor, em 11/2026.
 
 ## 0.3.0: tablet esperto
 
