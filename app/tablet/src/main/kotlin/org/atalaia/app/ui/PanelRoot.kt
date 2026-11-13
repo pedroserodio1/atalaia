@@ -128,6 +128,7 @@ fun PanelRoot(app: PanelApp) {
                     if (pos != null) act("media", action, buildJsonObject { put("positionSec", pos) }) else act("media", action)
                 },
                 onOpenConfig = { configuring = true },
+                onDismissDownload = app.store::dismissDownload,
                 modifier = Modifier.width(270.dp).fillMaxHeight(),
             )
             Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -86,9 +86,9 @@ class SettingsStore(context: Context) {
 
     /** Limites dos alertas; `-1` guardado = desligado, ausente = padrão. */
     var limits: Limits
-        get() = Limits(limit("limitGpu", LimitSpecs.GPU_TEMP), limit("limitRam", LimitSpecs.RAM), limit("limitDisk", LimitSpecs.DISK))
+        get() = Limits(limit("limitGpu", LimitSpecs.GPU_TEMP), limit("limitRam", LimitSpecs.RAM), limit("limitDisk", LimitSpecs.DISK), limit("limitDownload", LimitSpecs.DOWNLOAD_MBPS))
         set(v) {
-            prefs.edit().putInt("limitGpu", v.gpuTempC ?: -1).putInt("limitRam", v.ramPercent ?: -1).putInt("limitDisk", v.diskPercent ?: -1).apply()
+            prefs.edit().putInt("limitGpu", v.gpuTempC ?: -1).putInt("limitRam", v.ramPercent ?: -1).putInt("limitDisk", v.diskPercent ?: -1).putInt("limitDownload", v.downloadMbps ?: -1).apply()
         }
 
     private fun limit(key: String, spec: LimitSpec): Int? =

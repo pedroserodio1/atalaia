@@ -244,6 +244,21 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 6. Nome de canal ou de servidor bem longo: o título corta com "…" e o número continua visível.
 7. Feche o agente com a call aberta: o aviso de dado velho (ou de ação recusada) toma o lugar do número no cabeçalho. Com o Discord fechado, aparece só "Discord fechado" em tela cheia.
 
+## 19. Aviso de download terminando no PC
+
+O app deduz o download de `system.net.rxKbps`: **30 Mbps ou mais por 2 min seguidos** é um download; quando o tráfego cai abaixo de **2 Mbps por 30 s**, avisa. O limite de 30 Mbps muda na configuração
+(cartão "Alertas de limite", linha "Aviso de download", de 10 a 100 Mbps; abaixo do mínimo, desliga).
+
+1. Baixe um jogo grande pela Steam (ou outro arquivo grande) numa conexão que passe de 30 Mbps. **Esperado:** nada aparece durante o download. Uns 30 s a 1 min depois do fim, o cartão do relógio
+   troca a linha de baixo por **"Download terminou"** com a borda menta (a linha do jogo/janela volta quando o aviso sai).
+2. O aviso some sozinho em 10 min, ou com um **toque** no cartão do relógio.
+3. Pause o download por uns 10 s no meio e retome. **Esperado:** nenhum aviso (o vale é curto demais).
+4. Deixe um vídeo 1080p rodando 5 min. **Esperado:** nenhum aviso (o tráfego fica abaixo do limite). Teste também com um vídeo 4K ou streaming pesado: se passar de 30 Mbps, suba o limite.
+5. Com o aviso na tela, simule uma queda de energia (cenário 10) ou um alerta de limite (cenário 15). **Esperado:** esses alertas têm prioridade e o aviso de download espera.
+6. Feche e suba o agente no meio de um download. **Esperado:** nenhum aviso falso ao reconectar (a contagem recomeça).
+7. Desligue o aviso na configuração ("Desligado"). **Esperado:** nunca aparece.
+8. Anote: o número que o app vê (aba Sistema) bate com a velocidade do download? (A conta depende de o PC medir `rxKbps` de forma estável, o que não foi provado no Wi-Fi.)
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -264,3 +279,4 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 | 16 Tela de PC desligado | | |
 | 17 Troca de tela por contexto | | |
 | 18 Discord: tela mais clara | | |
+| 19 Aviso de download | | |
