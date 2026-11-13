@@ -158,7 +158,8 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
 - [ ] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
   (o nobreak já chegou a dar 95 quedas em ~2 dias).
 - [ ] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
-  acesa mostrando isso. **Modo noite por horário**, relógio discreto ou tela apagada. Decisão em aberto (ver abaixo).
+  acesa mostrando isso. Decidido: **configurável** na tela de configuração do tablet entre **modo noite por horário**, **relógio discreto sempre** e
+  **tela apagada**.
 - [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
   com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
@@ -186,12 +187,13 @@ Um sub-ramo por linha, entrando em `beta/0.3.0` por squash. Dá para começar pe
 |---|---|---|---|---|
 | 1 | `feat/app-alertas-limite` | Alertas de limite | não (`gpu.tempC`, `system.ram`, `system.disks` já chegam) | nada |
 | 2 | `feat/app-contexto` | Troca de tela por contexto; Discord: tela mais clara | não | nada. A decidir: o gatilho "jogo abriu" é `steam.game` (coletado a cada 30 s) ou `activeWindow` (só vê a janela em primeiro plano) |
-| 3 | `feat/app-pc-desligado` | Tela de PC desligado, modo noite por horário | não | decisão 1 (o que mostrar). Hoje o app só escreve o texto de `ConnectionState.Unreachable` (`Texts.kt`) |
+| 3 | `feat/app-pc-desligado` | Tela de PC desligado, **configurável** entre modo noite por horário, relógio sempre e tela apagada | não | nada (decisão 1 tomada). Hoje o app só escreve o texto de `ConnectionState.Unreachable` (`Texts.kt`); a escolha fica na tela de configuração do tablet |
 | 4 | `feat/app-atracao` | Tela Atração | não | 3 (reaproveita o relógio). "Horas jogadas hoje": o v1 só traz `hours2w` e `library.hours`, então o app teria de somar o tempo com `steam.game` ativo enquanto conectado, zerando à meia-noite (só conta o que ele viu). A confirmar |
 | 5 | `feat/discord-sinais` | Discord: qualidade da conexão, modo de voz, sair da call, escopos | sim, campos e ações opcionais em `discord` | aprovação do contrato; **primeiro um teste com o Discord real** para saber os escopos |
 | 6 | `feat/wake-on-lan` | Wake-on-LAN | sim, publicar o MAC (campo opcional) | decisões 2 e 7. O pacote mágico sai **do tablet** (UDP na rede local; o agente está desligado junto com o PC), então talvez nem seja uma ação nova, só o MAC; a confirmar. Só funciona pelo Wi-Fi, não pelo USB |
 | 7 | `feat/app-pin` | Configurações no tablet com PIN | não | nada |
-| 8 | `feat/pareamento` | Pareamento com validade e lista de tablets | sim, mensagens novas | aprovação do contrato; é o item maior e mais arriscado, deixar por último |
+| 8 | `feat/aviso-transferencia` | Aviso de download ou cópia terminando no PC | a definir (ver "Em risco") | nada para o download; a cópia pode exigir campo novo |
+| 9 | `feat/pareamento` | Pareamento com validade e lista de tablets | sim, mensagens novas | aprovação do contrato; é o item maior e mais arriscado, deixar por último |
 
 ### Mudanças de contrato desta versão (aprovar antes de codar)
 
@@ -204,11 +206,13 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
 
 ### Em risco
 
-- **Aviso de download ou cópia terminando no PC:** não existe fonte para isso hoje (nem no agente, nem no protocolo), o que contradiz o
-  "usa dados que o agente já envia". Proposta: sair da 0.3.0 e voltar como fonte nova na 0.4.0, a menos que o mantenedor queira abrir esse trabalho agora.
+- **Aviso de download ou cópia terminando no PC (decidido: fica na 0.3.0):** não existe fonte própria para isso (nem no agente, nem no protocolo).
+  Proposta para caber no ciclo: começar pelo **download**, que o app deduz de `system.net.rxKbps` (tráfego alto e contínuo que cai e fica baixo por
+  um tempo; função pura testada, com anti-ruído como nos alertas de limite), sem mudar o contrato. A **cópia** de arquivos precisa de leitura de
+  disco, que o `system` não tem: seria campo novo e opcional (MINOR), combinar antes. A confirmar com o mantenedor se a cópia entra nesta versão.
 - **Pareamento:** é o único item que pode sozinho adiar a versão. Proposta: decidir no começo do ciclo se entra; se não entrar, vai para a 0.4.0 e a #15
   continua só com a opção A (que já resolve o dia a dia).
-- **Modo noite e Wake-on-LAN** dependem das decisões 1 e 2 (abaixo); sem elas, as linhas 3, 4 e 6 não começam.
+- **Wake-on-LAN** depende das decisões 2 e 7 (abaixo); sem elas, a linha 6 não começa.
 
 ### Pronto quando
 
@@ -311,14 +315,14 @@ A `1.0.0` é declarada pelo mantenedor quando:
 
 ## Decisões em aberto
 
-1. **O que o tablet mostra quando o PC está desligado** (modo noite, tela apagada, relógio): define a `0.3.0`.
+1. ~~**O que o tablet mostra quando o PC está desligado**~~ Decidido: **configurável** entre modo noite por horário, relógio sempre e tela apagada.
 2. **PC no cabo ou no Wi-Fi:** define se o Wake-on-LAN é viável.
 3. **Qual modelo de plugin entra primeiro** (assembly .NET ou processo separado).
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
 5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
 6. ~~**Porta do agente (#13)**~~ Decidido: faixa de 10 portas, o app a percorre sozinho na rede local (`docs/protocolo-v1.md`).
 7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord`): aprovar antes de qualquer código.
-8. **Aviso de download ou cópia (`0.3.0`):** fica na versão (exige fonte nova) ou vai para a `0.4.0`; e se o pareamento entra na `0.3.0`.
+8. **Aviso de download ou cópia (`0.3.0`):** o aviso fica na versão (decidido). Em aberto: se a **cópia** entra (exige campo novo de leitura de disco) ou só o download; e se o pareamento entra na `0.3.0` (decidir depois, no ciclo).
 9. **Discord por pessoa (`0.4.0`):** publicar o id do Discord do membro ou um identificador opaco, e se o avatar fica só em memória ou também em disco.
 
 ## Diferenças em relação ao documento de funcionalidades
