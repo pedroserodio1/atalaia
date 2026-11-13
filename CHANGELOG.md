@@ -3,6 +3,23 @@
 Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.2.0] - 2026-11-13
+
+### Novidades
+
+- **agent:** Manter o mesmo código de acesso entre reinícios e gerar novo (#36)
+- **agent:** Abrir o app no tablet após instalar por USB e avisar quando o código mudar (#39)
+- Faixa de portas para o agente não cair com a porta ocupada (#13) (#42)
+- **agent:** Tutoriais das fontes, Abrir página e Testar conexão (#44)
+- **app:** Abrir o painel sozinho quando o tablet liga (#46)
+
+### Outros
+
+- Abre o ciclo 0.2.0
+- Marca o roadmap (0.1.2 fechada, 0.2.0 em beta) e cria a regra de manter o roadmap em dia (#38)
+- Roadmap com a v0.2.0-beta.2 publicada
+- Roadmap da 0.2.0 todo feito (beta.5) e notas do app abrindo no boot (#48)
+
 ## [0.1.2] - 2026-11-12
 
 ### Correções
