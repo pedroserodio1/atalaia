@@ -124,6 +124,9 @@ object Texts {
 
     fun hour(h: Int): String = "%02dh".format(h)
 
+    const val DOWNLOAD_DONE = "Download terminou"
+    const val LIMIT_DOWNLOAD = "Aviso de download"
+
     const val LIMITS_TITLE = "Alertas de limite"
     const val LIMITS_HINT = "Avisa no relógio quando passa do limite por 10 s. Abaixo do mínimo, desliga."
     const val LIMIT_GPU = "GPU quente"

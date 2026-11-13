@@ -26,6 +26,8 @@ object LimitSpecs {
     val GPU_TEMP = LimitSpec(min = 60, max = 100, step = 5, default = 85)
     val RAM = LimitSpec(min = 70, max = 100, step = 5, default = 90)
     val DISK = LimitSpec(min = 70, max = 100, step = 5, default = 90)
+    /** Megabits por segundo de `rxKbps` a partir dos quais um tráfego contínuo conta como download. */
+    val DOWNLOAD_MBPS = LimitSpec(min = 10, max = 100, step = 10, default = 30)
 }
 
 /** Limites escolhidos pelo usuário. `null` desliga o alerta correspondente. */
@@ -33,6 +35,8 @@ data class Limits(
     val gpuTempC: Int? = LimitSpecs.GPU_TEMP.default,
     val ramPercent: Int? = LimitSpecs.RAM.default,
     val diskPercent: Int? = LimitSpecs.DISK.default,
+    /** `null` desliga o aviso de download terminado. */
+    val downloadMbps: Int? = LimitSpecs.DOWNLOAD_MBPS.default,
 )
 
 enum class LimitKind { GPU_TEMP, RAM, DISK }

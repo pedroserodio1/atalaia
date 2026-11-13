@@ -190,6 +190,9 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Provado pelo mantenedor no tablet, em 13/11/2026 (`0.3.0-beta.4`, cenário 18 de
   `app/docs/teste-manual.md`): a tela ficou como desenhada.
 - [ ] **Aviso de download ou cópia terminando no PC.**
+  Download: código e testes prontos (ramo `feat/app-aviso-download`). O app deduz de `system.net.rxKbps`: tráfego a partir de 30 Mbps (configurável de 10 a 100, ou desligado) por 2 min seguidos é um
+  download; quando cai abaixo de 2 Mbps por 30 s, o cartão do relógio mostra "Download terminou" (borda menta) por 10 min ou até um toque. Reconectar zera a contagem. Sem mudança de contrato.
+  Falta provar no tablet (cenário 19 de `app/docs/teste-manual.md`). **Cópia de arquivos: fora da 0.3.0** (pede leitura de disco nova), vai para a 0.4.0 junto com "Tráfego de rede".
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo
   novo, então só entra se o mantenedor aprovar a mudança de contrato.

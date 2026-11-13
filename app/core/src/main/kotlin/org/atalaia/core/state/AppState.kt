@@ -78,6 +78,8 @@ data class AppState(
      * por `Connected`; `null` se há conexão ou se o problema é outro (token, versão, configuração).
      */
     val disconnectedSinceMono: Long? = null,
+    /** Quando (relógio monotônico do tablet) um download terminou no PC; `null` sem aviso ou depois de dispensado. Ver [downloadDoneActive]. */
+    val downloadDoneMono: Long? = null,
 ) {
     inline fun <reified T : SourceData> dataOf(source: String): T? = sources[source]?.data as? T
 

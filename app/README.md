@@ -21,6 +21,8 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
   Só liga depois de 10 s acima do limite e só desliga 5 pontos abaixo dele; os limites (ou "Desligado") se ajustam na configuração.
 - **PC desligado:** depois de 1 min sem achar o PC (a troca USB e Wi-Fi não conta), a tela vira, conforme a configuração, **modo noite** (relógio escuro no horário escolhido, padrão 22h às 07h;
   fora dele o painel segue normal), **relógio** sempre ou **tela apagada** (preta, brilho mínimo, tela ainda ligada). Voltou a conectar, volta o painel. Segurar na tela abre a configuração.
+- **Aviso de download:** tráfego de rede do PC a partir de 30 Mbps (configurável) por 2 min seguidos conta como download; quando cai abaixo de 2 Mbps por 30 s o relógio mostra "Download terminou"
+  por 10 min ou até um toque. Deduzido só de `system.net.rxKbps`, sem mudar o protocolo.
 - **Troca de tela por contexto:** jogo da Steam que abre leva à aba Jogo; call no Discord (sem jogo aberto) leva à aba Discord; depois de 5 min sem toque volta ao Início (menos se a aba
   é a do contexto ainda ativo). Só reage a um começo (reconectar com jogo ou call em andamento não puxa a tela, nem quem está mexendo). Ligada por padrão; desliga na configuração.
 - **Configuração:** abre sozinha na primeira vez, por toque longo no relógio ou tocando na faixa de erro de conexão.
@@ -75,7 +77,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (219 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (229 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.

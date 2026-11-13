@@ -128,6 +128,9 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, -1)) }, { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, +1)) })
             LimitRow(Texts.LIMIT_DISK, Texts.limitValue(limits.diskPercent, "%"), limits.diskPercent != null, limits.diskPercent != disk.max,
                 { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, -1)) }, { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, +1)) })
+            val dl = LimitSpecs.DOWNLOAD_MBPS
+            LimitRow(Texts.LIMIT_DOWNLOAD, Texts.limitValue(limits.downloadMbps, " Mbps"), limits.downloadMbps != null, limits.downloadMbps != dl.max,
+                { limits = limits.copy(downloadMbps = dl.step(limits.downloadMbps, -1)) }, { limits = limits.copy(downloadMbps = dl.step(limits.downloadMbps, +1)) })
         }
         PanelCard(Modifier.fillMaxWidth()) {
             MonoText(Texts.OFF_TITLE)
