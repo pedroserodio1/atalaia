@@ -63,6 +63,9 @@ object Texts {
     const val MIC_VOLUME = "Microfone"
     const val OUT_VOLUME = "Saída"
     const val SPEAKING = "falando"
+    const val YOU_TAG = "você"
+
+    fun inCall(n: Int): String = "$n na call"
     const val MUTED_TAG = "mudo"
     const val DEAF_TAG = "surdo"
 

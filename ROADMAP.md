@@ -183,6 +183,10 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
     (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
 - [ ] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
   com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
+  Código e testes prontos (ramo `feat/app-discord-tela`): "N na call" no cabeçalho do canal (o título cede espaço, o número não é espremido), quem fala com o nome em menta além do anel e do
+  "falando" (a lista **não** se reordena), e "você" no próprio usuário. A marca é por nome (`user` do `discord` contra o `name` do membro) e só aparece se exatamente um membro casa;
+  com apelido no servidor ela **não** aparece. Acertar isso pede um campo novo e opcional no membro (`self: true` ou o id): fica como pendência de "Discord: sinais e controles novos",
+  que muda o contrato. Falta provar no tablet de verdade (cenário 18 de `app/docs/teste-manual.md`), com a call real, 5 ou mais pessoas e a altura de 505 dp.
 - [ ] **Aviso de download ou cópia terminando no PC.**
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo

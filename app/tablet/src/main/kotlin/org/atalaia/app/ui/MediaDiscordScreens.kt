@@ -29,12 +29,13 @@ import org.atalaia.app.CoverRepository
 import org.atalaia.app.ui.theme.Palette
 import org.atalaia.core.connection.Clock
 import org.atalaia.core.connection.ConnectionState
+import org.atalaia.core.panel.MemberView
 import org.atalaia.core.panel.Pt
+import org.atalaia.core.panel.callMembers
 import org.atalaia.core.panel.mediaLine
 import org.atalaia.core.protocol.AudioData
 import org.atalaia.core.protocol.AudioSession
 import org.atalaia.core.protocol.DiscordData
-import org.atalaia.core.protocol.DiscordMember
 import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
 
@@ -152,12 +153,15 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, s
         }
         PanelCard(Modifier.fillMaxWidth().weight(1f)) {
             val channel = d?.channel
-            CardLabel(if (channel != null) "${channel.name} · ${channel.guild}" else Texts.VOICE_CHANNEL)
+            CardLabel(
+                if (channel != null) "${channel.name} · ${channel.guild}" else Texts.VOICE_CHANNEL,
+                trailing = if (channel != null && d?.connected == true) Texts.inCall(channel.members.size) else null,
+            )
             when {
                 d == null || !d.connected -> Unit
                 channel == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
                 else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    channel.members.forEach { MemberRow(it) }
+                    callMembers(d).forEach { MemberRow(it) }
                 }
             }
         }
@@ -176,14 +180,19 @@ private fun VolumeLine(label: String, value: Int?, max: Int, enabled: Boolean, c
 }
 
 @Composable
-private fun MemberRow(m: DiscordMember) {
+private fun MemberRow(view: MemberView) {
+    val m = view.member
     Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         // Quem fala ganha anel menta E o texto "falando": o estado nunca depende só da cor.
         Box(
             Modifier.size(34.dp).background(Palette.Border, CircleShape).border(if (m.speaking) 3.dp else 1.dp, if (m.speaking) Palette.Mint else Palette.Border, CircleShape),
             contentAlignment = Alignment.Center,
         ) { BodyText(m.name.take(1).uppercase(), sp = 14) }
-        Box(Modifier.weight(1f)) { BodyText(m.name, sp = 16) }
+        // Quem fala também ganha o nome em menta (além do anel e do "falando"); a lista não se reordena. "você" marca o próprio usuário.
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BodyText(m.name, if (m.speaking) Palette.Mint else Palette.Text, 16, Modifier.weight(1f, fill = false))
+            if (view.self) MonoText(Texts.YOU_TAG, Palette.Mint, 12)
+        }
         if (m.speaking) MonoText(Texts.SPEAKING, Palette.Mint)
         if (m.deafened) MonoText(Texts.DEAF_TAG, Palette.Coral) else if (m.muted) MonoText(Texts.MUTED_TAG, Palette.Coral)
     }

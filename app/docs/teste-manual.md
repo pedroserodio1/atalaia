@@ -230,6 +230,17 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 6. Com a configuração aberta, ou com a tela de PC desligado (cenário 16), nada troca; ao sair delas, também não.
 7. Repita a medição de quadros do arrasto (cenário 12): o toque na raiz não pode piorar o slider do mixer.
 
+## 18. Discord: tela mais clara (contagem, quem fala, você)
+
+1. Com `--simulate`: o cabeçalho do canal mostra "Geral · Servidor de teste" e "4 na call" à direita. Quem fala tem o anel menta, o texto "falando" e o **nome em menta**. A ordem
+   da lista **não muda** quando a fala passa de um para outro. O simulador não marca "você" (o `user` dele não está na lista).
+2. Com o Discord real: entre sozinho, depois com 5 ou mais pessoas. **Esperado:** a contagem acompanha ("1 na call", "5 na call") e a lista rola sem cortar o cartão de cima, também
+   com a faixa de conexão à mostra. Confira nos 505 dp reais do tablet (não por `screenHeightDp`).
+3. Com o Discord real: o seu nome aparece com "você". Repita com **apelido no servidor** e anote: esperado hoje é **sem a marca** (o nome do membro vira o apelido e não bate com `user`).
+   Duas pessoas com o mesmo nome na call: ninguém é marcado.
+4. Nome de canal ou de servidor bem longo: o título corta com "…" e "N na call" continua visível.
+5. Aviso de dado velho ou de ação recusada no cabeçalho do canal (feche o agente com a call aberta): o texto de aviso toma o lugar da contagem, como no resto do app.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -249,3 +260,4 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 | 15 Alertas de limite | | |
 | 16 Tela de PC desligado | | |
 | 17 Troca de tela por contexto | | |
+| 18 Discord: tela mais clara | | |
