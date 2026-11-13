@@ -190,6 +190,24 @@ Padrões: GPU 85 °C, RAM 90 %, disco 90 %. O alerta só liga depois de **10 s s
    (tem prioridade); ao voltar a energia, o alerta de limite reaparece se ainda valer.
 8. Com um alerta ligado, feche o agente. **Esperado:** o alerta some quando o dado fica velho (o painel mostra "velho" ou "PC desligado"), sem ficar fingindo.
 
+## 16. Tela de PC desligado (modo noite, relógio, tela apagada)
+
+O PC só conta como desligado depois de **1 minuto** sem achar o agente. Padrão: modo noite, das 22h às 07h.
+
+1. Abra a configuração (toque longo no relógio). **Esperado:** o cartão "PC desligado" mostra "Mostrar" com − e +, que passam por Modo noite, Relógio e Tela apagada. Em
+   Modo noite aparecem também "começa" e "termina" (de hora em hora, dando a volta de 23h para 00h). Salve.
+2. **Relógio:** escolha "Relógio", salve e feche o agente. **Esperado:** nada muda por ~1 min (o painel segue com "PC desligado ou inalcançável"); depois a tela fica
+   preta com a hora grande em cinza escuro, "PC desligado" e a dica de segurar, no brilho mínimo. Suba o agente: **esperado:** o painel volta sozinho, com o brilho de antes.
+3. **Tela apagada:** escolha "Tela apagada" e repita. **Esperado:** tela preta sem nada, no brilho mínimo. Anote se o T68 realmente fica escuro (LCD com luz de fundo acesa não fica
+   preto de verdade) e se o brilho mínimo vale em tela cheia.
+4. **Modo noite:** ponha o início uma hora antes e o fim uma hora depois do horário atual, feche o agente e espere 1 min. **Esperado:** relógio escuro. Depois mude o horário
+   para não incluir a hora atual. **Esperado:** o painel normal com a faixa de erro, como antes.
+5. **Meia-noite:** com o padrão 22h às 07h, confira de noite (e de manhã, depois das 07h) que o modo noite entra e sai na hora certa.
+6. Segure o dedo em qualquer ponto da tela escura. **Esperado:** abre a configuração (o brilho volta ao normal enquanto ela está aberta).
+7. Troca de canal (cenário 5) e queda curta do Wi-Fi com o USB ligado. **Esperado:** a tela escura **não** aparece (a queda é menor que 1 min).
+8. Com o agente com código errado (cenário 9) **esperado:** o painel com a faixa "Código inválido", nunca a tela escura.
+9. Deixe a noite toda no modo escolhido e anote a bateria e a temperatura do tablet. Reabra o app e confira que a escolha continua salva.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -207,3 +225,4 @@ Padrões: GPU 85 °C, RAM 90 %, disco 90 %. O alerta só liga depois de **10 s s
 | 11 Dados reais | | |
 | 12 Desempenho | | |
 | 15 Alertas de limite | | |
+| 16 Tela de PC desligado | | |

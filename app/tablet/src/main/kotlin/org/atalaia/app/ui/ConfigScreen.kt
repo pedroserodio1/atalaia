@@ -46,6 +46,8 @@ import org.atalaia.app.ui.theme.PlexMono
 import org.atalaia.core.connection.ChannelKind
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.settings.ConfigDraft
+import org.atalaia.core.panel.OffMode
+import org.atalaia.core.panel.OffSettings
 import org.atalaia.core.settings.Edit
 import org.atalaia.core.state.LimitSpecs
 
@@ -60,6 +62,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     var newHost by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var limits by remember { mutableStateOf(app.settings.limits) }
+    var off by remember { mutableStateOf(app.settings.offScreen) }
     var showToken by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -79,6 +82,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
         if (!app.configure(endpoints, clean.ifEmpty { null })) { error = Texts.CONFIG_TOKEN_NOT_SAVED; return }
         app.settings.limits = limits
         app.store.limits = limits
+        app.settings.offScreen = off
         onClose()
     }
 
@@ -122,6 +126,20 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, -1)) }, { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, +1)) })
             LimitRow(Texts.LIMIT_DISK, Texts.limitValue(limits.diskPercent, "%"), limits.diskPercent != null, limits.diskPercent != disk.max,
                 { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, -1)) }, { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, +1)) })
+        }
+        PanelCard(Modifier.fillMaxWidth()) {
+            MonoText(Texts.OFF_TITLE)
+            MonoText(Texts.OFF_HINT, sp = 12)
+            LimitRow(Texts.OFF_MODE, Texts.offMode(off.mode), true, true,
+                { off = off.copy(mode = off.mode.step(-1)) }, { off = off.copy(mode = off.mode.step(+1)) })
+            if (off.mode == OffMode.NIGHT) {
+                LimitRow(Texts.OFF_NIGHT_START, Texts.hour(off.nightStartHour), true, true,
+                    { off = off.copy(nightStartHour = OffSettings.stepHour(off.nightStartHour, -1)) },
+                    { off = off.copy(nightStartHour = OffSettings.stepHour(off.nightStartHour, +1)) })
+                LimitRow(Texts.OFF_NIGHT_END, Texts.hour(off.nightEndHour), true, true,
+                    { off = off.copy(nightEndHour = OffSettings.stepHour(off.nightEndHour, -1)) },
+                    { off = off.copy(nightEndHour = OffSettings.stepHour(off.nightEndHour, +1)) })
+            }
         }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {

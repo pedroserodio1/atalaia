@@ -8,6 +8,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import org.atalaia.core.connection.Endpoint
+import org.atalaia.core.panel.OffMode
+import org.atalaia.core.panel.OffSettings
 import org.atalaia.core.state.LimitSpec
 import org.atalaia.core.state.LimitSpecs
 import org.atalaia.core.state.Limits
@@ -91,6 +93,18 @@ class SettingsStore(context: Context) {
 
     private fun limit(key: String, spec: LimitSpec): Int? =
         prefs.getInt(key, spec.default).let { if (it < 0) null else it }
+
+    /** O que mostrar com o PC desligado; ausente ou valor desconhecido = padrão. */
+    var offScreen: OffSettings
+        get() {
+            val d = OffSettings()
+            return OffSettings(
+                mode = OffMode.entries.firstOrNull { it.name == prefs.getString("offMode", null) } ?: d.mode,
+                nightStartHour = prefs.getInt("offStart", d.nightStartHour).coerceIn(0, 23),
+                nightEndHour = prefs.getInt("offEnd", d.nightEndHour).coerceIn(0, 23),
+            )
+        }
+        set(v) { prefs.edit().putString("offMode", v.mode.name).putInt("offStart", v.nightStartHour).putInt("offEnd", v.nightEndHour).apply() }
 
     val token: String? get() = vault.load()
 

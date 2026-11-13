@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` em publicação, com os alertas de limite).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` publicada em 13/11/2026, com os alertas de limite).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1).
@@ -27,7 +27,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.1` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
+| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.1` publicada) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
 | **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
@@ -155,14 +155,17 @@ Objetivo: o tablet deixa de ser só um espelho do PC e passa a reagir ao que aco
 Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu de `development` com `VERSION` em `0.3.0`.
 
 - [ ] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
-- [ ] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
+- [x] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
   (o nobreak já chegou a dar 95 quedas em ~2 dias).
-  Código e testes prontos (ramo `feat/app-alertas-limite`): padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
-  de 10 s acima do limite e só desliga 5 pontos abaixo, aparece no cartão do relógio (a queda de energia continua mandando). Falta provar no tablet de verdade (cenário 15 de
-  `app/docs/teste-manual.md`), inclusive se a tela de configuração cabe nos 505 dp.
+  Feito na `0.3.0-beta.1`: padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
+  de 10 s acima do limite e só desliga 5 pontos abaixo, aparece no cartão do relógio (a queda de energia continua mandando). Provado pelo mantenedor no tablet, em 13/11/2026
+  (roteiro: cenário 15 de `app/docs/teste-manual.md`).
 - [ ] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
   acesa mostrando isso. Decidido: **configurável** na tela de configuração do tablet entre **modo noite por horário**, **relógio discreto sempre** e
   **tela apagada**.
+  Código e testes prontos (ramo `feat/app-pc-desligado`): vale depois de **1 min** sem achar o PC (o failover USB e Wi-Fi não conta); modo noite (padrão 22h às 07h; fora do
+  horário o painel segue como antes), relógio sempre ou tela apagada (preta no brilho mínimo, com a tela ainda ligada); segurar na tela abre a configuração. Falta provar no
+  tablet de verdade (cenário 16 de `app/docs/teste-manual.md`): o preto e o brilho mínimo no T68, o horário virando a meia-noite e o consumo a noite toda.
 - [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
   com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
