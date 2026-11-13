@@ -31,6 +31,7 @@ class PanelApp : Application() {
     override fun onCreate() {
         super.onCreate()
         settings = SettingsStore(this)
+        store.limits = settings.limits
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "0"
         connection = AgentConnection(scope, OkHttpTransport(), clock, SessionConfig(clientVersion = version, sources = SOURCES))
         covers = CoverRepository(current = {

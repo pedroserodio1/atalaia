@@ -47,6 +47,7 @@ import org.atalaia.core.connection.ChannelKind
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.settings.ConfigDraft
 import org.atalaia.core.settings.Edit
+import org.atalaia.core.state.LimitSpecs
 
 /**
  * Configuração: lista de endereços do agente em ordem de prioridade (o primeiro é o preferido) e o token. O token nunca
@@ -58,6 +59,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     var endpoints by remember { mutableStateOf(app.settings.endpoints.ifEmpty { listOf(Endpoint("127.0.0.1")) }) }
     var newHost by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
+    var limits by remember { mutableStateOf(app.settings.limits) }
     var showToken by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -75,6 +77,8 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
         if (problem != null) { error = problem; return }
         val clean = ConfigDraft.cleanToken(token)
         if (!app.configure(endpoints, clean.ifEmpty { null })) { error = Texts.CONFIG_TOKEN_NOT_SAVED; return }
+        app.settings.limits = limits
+        app.store.limits = limits
         onClose()
     }
 
@@ -83,7 +87,8 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
         Modifier.fillMaxSize().background(Palette.Graphite).imePadding().verticalScroll(rememberScrollState()).padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PanelCard(Modifier.weight(1.25f)) {
+        Column(Modifier.weight(1.25f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        PanelCard(Modifier.fillMaxWidth()) {
             MonoText(Texts.CONFIG_ENDPOINTS)
             MonoText(Texts.CONFIG_ENDPOINTS_HINT, sp = 12)
             Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
@@ -104,6 +109,20 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 Field(newHost, { newHost = it }, Texts.CONFIG_HOST_PLACEHOLDER, Modifier.weight(1f), KeyboardType.Uri, ImeAction.Done, onDone = ::addHost)
                 ActionButton(Texts.CONFIG_ADD, primary = false, modifier = Modifier.width(110.dp), onClick = ::addHost)
             }
+        }
+        PanelCard(Modifier.fillMaxWidth()) {
+            MonoText(Texts.LIMITS_TITLE)
+            MonoText(Texts.LIMITS_HINT, sp = 12)
+            val gpu = LimitSpecs.GPU_TEMP
+            val ram = LimitSpecs.RAM
+            val disk = LimitSpecs.DISK
+            LimitRow(Texts.LIMIT_GPU, Texts.limitValue(limits.gpuTempC, " °C"), limits.gpuTempC != null, limits.gpuTempC != gpu.max,
+                { limits = limits.copy(gpuTempC = gpu.step(limits.gpuTempC, -1)) }, { limits = limits.copy(gpuTempC = gpu.step(limits.gpuTempC, +1)) })
+            LimitRow(Texts.LIMIT_RAM, Texts.limitValue(limits.ramPercent, "%"), limits.ramPercent != null, limits.ramPercent != ram.max,
+                { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, -1)) }, { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, +1)) })
+            LimitRow(Texts.LIMIT_DISK, Texts.limitValue(limits.diskPercent, "%"), limits.diskPercent != null, limits.diskPercent != disk.max,
+                { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, -1)) }, { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, +1)) })
+        }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             PanelCard(Modifier.fillMaxWidth()) {
@@ -134,6 +153,17 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 ActionButton(Texts.CONFIG_SAVE, true, Modifier.weight(1f), ::save)
             }
         }
+    }
+}
+
+/** Uma linha de limite: rótulo, valor atual e os botões − e +. */
+@Composable
+private fun LimitRow(label: String, value: String, canMinus: Boolean, canPlus: Boolean, onMinus: () -> Unit, onPlus: () -> Unit) {
+    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f)) { BodyText(label, sp = 15) }
+        MonoText(value, Palette.Mint, 14)
+        SmallButton("−", canMinus, onMinus)
+        SmallButton("+", canPlus, onPlus)
     }
 }
 
