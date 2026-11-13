@@ -55,10 +55,16 @@ derrubar o app no tablet.
 1. Suba o agente (`../agent`; `--simulate` para dados falsos). Por USB, ligue `Usb:Enabled` no agente para ele manter o
    `adb reverse` sozinho (ou faça `adb reverse tcp:8765 tcp:8765` à mão). Por Wi-Fi, ligue `Agent:ListenOnLan` e libere o
    Firewall do Windows.
-2. Abra o app: a configuração abre sozinha. Informe os endereços e o código de 6 dígitos do agente (no PC: menu do ícone da bandeja; ele muda toda vez que o agente reinicia).
+2. Abra o app: a configuração abre sozinha. (Por Wi-Fi, se a porta 8765 do PC estiver ocupada, o agente usa a próxima da faixa e o app a procura sozinho, de 8765 a 8774.) Informe os endereços e o código de 6 dígitos do agente (no PC: menu do ícone da bandeja; ele muda toda vez que o agente reinicia).
 3. Em build de debug, dá para configurar por `adb`:
    `adb shell am start -n org.atalaia.app/.MainActivity --es hosts "127.0.0.1:8765,192.168.0.12" --es token "..."`
    (ignorado em release).
+4. **Abre sozinho ao ligar o tablet:** o app declara `RECEIVE_BOOT_COMPLETED` (permissão normal, sem aviso) e um `BootReceiver` que só abre a tela
+   e termina, sem serviço em segundo plano. Funciona no Android 8.1 (o alvo). **Do Android 10 em diante o sistema impede abrir uma tela a partir do segundo
+   plano**, e o app simplesmente não abre sozinho (nada quebra: é só tocar no ícone). Para esses aparelhos seria preciso "Exibir sobre outros apps"
+   (`SYSTEM_ALERT_WINDOW`) ou ser o app inicial do aparelho, o que não está feito.
+   **Demora:** o painel abre uns 25 a 30 s depois de o Android terminar de ligar, porque o aviso de boot é entregue aos apps um por vez (medido no T68).
+   **Tire a tela de bloqueio** (Configurações, Segurança, Bloqueio de tela, Nenhum): com ela ligada, o painel abre atrás dela e é preciso deslizar para ver.
 
 ## Testes e verificação
 

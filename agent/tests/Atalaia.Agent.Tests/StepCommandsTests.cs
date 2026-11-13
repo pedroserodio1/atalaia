@@ -71,6 +71,8 @@ internal sealed class StepHarness : IAsyncLifetime
     public Func<string, AdbResult>? InstallReply;
     public List<string> Copied = [];
     public List<string> Opened = [];
+    public List<(string Id, Dictionary<string, string> Values)> Tested = [];   // o que "Testar conexão" mandou testar (a rede nunca é tocada)
+    public SourceTestResult TestReply = new(true, "ok");
     public Dictionary<string, string> RunKeyValues = [];
     public string ExePath = @"C:\Atalaia\AtalaiaAgent.exe";
     public StepCommands Commands = null!;
@@ -95,7 +97,7 @@ internal sealed class StepHarness : IAsyncLifetime
         Adb = new ScriptedAdb(line => line switch
         {
             "devices -l" => new(0, DevicesOutput),
-            _ when line.EndsWith("reverse --list") => new(0, $"(reverse) tcp:{Runtime.Port} tcp:{Runtime.Port}\n"),
+            _ when line.EndsWith("reverse --list") => new(0, $"(reverse) tcp:8765 tcp:{Runtime.Port}\n(reverse) tcp:{Runtime.Port} tcp:{Runtime.Port}\n"),
             _ when line.EndsWith("dumpsys package org.atalaia.app") => new(0, TabletVersion is null ? "Unable to find package: org.atalaia.app" : $"Packages:\n  Package [org.atalaia.app] (1):\n    versionName={TabletVersion}\n"),
             _ when line.Contains(" install -r ") => InstallReply?.Invoke(line) ?? new(0, "Performing Streamed Install\nSuccess\n"),
             _ when line.Contains(" uninstall ") => new(0, "Success\n"),
@@ -115,7 +117,8 @@ internal sealed class StepHarness : IAsyncLifetime
             PickAdb: () => PickAdb(),
             PickApk: () => PickApk(),
             CopyText: Copied.Add,
-            OpenExternal: Opened.Add);
+            OpenExternal: Opened.Add,
+            TestSource: (id, values, _) => { Tested.Add((id, new Dictionary<string, string>(values))); return Task.FromResult(TestReply); });
         Commands = new StepCommands(services);
         Commands.Register(Router);
     }
@@ -193,9 +196,9 @@ public class StepCommandsContractTests : StepTestBase
     {
         // O contrato de segurança da ponte: acrescentar um comando exige mudar este teste de propósito.
         Assert.Equal(
-            ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get",
+            ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get", "code.keep", "code.renew",
              "network.firewallCreate", "network.get", "network.setAdapter", "network.setLan", "network.setPort", "network.verify",
-             "sources.clearConfig", "sources.configure", "sources.get", "sources.set", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
+             "sources.clearConfig", "sources.configure", "sources.get", "sources.openPage", "sources.set", "sources.test", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
             H.Router.Commands.Order(StringComparer.Ordinal).ToArray());
     }
 }

@@ -47,7 +47,7 @@ aplicativo), `activeWindow`, `ups` (nobreak Intelbras, com alerta de queda de en
 |---|---|
 | [`agent/`](agent/) | O agente do PC (C#, .NET 10). Plugins por fonte, hub WebSocket, bandeja, simulador. [README](agent/README.md) |
 | [`app/`](app/) | O app do tablet. `core/` (Kotlin/JVM: protocolo, conexão, estado) e `tablet/` (Android + Compose). [README](app/README.md) |
-| [`docs/`](docs/) | O protocolo v1, a especificação do agente (marco 1) e o [plano do app](docs/plano-app.md) |
+| [`docs/`](docs/) | O protocolo v1, a especificação do agente (marco 1), o [plano do app](docs/plano-app.md) e os tutoriais de chaves e serviços externos em [`docs/fontes/`](docs/fontes/) (Steam, Discord, clima, nobreak) |
 | `probe_tests/` | A sondagem antiga, usada como referência de APIs. **Somente leitura.** |
 
 ## Começando

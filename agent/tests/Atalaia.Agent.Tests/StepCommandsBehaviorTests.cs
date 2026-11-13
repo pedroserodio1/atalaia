@@ -469,6 +469,63 @@ public class CodeSourcesAndSummaryTests : StepTestBase
     }
 
     [Fact]
+    public async Task Manter_o_codigo_guarda_o_atual_no_cofre_e_desligar_apaga()
+    {
+        Assert.False((await H.Data("code.get")).GetProperty("keep").GetBoolean());
+        Assert.True((await H.Data("code.keep", new { enabled = true })).GetProperty("keep").GetBoolean());
+        Assert.Equal("482917", H.Vault.Read()["Access:Code"]);              // o código que o tablet já digitou continua valendo
+        Assert.Equal("482917", H.Runtime.Token);                            // e o agente não religou nem trocou nada
+        Assert.True((bool)H.Settings.Read()["Access"]!["KeepCode"]!);
+        Assert.DoesNotContain("482917", File.ReadAllText(H.Settings.FilePath));   // o código vai só para o cofre, nunca para o settings.json
+
+        Assert.False((await H.Data("code.keep", new { enabled = false })).GetProperty("keep").GetBoolean());
+        Assert.False(H.Vault.Has("Access:Code"));
+    }
+
+    [Fact]
+    public async Task Aviso_de_codigo_novo_so_quando_o_codigo_foi_sorteado_de_novo()
+    {
+        Assert.True((await H.Data("code.get")).GetProperty("changed").GetBoolean());    // sem "manter": cada início sorteia
+        await H.Data("code.keep", new { enabled = true });
+        Assert.False((await H.Data("code.get")).GetProperty("changed").GetBoolean());   // mantido: o tablet segue valendo
+    }
+
+    [Fact]
+    public async Task Gerar_novo_troca_o_codigo_e_atualiza_o_cofre_so_se_ele_e_mantido()
+    {
+        var d = await H.Data("code.renew");
+        var code = d.GetProperty("code").GetString()!;
+        Assert.Matches(@"^\d{6}$", code);
+        Assert.Equal(code, H.Runtime.Token);
+        Assert.False(H.Vault.Has("Access:Code"));                           // não mantido: nada no cofre
+
+        await H.Data("code.keep", new { enabled = true });
+        var next = (await H.Data("code.renew")).GetProperty("code").GetString()!;
+        Assert.Equal(next, H.Vault.Read()["Access:Code"]);
+        Assert.True(H.Runtime.Hub.ValidateToken(next));
+        Assert.False(H.Runtime.Hub.ValidateToken("482917"));                // o antigo foi revogado
+    }
+
+    [Fact]
+    public async Task Gerar_novo_que_nao_sobe_volta_o_codigo_anterior()
+    {
+        await H.Data("code.keep", new { enabled = true });
+        H.ApplyOverride = () => throw new InvalidOperationException("porta ocupada");
+        Assert.Equal("restart_failed", await H.ErrorOf("code.renew"));
+        Assert.Equal("482917", H.Runtime.Token);
+        Assert.Equal("482917", H.Vault.Read()["Access:Code"]);
+    }
+
+    [Fact]
+    public async Task Token_fixo_nao_mantem_nem_gera_novo()
+    {
+        await using var fixedToken = new FixedTokenHarness();
+        await fixedToken.H.InitializeAsync();
+        Assert.Equal("fixed_token", await fixedToken.H.ErrorOf("code.keep", new { enabled = true }));
+        Assert.Equal("fixed_token", await fixedToken.H.ErrorOf("code.renew"));
+    }
+
+    [Fact]
     public async Task Token_fixo_nunca_aparece_e_nao_e_copiado()
     {
         await using var fixedToken = new FixedTokenHarness();

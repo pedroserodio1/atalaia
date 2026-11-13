@@ -55,13 +55,13 @@ internal static class Program
                 Log.Warning("O settings.json estava inválido: foi guardado em {Path} e o agente começou com a configuração padrão.", bad);
             if (HostConfig.SecretsQuarantined is { } unreadable)
                 Log.Warning("O cofre de segredos não pôde ser lido (outro usuário do Windows ou arquivo estragado): foi guardado em {Path} e as credenciais precisam ser digitadas de novo.", unreadable);
-            runtime = new AgentRuntime(config, simulate, TokenStore.Load(config));
+            runtime = new AgentRuntime(config, simulate, TokenStore.Load(config, SecretVault.Default));
             Task.Run(runtime.StartAsync).GetAwaiter().GetResult();   // fora da thread da interface
 
             if (console)   // o token só aparece aqui (e em "Copiar token"), nunca no arquivo de log
             {
                 Console.WriteLine($"Agente em ws://{runtime.Address}/ws{(simulate ? " (simulado)" : "")}");
-                Console.WriteLine(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}   (novo a cada início)" : $"Token: {runtime.Token}");
+                Console.WriteLine(runtime.TokenCreated ? $"Código de acesso: {runtime.Token}" : $"Token: {runtime.Token}");
             }
 
             var onboarding = new OnboardingStore(SettingsStore.Default);
@@ -114,6 +114,9 @@ internal static class Program
     {
         var settings = SettingsStore.Default;
         string Repo() => RepositoryFrom(runtime.Config);
+        SourceProbe ProbeFor(string id) => new(k => runtime.Config[$"Plugins:{id}:{k}"], File.Exists, Directory.Exists, Environment.GetEnvironmentVariable,
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        var tester = new SourceTester(new HttpClient { Timeout = SourceTester.Timeout }, ProbeFor, SourceTester.DiscordIsOpen, () => DateTimeOffset.Now);
         return new StepServices(
             runtime,
             settings,
@@ -124,13 +127,13 @@ internal static class Program
             Apk: () => ApkProviderFor(runtime, AppInfo.Version),
             ReadAdapters: LanAddressProvider.Read,
             IsPortFree: PortValidator.IsFreeOnLoopback,
-            Probe: id => new SourceProbe(k => runtime.Config[$"Plugins:{id}:{k}"], File.Exists, Directory.Exists, Environment.GetEnvironmentVariable,
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            Probe: ProbeFor,
             Autostart: new AutostartService(new RegistryRunKey(), () => Environment.ProcessPath),
             PickAdb: () => Pick("Escolha o adb.exe (pasta platform-tools do Android)", "adb.exe|adb.exe"),
             PickApk: () => Pick("Escolha o APK do Atalaia para o tablet", "APK do Android (*.apk)|*.apk"),
             CopyText: Clipboard.SetText,
-            OpenExternal: MainWindow.OpenInBrowser);
+            OpenExternal: MainWindow.OpenInBrowser,
+            TestSource: tester.RunAsync);
     }
 
     private static ApkProvider ApkProviderFor(AgentRuntime runtime, string version) =>

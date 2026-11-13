@@ -30,9 +30,10 @@ function row(name, hint, ...controls) {
 
 function card(title, ...kids) { return h('div', { class: 'card' }, title ? h('div', { class: 'eyebrow' }, title) : null, ...kids); }
 
-function howto(title, items) {
-  return h('div', { class: 'card howto' }, h('div', { class: 'eyebrow' }, title),
-    items.map((text, i) => h('div', { class: 'tip' }, h('span', { class: 'num' }, String(i + 1)), h('div', null, text))));
+/** Passos numerados. `opts.inline`: dentro de outro cartão (sem a largura fixa do lado a lado); `opts.after`: nós depois dos passos. */
+function howto(title, items, opts = {}) {
+  return h('div', { class: 'card howto' + (opts.inline ? ' inline' : ''), hidden: opts.hidden ? true : null }, h('div', { class: 'eyebrow' }, title),
+    items.map((text, i) => h('div', { class: 'tip' }, h('span', { class: 'num' }, String(i + 1)), h('div', null, text))), opts.after);
 }
 
 /** Um passo: guarda os dados, desenha com paint(), e refaz a consulta de tempos em tempos. */
@@ -86,14 +87,14 @@ function firewallRow(d, view) {
 }
 
 function portRow(d, view) {
-  const input = h('input', { type: 'text', class: 'input', value: String(d.port), 'aria-label': 'Porta', inputmode: 'numeric', maxlength: '5' });
+  const input = h('input', { type: 'text', class: 'input', value: String(d.firstPort), 'aria-label': 'Porta', inputmode: 'numeric', maxlength: '5' });
   const apply = () => {
     const port = Number(input.value.trim());
     if (!Number.isInteger(port)) { toast('Digite só números na porta.'); return; }
     view.run('Religando o agente na porta nova…', () => call('network.setPort', { port }));
   };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
-  return row('Porta', 'Padrão 8765 · de 1024 a 65535', input,
+  return row('Porta', 'Padrão 8765 · de 1024 a 65535 · se estiver ocupada, o agente usa a próxima, até 10 portas seguidas', input,
     h('button', { class: 'btn small', disabled: view.busy ? true : null, onclick: apply }, 'Aplicar'));
 }
 
@@ -108,6 +109,7 @@ function networkStep() {
       }, h('span', { class: 'mono' }, a.ip), ' · ', a.name, a.gateway ? '' : ' (sem gateway)')))
       : null;
     return [
+      d.port !== d.firstPort ? h('div', { class: 'notice' }, `A porta ${d.firstPort} está ocupada por outro programa, então o agente está usando a ${d.port}. O app do tablet procura sozinho nas portas seguintes. Se você digitou o endereço com a porta no tablet, ajuste para ${d.port}.`) : null,
       h('div', { class: 'cols' },
         h('div', { class: 'card narrow' },
           h('div', { class: 'eyebrow' }, 'Endereço do PC na rede'),
@@ -252,6 +254,28 @@ function appStep() {
 
 function groupCode(code) { return code.length === 6 ? code.slice(0, 3) + ' ' + code.slice(3) : code; }
 
+let renewArmed = false;   // "Gerar novo" em dois toques: derruba os tablets conectados
+
+/** Aviso de que o código foi sorteado de novo (reinício ou atualização do agente): quem já pareou precisa digitar o novo no tablet. */
+function codeChangedNotice(d) {
+  return d.changed ? h('div', { class: 'notice' }, 'O código de acesso mudou neste início do agente. Se o tablet não conectar, digite o código novo. Para não precisar disso, ligue "Manter o mesmo código".') : null;
+}
+
+/** "Manter o mesmo código" e "Gerar novo", abaixo do código. Os dois só existem com código sorteado (token fixo não passa por aqui). */
+function codeKeepControls(d, v) {
+  const disarm = () => { renewArmed = false; };
+  return [
+    row('Manter o mesmo código', d.keep ? 'O tablet não precisa do código de novo depois de reiniciar o agente.' : 'Hoje o código muda a cada início do agente.',
+      toggle('Manter o mesmo código', d.keep, (on) => { disarm(); v.run('Gravando…', () => call('code.keep', { enabled: on })); }, v.busy)),
+    h('div', { class: 'btnrow' },
+      h('button', { class: 'btn small', disabled: v.busy ? true : null, onclick: () => {
+        if (!renewArmed) { renewArmed = true; v.paint(); return; }
+        disarm(); v.run('Gerando o código novo…', () => call('code.renew'));
+      } }, renewArmed ? 'Confirmar: os tablets caem' : 'Gerar novo')),
+    renewArmed ? h('div', { class: 'hint' }, 'O código atual deixa de valer e todo tablet conectado precisa do novo.') : null,
+  ];
+}
+
 function codeStep() {
   let copied = false;
   let advanced = false;
@@ -271,8 +295,10 @@ function codeStep() {
             : h('div', { class: 'card codecard' },
               h('div', { class: 'eyebrow' }, 'Código de acesso'),
               h('div', { class: 'code', 'aria-label': 'Código ' + d.code.split('').join(' ') }, groupCode(d.code)),
-              h('div', { class: 'hint' }, 'Muda toda vez que o agente reinicia. Depois de tentativas erradas, o agente limita novas tentativas.'),
-              h('div', { class: 'btnrow' }, h('button', { class: 'btn small', onclick: () => call('code.copy').then(() => { copied = true; v.paint(); setTimeout(() => { copied = false; v.paint(); }, 2000); }).catch((e) => toast(e.message)) }, copied ? 'Copiado ✓' : 'Copiar código'))),
+              h('div', { class: 'hint' }, d.keep ? 'Fica o mesmo entre reinícios do agente. Depois de tentativas erradas, o agente limita novas tentativas.' : 'Muda toda vez que o agente reinicia, a menos que você escolha manter. Depois de tentativas erradas, o agente limita novas tentativas.'),
+              codeChangedNotice(d),
+              h('div', { class: 'btnrow' }, h('button', { class: 'btn small', onclick: () => call('code.copy').then(() => { copied = true; v.paint(); setTimeout(() => { copied = false; v.paint(); }, 2000); }).catch((e) => toast(e.message)) }, copied ? 'Copiado ✓' : 'Copiar código')),
+              ...codeKeepControls(d, v)),
           card(connected ? 'Tablet conectado' : 'Esperando o tablet',
             row('USB', d.usbAddress, pill(channelOf('usb') ? 'Conectado' : 'Aguardando', channelOf('usb') ? 'ok' : '')),
             row('Wi-Fi', d.wifiAddress || 'desligado (ligue no passo Rede e Firewall)', pill(channelOf('wifi') ? 'Conectado' : d.wifiAddress ? 'Aguardando' : 'Desligado', channelOf('wifi') ? 'ok' : '')),
@@ -288,6 +314,47 @@ function codeStep() {
 }
 
 // ---------------------------------------------------------------- 5 · Fontes de dados
+
+let helpOpen = null;       // id da fonte com o "Como conseguir" aberto (sobrevive ao redesenho da consulta periódica)
+const testResults = {};    // id da fonte → { ok, message } do último "Testar conexão" (some quando o formulário é salvo ou cancelado)
+
+/** O texto do resultado do teste. Atualizado no lugar, sem redesenhar a página (que apagaria o que foi digitado). */
+function showTestResult(out, r) {
+  out.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+  out.textContent = '● ' + r.message;
+}
+
+/** "Testar conexão": manda o que está digitado (segredo em branco usa o guardado) e mostra a causa em português. Não grava nada. */
+function testButton(s, getValues, out) {
+  const btn = h('button', { type: 'button', class: 'btn small' }, 'Testar conexão');
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; btn.textContent = 'Testando…'; out.className = 'hint'; out.textContent = '';
+    try { const r = await call('sources.test', s.fields ? { id: s.id, values: getValues() } : { id: s.id }); testResults[s.id] = r; showTestResult(out, r); }
+    catch (err) { out.className = 'hint warn'; out.textContent = '● ' + err.message; }
+    finally { btn.disabled = false; btn.textContent = 'Testar conexão'; }
+  });
+  return btn;
+}
+
+/** O "Como conseguir" da fonte: passos, o que fazer se der errado e o botão que abre a página do serviço (a página manda só o id; o endereço é do agente). */
+function helpBlock(s) {
+  const hp = s.help;
+  const out = h('div', { class: 'hint', role: 'status' });
+  if (!s.fields && testResults[s.id]) showTestResult(out, testResults[s.id]);
+  const open = hp.pageLabel
+    ? h('button', { type: 'button', class: 'btn small', onclick: () => call('sources.openPage', { id: s.id }).catch((e) => toast(e.message)) }, hp.pageLabel)
+    : null;
+  const test = !s.fields && hp.canTest ? testButton(s, () => ({}), out) : null;   // fonte sem formulário (nobreak): o teste fica aqui
+  return howto(hp.title, hp.steps, {
+    inline: true, hidden: helpOpen !== s.id,
+    after: [
+      h('div', { class: 'eyebrow sub' }, 'Se der errado'),
+      ...hp.ifWrong.map((t) => h('div', { class: 'hint' }, '• ' + t)),
+      open || test ? h('div', { class: 'btnrow' }, open, test) : null,
+      out,
+    ],
+  });
+}
 
 let editingSource = null;   // id da fonte com o formulário aberto: enquanto houver, a consulta periódica não redesenha (apagaria o que foi digitado)
 
@@ -311,19 +378,22 @@ function configForm(v, s) {
         : f.secret && f.configured ? h('div', { class: 'hint ok' }, '● Configurada. O valor nunca é mostrado; deixe em branco para manter.') : null);
   });
   const save = h('button', { type: 'button', class: 'btn small primary' }, 'Salvar');
+  const testOut = h('div', { class: 'hint', role: 'status' });
+  if (testResults[s.id]) showTestResult(testOut, testResults[s.id]);
+  const collect = () => { const values = {}; for (const f of s.fields) if (!f.fromEnv) values[f.name] = inputs[f.name].value; return values; };
+  const test = s.help && s.help.canTest ? testButton(s, collect, testOut) : null;
   const cancel = h('button', { type: 'button', class: 'btn small' }, 'Cancelar');
   const configured = s.fields.some((f) => f.configured && !f.fromEnv);
   const remove = configured ? h('button', { type: 'button', class: 'btn small' }, 'Remover') : null;
 
   const lock = (on) => { for (const b of [save, cancel, remove]) if (b) b.disabled = on; };
   save.addEventListener('click', async () => {
-    const values = {};
-    for (const f of s.fields) if (!f.fromEnv) values[f.name] = inputs[f.name].value;
+    const values = collect();
     error.textContent = ''; lock(true); save.textContent = 'Salvando…';
-    try { const data = await call('sources.configure', { id: s.id, values }); editingSource = null; v.set(data); }
+    try { const data = await call('sources.configure', { id: s.id, values }); editingSource = null; delete testResults[s.id]; v.set(data); }
     catch (err) { error.textContent = err.message; lock(false); save.textContent = 'Salvar'; }
   });
-  cancel.addEventListener('click', () => { editingSource = null; v.paint(); });
+  cancel.addEventListener('click', () => { editingSource = null; delete testResults[s.id]; v.paint(); });
   if (remove) {
     let armed = false;   // dois toques: o primeiro só pede a confirmação
     remove.addEventListener('click', async () => {
@@ -335,7 +405,7 @@ function configForm(v, s) {
   }
   return h('div', { class: 'cfg' }, fields, error,
     h('div', { class: 'hint' }, 'Só sai deste PC o que a própria fonte precisa. Segredos ficam criptografados com a sua conta do Windows, fora do arquivo de configuração.'),
-    h('div', { class: 'btnrow' }, save, cancel, remove));
+    h('div', { class: 'btnrow' }, save, test, cancel, remove), testOut);
 }
 
 function sourcesStep() {
@@ -350,8 +420,22 @@ function sourcesStep() {
           h('div', { class: 'hint' }, s.description),
           s.enabled ? s.needs.map((n) => h('div', { class: 'hint warn' }, '● ' + n)) : null,
           s.enabled && s.status === 'error' ? h('div', { class: 'hint warn' }, '● A fonte está com erro agora (o agente tenta de novo sozinho).') : null),
+        s.help ? h('button', { type: 'button', class: 'link', 'aria-expanded': helpOpen === s.id ? 'true' : 'false', onclick: (e) => {
+          // Só mostra ou esconde o bloco, sem redesenhar: o formulário aberto não pode perder o que foi digitado.
+          const btn = e.currentTarget;
+          const card = btn.closest('.card');
+          const block = btn.closest('.row').nextElementSibling;
+          if (!block || !block.classList.contains('howto')) return;
+          const show = block.hidden;
+          card.querySelectorAll('.howto.inline').forEach((b) => { b.hidden = true; });
+          card.querySelectorAll('button.link[aria-expanded]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+          block.hidden = !show;
+          helpOpen = show ? s.id : null;
+          btn.setAttribute('aria-expanded', show ? 'true' : 'false');
+        } }, 'Como conseguir') : null,
         s.fields && editingSource !== s.id ? h('button', { type: 'button', class: 'btn small', disabled: v.busy ? true : null, onclick: () => { editingSource = s.id; v.paint(); } }, 'Configurar') : null,
         toggle(s.name, s.enabled, (on) => v.run(on ? `Ligando ${s.name}…` : `Desligando ${s.name}…`, () => call('sources.set', { id: s.id, enabled: on })), v.busy)),
+        s.help ? helpBlock(s) : null,
         s.fields && editingSource === s.id ? configForm(v, s) : null])),
       h('div', { class: 'hint' }, 'Dá para mudar tudo isso depois em Fontes de dados.'),
       busyNote(v),

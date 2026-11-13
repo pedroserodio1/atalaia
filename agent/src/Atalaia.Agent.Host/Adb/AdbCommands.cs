@@ -21,15 +21,19 @@ internal static class AdbCommands
 
     public static IReadOnlyList<string> ReverseList(string serial) => ["-s", CheckSerial(serial), "reverse", "--list"];
 
-    /// <summary>O mesmo que o módulo USB faz: aparelho → PC na mesma porta.</summary>
-    public static IReadOnlyList<string> Reverse(string serial, int port) =>
-        ["-s", CheckSerial(serial), "reverse", $"tcp:{port.ToString(CultureInfo.InvariantCulture)}", $"tcp:{port.ToString(CultureInfo.InvariantCulture)}"];
+    /// <summary>O mesmo que o módulo USB faz: a porta do tablet chega à porta do PC. Pelo protocolo, o tablet usa <c>8765</c> e o PC pode estar em outra porta da faixa.</summary>
+    public static IReadOnlyList<string> Reverse(string serial, int tabletPort, int hostPort) =>
+        ["-s", CheckSerial(serial), "reverse", $"tcp:{tabletPort.ToString(CultureInfo.InvariantCulture)}", $"tcp:{hostPort.ToString(CultureInfo.InvariantCulture)}"];
 
     /// <summary>Instala por cima (<c>-r</c>), mantendo os dados do app se a assinatura for a mesma.</summary>
     public static IReadOnlyList<string> Install(string serial, string apkPath) => ["-s", CheckSerial(serial), "install", "-r", apkPath];
 
     /// <summary>Remove o app do Atalaia (e a configuração dele no tablet). Só o pacote do Atalaia, nunca outro.</summary>
     public static IReadOnlyList<string> UninstallTablet(string serial) => ["-s", CheckSerial(serial), "uninstall", TabletPackage];
+
+    /// <summary>Abre o app do Atalaia no tablet. Argumentos fixos: só a activity principal do pacote do Atalaia.</summary>
+    public static IReadOnlyList<string> StartTablet(string serial) =>
+        ["-s", CheckSerial(serial), "shell", "am", "start", "-n", $"{TabletPackage}/.MainActivity"];
 
     public static IReadOnlyList<string> DumpPackage(string serial) => ["-s", CheckSerial(serial), "shell", "dumpsys", "package", TabletPackage];
 

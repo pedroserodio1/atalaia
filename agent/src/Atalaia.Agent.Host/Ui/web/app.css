@@ -123,6 +123,9 @@ button { font: inherit; color: inherit; }
 .colmain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 .card.narrow { width: 340px; flex: none; }
 .card.howto { width: 360px; flex: none; }
+.card.howto.inline { width: auto; flex: none; margin: 10px 0 4px; background: var(--panel-2); }
+.card.howto.inline[hidden] { display: none; }
+.eyebrow.sub { font-size: 13px; margin-top: 14px; }
 .card.qr { width: 340px; flex: none; }
 .card.codecard { padding-bottom: 20px; }
 .bigip { font-family: var(--mono); font-weight: 500; font-size: 36px; margin: 10px 0 4px; color: var(--mint); white-space: nowrap; }

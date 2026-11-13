@@ -43,7 +43,7 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
 
 1. **Rede e Firewall:** o endereço do PC na rede local (se há mais de uma placa, você escolhe), liga e desliga o Wi-Fi (`Agent:ListenOnLan`), muda
    a porta e libera o Firewall. A regra é criada por um processo elevado (`AtalaiaAgent.exe --firewall-rule <porta>`, que pede a permissão do
-   Windows na hora): uma regra de entrada **TCP só para a porta do agente, só no perfil Privado e só para a sub-rede local**, chamada `Atalaia-Agente`
+   Windows na hora): uma regra de entrada **TCP só para a faixa de portas do agente (`8765-8774`), só no perfil Privado e só para a sub-rede local**, chamada `Atalaia-Agente`
    (trocar a porta troca a regra, sem deixar sobras). O botão **Verificar** confere o que dá para garantir do PC: que o agente escuta na rede, que há
    regra para a porta e o tipo da rede. Ele **não** prova que o tablet entra (chamar o próprio IP não passa pelo Firewall): isso só fica provado
    quando o tablet conecta, no passo 4.
@@ -91,7 +91,8 @@ logs, `settings.json`, downloads e os dados do WebView2 passam a ficar nela.
 
 O menu da bandeja tem o endereço em uso,
 `Clientes conectados: N`, o **código de acesso** (6 dígitos), **Copiar código**, **Abrir pasta de logs** e **Sair**. Só roda uma instância por vez.
-Se não conseguir subir (porta ocupada, por exemplo), aparece uma caixa de mensagem com o erro.
+Porta ocupada não derruba o agente: ele usa a próxima livre da faixa (a porta configurada e as 9 seguintes) e mostra a porta em uso na janela e
+na bandeja. Só se a faixa toda estiver ocupada, ou houver outro erro ao subir, aparece uma caixa de mensagem com o erro.
 
 Testes:
 
@@ -101,11 +102,15 @@ dotnet test
 
 ## Código de acesso e pareamento
 
-- **A cada início**, o agente gera um **código de 6 dígitos** novo (sorteio criptográfico, só em memória: não grava arquivo).
-  Um balão avisa que há código novo (o balão não mostra o código).
+- **Por padrão, a cada início**, o agente gera um **código de 6 dígitos** novo (sorteio criptográfico, só em memória: não grava arquivo).
+  O balão da bandeja não mostra o código.
+- **Manter o mesmo código** (opção na janela, tela Conexão, ou no passo do código do onboarding; `Access:KeepCode` no `settings.json`): o
+  código passa a ficar guardado no cofre (`secrets.dat`, DPAPI) e o tablet não precisa dele de novo depois de reiniciar o agente. Ligar guarda o
+  código de agora (quem já o digitou continua entrando); desligar apaga o guardado. **Gerar novo** sorteia outro código e religa o agente: os
+  tablets conectados caem e só entram com o código novo (é como se revoga o acesso). O limite de tentativas abaixo vale do mesmo jeito.
 - Para parear o tablet ou a página de teste: o código aparece no menu do ícone da bandeja (**Código de acesso: 042917**) e
-  na saída do `--console`; **Copiar código** põe na área de transferência. **Ao reiniciar o agente o código muda** e o
-  tablet precisa do novo (o app avisa "Código inválido" e abre a configuração com um toque na faixa).
+  na saída do `--console`; **Copiar código** põe na área de transferência. **Ao reiniciar o agente o código muda**, a não ser que
+  "Manter o mesmo código" esteja ligado; se mudou, o tablet precisa do novo (o app avisa "Código inválido" e abre a configuração com um toque na faixa).
 - `ATALAIA_TOKEN` (variável de ambiente ou `.env`) **fixa** o token: nesse caso ele não muda a cada início, não aparece no
   menu (só "Token fixo") e pode ter qualquer tamanho. Veja `.env.example`. O `agent.json` das versões anteriores não é mais usado.
 - **Limite de tentativas erradas** (porque 6 dígitos são só 1 milhão de combinações): quem vem pela rede tem 5 erros por endereço;
@@ -137,6 +142,15 @@ Em **Fontes de dados** (e no passo 5 do onboarding), o botão **Configurar** de 
 | Steam | `Plugins:steam:apiKey` (obrigatória) e `steamId64` (exatamente 17 dígitos) | `apiKey` no cofre; `steamId64` no `settings.json` |
 | Discord | `Plugins:discord:clientId` e `clientSecret` (obrigatórios, sem espaços) | `clientSecret` no cofre; `clientId` (identificador público do aplicativo) no `settings.json` |
 
+- **Como conseguir.** Cada fonte com credencial (Steam, Discord, clima) e o nobreak têm um bloco **Como conseguir** na própria janela, com os passos
+  numerados e o que fazer quando der errado. O texto é fixo e embutido no agente (nada é baixado para exibi-lo) e é o mesmo das páginas
+  [`docs/fontes/`](../docs/fontes/); um teste confere que os dois não divergem. O botão **Abrir página** abre só um endereço de uma lista fechada, definida
+  no código (`SourceHelp`): a página da janela manda apenas o id da fonte, nunca o endereço.
+- **Testar conexão.** Confere a credencial na hora, **sem ligar a fonte nem gravar nada**, e responde a causa em português ("chave recusada", "perfil não
+  é público", "Discord fechado"). Usa o que está digitado e, no segredo em branco, o que já está guardado; campo fixado por variável de ambiente vale pelo
+  valor dela. Steam: `GetPlayerSummaries`; clima: uma consulta ao Open-Meteo; Discord (versão leve): o Discord para computador está aberto e o aplicativo
+  aceita o Client ID e o Client Secret, sem abrir o pedido de autorização; nobreak: o banco do software foi encontrado. Prazo de 8 s por chamada; o texto
+  do resultado nunca traz o valor digitado nem a URL.
 - **O cofre** é o arquivo `%LOCALAPPDATA%\AtalaiaAgent\secrets.dat`, inteiro cifrado com a **DPAPI do Windows no escopo do usuário atual**: só a mesma
   conta do Windows, neste PC, consegue lê-lo. Ele fica fora do repositório e do `settings.json`, e o agente o lê ao montar a configuração
   (acima do `settings.json`, **abaixo** do `.env` e das variáveis `ATALAIA_*`, que continuam mandando). Copiar o arquivo para outro PC ou outra
@@ -168,7 +182,7 @@ Chaves principais (padrões em `appsettings.json`):
 
 | Chave | Significado |
 |---|---|
-| `Agent:Port` | Porta do WebSocket e do HTTP da capa (8765) |
+| `Agent:Port` | Começo da faixa de 10 portas do WebSocket e do HTTP da capa (8765 a 8774); o agente usa a primeira livre |
 | `Agent:ListenOnLan` | `false` = `127.0.0.1`; `true` = `0.0.0.0` |
 | `Agent:MaxSilenceMs` | Reenvia o dado a cada tanto tempo mesmo sem mudança (10000) |
 | `Updates:AutoCheck` | Buscar atualizações sozinho (`true` por padrão; gravado pela janela, usado pela atualização automática) |
@@ -204,8 +218,8 @@ Plugin ligado sem a configuração necessária (por exemplo `steam` sem chave) a
 
 ## USB: tablet ligado por cabo (`Usb:*`)
 
-Com o módulo ligado, o agente roda `adb reverse tcp:<porta> tcp:<porta>` para cada aparelho autorizado, e assim o app
-no tablet alcança o agente em `127.0.0.1` sem Wi-Fi e sem `ListenOnLan`. A cada `Usb:PollSeconds` ele confere os
+Com o módulo ligado, o agente roda `adb reverse tcp:8765 tcp:<porta do agente>` para cada aparelho autorizado (se o agente caiu em outra porta da faixa, o tablet
+continua em `127.0.0.1:8765`), e assim o app no tablet alcança o agente em `127.0.0.1` sem Wi-Fi e sem `ListenOnLan`. A cada `Usb:PollSeconds` ele confere os
 aparelhos (`adb devices`) e a regra (`adb reverse --list`) e refaz o que faltar, o que cobre o cabo replugado e o servidor
 do `adb` reiniciado. Só usa `devices`, `reverse --list` e `reverse`; não instala nada nem toca no aparelho.
 Aparelho `unauthorized` ou `offline` é só registrado no log (aceite a depuração USB na tela do tablet).

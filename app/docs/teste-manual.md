@@ -152,6 +152,26 @@ powershell -ExecutionPolicy Bypass -File tools\measure-perf.ps1 -Minutes 30
 **Esperado** (referência medida em 10/11 com o agente simulado): memória (PSS) abaixo de ~60 MB e estável, CPU abaixo de ~3%,
 partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória: o teste longo (8 h) ainda não foi feito.
 
+## 13. Porta ocupada (faixa de portas)
+
+1. Com o agente fechado, ocupe a 8765 no PC com outro programa (por exemplo, `python -m http.server 8765`) e suba o agente.
+   **Esperado:** o agente sobe sem erro, a janela avisa que está na 8766 e o menu da bandeja mostra `...:8766`.
+2. **Wi-Fi:** com o endereço do PC sem porta no app (ou `:8765`), **esperado:** o app conecta sozinho, em poucos segundos, passando pela 8765
+   (o outro programa) até chegar na 8766. Depois de conectado, reinicie o app: ele deve ir direto na 8766.
+3. **USB:** com `Usb:Enabled` e o endereço `127.0.0.1` no app, **esperado:** conecta normalmente (o `adb reverse` leva a 8765 do tablet à 8766 do PC;
+   `adb reverse --list` mostra `tcp:8765 tcp:8766`).
+4. Ocupe as 10 portas (8765 a 8774) e suba o agente. **Esperado:** caixa de erro dizendo que a faixa inteira está em uso.
+5. Se o Firewall tinha regra só para a 8765, a janela deve pedir para liberar de novo (a regra nova é `8765-8774`).
+
+## 14. Abrir sozinho ao ligar o tablet
+
+1. Com o app instalado e já configurado, e a **tela de bloqueio desligada**, desligue o tablet e ligue de novo (ou reinicie). **Esperado:** uns 25 a 30 s depois
+   de o Android terminar de ligar, o painel abre sozinho, em tela cheia, e conecta ao agente sem toque. Não toque em nada nesse tempo.
+2. Reinicie com o PC desligado. **Esperado:** o app abre e fica no estado de espera ("PC desligado ou inalcançável"), sem erro, e conecta quando o agente subir.
+3. Com a tela de bloqueio ligada, reinicie. **Esperado:** o painel abre **atrás** dela; é preciso deslizar para vê-lo. (Com PIN ou padrão o Android só entrega o aviso de
+   boot depois do desbloqueio; isso não foi medido.)
+4. Anote a versão do Android do aparelho: do Android 10 em diante o sistema bloqueia e o app não abre sozinho (isso é esperado, não é defeito).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |

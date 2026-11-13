@@ -65,6 +65,10 @@ class FakeTransport(private val now: () -> Long) : Transport {
     /** Hosts que recusam a conexão (cabo desplugado, PC fora do ar neste canal) e hosts que nunca respondem. */
     val failHosts = mutableSetOf<String>()
     val hangHosts = mutableSetOf<String>()
+    /** Portas (em qualquer host) que recusam a conexão, que respondem sem aceitar o WebSocket e que estouram o prazo de conexão. */
+    val refusePorts = mutableSetOf<Int>()
+    val notAgentPorts = mutableSetOf<Int>()
+    val timeoutPorts = mutableSetOf<Int>()
 
     fun socketsTo(host: String) = sockets.filter { it.url.startsWith("ws://$host:") }
 
@@ -73,7 +77,11 @@ class FakeTransport(private val now: () -> Long) : Transport {
         sockets += s
         openTimes += now()
         val host = url.removePrefix("ws://").substringBefore(":")
+        val port = url.removePrefix("ws://").substringAfter(":").substringBefore("/").toIntOrNull()
         when {
+            port in refusePorts -> s.serverFail(java.net.ConnectException("recusou"))
+            port in notAgentPorts -> s.serverFail(java.net.ProtocolException("Expected HTTP 101 response but was '404 Not Found'"))
+            port in timeoutPorts -> s.serverFail(java.net.SocketTimeoutException("timeout"))
             host in failHosts -> s.serverFail(java.io.IOException("recusou"))
             host in hangHosts -> Unit
             failAlways || failNext > 0 -> { if (failNext > 0) failNext--; s.serverFail(java.io.IOException("recusou")) }
