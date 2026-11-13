@@ -155,11 +155,11 @@ Objetivo: o tablet deixa de ser só um espelho do PC e passa a reagir ao que aco
 Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu de `development` com `VERSION` em `0.3.0`.
 
 - [ ] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
-- [ ] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
+- [x] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
   (o nobreak já chegou a dar 95 quedas em ~2 dias).
-  Código e testes prontos (ramo `feat/app-alertas-limite`): padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
-  de 10 s acima do limite e só desliga 5 pontos abaixo, aparece no cartão do relógio (a queda de energia continua mandando). Falta provar no tablet de verdade (cenário 15 de
-  `app/docs/teste-manual.md`), inclusive se a tela de configuração cabe nos 505 dp.
+  Feito na `0.3.0-beta.1`: padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
+  de 10 s acima do limite e só desliga 5 pontos abaixo, aparece no cartão do relógio (a queda de energia continua mandando). Provado pelo mantenedor no tablet, em 13/11/2026
+  (roteiro: cenário 15 de `app/docs/teste-manual.md`).
 - [ ] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
   acesa mostrando isso. Decidido: **configurável** na tela de configuração do tablet entre **modo noite por horário**, **relógio discreto sempre** e
   **tela apagada**.
