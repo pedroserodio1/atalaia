@@ -5,6 +5,7 @@ package org.atalaia.app.ui
 
 import org.atalaia.core.connection.ActionOutcome
 import org.atalaia.core.connection.ConnectionState
+import org.atalaia.core.panel.OffMode
 import org.atalaia.core.state.LimitAlert
 import org.atalaia.core.state.LimitKind
 
@@ -106,6 +107,22 @@ object Texts {
     const val CONFIG_TAP = "Toque aqui."
 
     const val POWER_ALERT_TITLE = "Sem energia da rede"
+
+    const val OFF_TITLE = "PC desligado"
+    const val OFF_HINT = "O que mostrar quando o PC fica desligado ou inalcançável por mais de 1 minuto."
+    const val OFF_MODE = "Mostrar"
+    const val OFF_NIGHT_START = "Modo noite começa"
+    const val OFF_NIGHT_END = "Modo noite termina"
+    const val OFF_SCREEN_LABEL = "PC desligado"
+    const val OFF_HOLD_TO_CONFIG = "Segure para configurar"
+
+    fun offMode(m: OffMode): String = when (m) {
+        OffMode.NIGHT -> "Modo noite"
+        OffMode.CLOCK -> "Relógio"
+        OffMode.BLANK -> "Tela apagada"
+    }
+
+    fun hour(h: Int): String = "%02dh".format(h)
 
     const val LIMITS_TITLE = "Alertas de limite"
     const val LIMITS_HINT = "Avisa no relógio quando passa do limite por 10 s. Abaixo do mínimo, desliga."

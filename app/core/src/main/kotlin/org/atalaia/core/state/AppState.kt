@@ -73,6 +73,11 @@ data class AppState(
     val cpuHistory: List<Int> = emptyList(),
     /** Limites estourados (GPU, RAM, disco), já com o anti-ruído; a tela filtra dado velho com [limitAlerts]. */
     val limitAlerts: List<LimitAlert> = emptyList(),
+    /**
+     * Desde quando (relógio monotônico do tablet) a conexão está caída por não achar o PC (`Unreachable` ou religando), sem passar
+     * por `Connected`; `null` se há conexão ou se o problema é outro (token, versão, configuração).
+     */
+    val disconnectedSinceMono: Long? = null,
 ) {
     inline fun <reified T : SourceData> dataOf(source: String): T? = sources[source]?.data as? T
 

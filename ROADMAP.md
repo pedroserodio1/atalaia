@@ -163,6 +163,9 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
 - [ ] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
   acesa mostrando isso. Decidido: **configurável** na tela de configuração do tablet entre **modo noite por horário**, **relógio discreto sempre** e
   **tela apagada**.
+  Código e testes prontos (ramo `feat/app-pc-desligado`): vale depois de **1 min** sem achar o PC (o failover USB e Wi-Fi não conta); modo noite (padrão 22h às 07h; fora do
+  horário o painel segue como antes), relógio sempre ou tela apagada (preta no brilho mínimo, com a tela ainda ligada); segurar na tela abre a configuração. Falta provar no
+  tablet de verdade (cenário 16 de `app/docs/teste-manual.md`): o preto e o brilho mínimo no T68, o horário virando a meia-noite e o consumo a noite toda.
 - [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
   com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
