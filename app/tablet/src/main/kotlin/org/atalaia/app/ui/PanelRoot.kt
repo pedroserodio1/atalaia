@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowInsetsCompat
@@ -47,6 +48,8 @@ import org.atalaia.app.PanelApp
 import org.atalaia.app.ui.theme.Palette
 import org.atalaia.core.connection.Clock
 import org.atalaia.core.connection.ConnectionState
+import org.atalaia.core.panel.OffView
+import org.atalaia.core.panel.offView
 import org.atalaia.core.protocol.UpsData
 import org.atalaia.core.state.AppState
 
@@ -74,8 +77,22 @@ fun PanelRoot(app: PanelApp) {
     LaunchedEffect(configuring) {
         if (!configuring) (view.context as? Activity)?.window?.let { WindowInsetsControllerCompat(it, view).hide(WindowInsetsCompat.Type.systemBars()) }
     }
+    // PC desligado (sem conexão há mais de 1 min): tela escura com relógio ou apagada, conforme a configuração. Lida de novo ao sair da configuração.
+    val time by rememberLocalDateTime()
+    val offSettings = remember(configuring) { app.settings.offScreen }
+    val offLook = offView(state, now, offSettings, time.toLocalTime())
+    val dim = !configuring && offLook != OffView.NORMAL
+    LaunchedEffect(dim) {   // brilho mínimo só nesta janela; ao voltar, devolve o brilho do sistema
+        (view.context as? Activity)?.window?.let { w ->
+            w.attributes = w.attributes.also { it.screenBrightness = if (dim) 0.01f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE }
+        }
+    }
     if (configuring) {
         ConfigScreen(app) { configuring = false }
+        return
+    }
+    if (dim) {
+        OffScreen(offLook, time.toLocalTime()) { configuring = true }
         return
     }
     val scope = rememberCoroutineScope()

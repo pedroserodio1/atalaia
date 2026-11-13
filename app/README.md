@@ -18,6 +18,8 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 - **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; "velho", "desligado" ou "erro" em vez de número desatualizado.
   **Limites:** GPU quente (85 °C), RAM no fim (90 %) e disco cheio (90 %) acendem a borda do relógio e trocam a linha do jogo por "RAM no fim · 93%" (com "+N" se houver mais de um).
   Só liga depois de 10 s acima do limite e só desliga 5 pontos abaixo dele; os limites (ou "Desligado") se ajustam na configuração.
+- **PC desligado:** depois de 1 min sem achar o PC (a troca USB e Wi-Fi não conta), a tela vira, conforme a configuração, **modo noite** (relógio escuro no horário escolhido, padrão 22h às 07h;
+  fora dele o painel segue normal), **relógio** sempre ou **tela apagada** (preta, brilho mínimo, tela ainda ligada). Voltou a conectar, volta o painel. Segurar na tela abre a configuração.
 - **Configuração:** abre sozinha na primeira vez, por toque longo no relógio ou tocando na faixa de erro de conexão.
 
 ## Estrutura
@@ -70,7 +72,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (193 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (203 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.

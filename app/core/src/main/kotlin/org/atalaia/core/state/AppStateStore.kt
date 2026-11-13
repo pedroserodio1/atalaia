@@ -42,7 +42,11 @@ class AppStateStore(private val clock: Clock = Clock.System) {
         }
 
     fun onConnection(connection: ConnectionState) {
-        _state.update { it.copy(connection = connection) }
+        val now = clock.monotonicMs()
+        _state.update {
+            val searching = connection is ConnectionState.Unreachable || connection is ConnectionState.Connecting
+            it.copy(connection = connection, disconnectedSinceMono = if (searching) it.disconnectedSinceMono ?: now else null)
+        }
     }
 
     fun onMessage(m: Incoming) {
