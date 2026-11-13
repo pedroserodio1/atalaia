@@ -25,6 +25,18 @@ object Pt {
     /** `kbps` em kilobits por segundo (protocolo): `60 kb/s`, `3,3 Mb/s`. */
     fun rate(kbps: Long): String = if (kbps >= 1000) decimal(kbps / 1000.0) + " Mb/s" else "$kbps kb/s"
 
+    /** Tempo jogado: `45 min`, `1 h 20 min`, `2 h`. Menos de 1 min vira `0 min`. */
+    fun playTime(ms: Long): String {
+        val total = (ms / 60_000).coerceAtLeast(0)
+        val h = total / 60
+        val m = total % 60
+        return when {
+            h == 0L -> "$m min"
+            m == 0L -> "$h h"
+            else -> "$h h $m min"
+        }
+    }
+
     /** `3:25`, `1:02:03`. */
     fun duration(seconds: Double): String {
         val t = seconds.toLong().coerceAtLeast(0)

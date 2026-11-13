@@ -173,6 +173,9 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
 - [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
   com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
+  Código e testes prontos (ramo `feat/app-atracao`): com o PC conectado e 10 min sem toque, o painel dá lugar a um relógio com a data, o que o PC faz ("PC ligado" ou "jogando" e o nome do jogo) e "Jogado hoje".
+  Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
+  tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Falta provar no tablet (cenário 21 de `app/docs/teste-manual.md`).
 - [ ] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
   ações são acréscimos opcionais ao `discord` do v1, então MINOR, mas é mudança de contrato: combinar com o mantenedor antes.
   - [ ] **Qualidade da conexão:** assinar `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostrar "Conectado · 38 ms" no cabeçalho do canal.
