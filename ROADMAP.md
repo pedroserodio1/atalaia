@@ -177,16 +177,15 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
   tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Falta provar no tablet (cenário 21 de `app/docs/teste-manual.md`).
 - [ ] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
-  ações são acréscimos opcionais ao `discord` do v1, então MINOR, mas é mudança de contrato: combinar com o mantenedor antes.
-  - [ ] **Qualidade da conexão:** assinar `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostrar "Conectado · 38 ms" no cabeçalho do canal.
-    Campo novo e opcional (`null` quando não há leitura).
-  - [ ] **Modo de voz:** o `GET_VOICE_SETTINGS` já traz `mode.type` (`PUSH_TO_TALK` ou `VOICE_ACTIVITY`) e o plugin ignora. Mostrar a etiqueta e uma ação para
-    alternar o modo (pelo mesmo `SET_VOICE_SETTINGS`).
-  - [ ] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`. Ação com **confirmação na própria tela** (regra do app).
-  - [ ] **Escopos:** a doc não diz quais escopos cada comando de voz exige. Provar com o Discord real; se pedir escopo novo, atualizar o tutorial
-    (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
+  ações são acréscimos opcionais ao `discord` do v1 (MINOR). Contrato aprovado pelo mantenedor em 13/11/2026. O modo de voz foi cancelado da 0.3.0 (veja "Ideias sem versão").
+  - [ ] **Qualidade da conexão:** assina `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostra "Conectado · 38 ms" no cabeçalho do canal; campo `channel.connection`,
+    opcional (`null` sem leitura). Código e testes prontos (ramo `feat/discord-sinais`); falta provar no tablet (cenário 22 de `app/docs/teste-manual.md`).
+  - [ ] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`, ação `leave_call`, com **confirmação na própria tela**. Código e testes prontos (ramo `feat/discord-sinais`);
+    falta provar no tablet (cenário 22).
+  - [x] **Escopos:** teste com o Discord real em 13/11/2026 (agente `--console`, descartável): o ping, o ensurdecer e o `SELECT_VOICE_CHANNEL` com canal nulo funcionam com os escopos de
+    hoje (`rpc`, `rpc.voice.read`, `identify`). Não há escopo novo, então a autorização não aparece de novo. O evento chega ao assinar e depois a cada ~5 s; no ensurdecer o `mute` não muda.
 - [x] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
-  com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
+  com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do botão de sair.
   Código e testes prontos (ramo `feat/app-discord-tela`): layout novo com a faixa de controles à esquerda (botões redondos de microfone e fones no alto, volumes em pé embaixo) e a lista da call à
   direita, com a altura toda; o número de pessoas no cabeçalho do canal (ícone e número); estados por **ícone** (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo)
   no lugar dos textos "falando", "mudo" e "surdo"; ensurdecer mostra o microfone desligado também (como no Discord). Ícones do Tabler (MIT), só seis copiados, sem biblioteca. Sem a marca "você":
@@ -213,7 +212,7 @@ Um sub-ramo por linha, entrando em `beta/0.3.0` por squash. Dá para começar pe
 | 2 | `feat/app-contexto` | Troca de tela por contexto; Discord: tela mais clara | não | nada. Decidido: o gatilho "jogo abriu" é só `steam.game` (coletado a cada 30 s); `activeWindow` não entra. Em dois sub-ramos: `feat/app-contexto` (troca de tela) e `feat/app-discord-tela` (tela mais clara) |
 | 3 | `feat/app-pc-desligado` | Tela de PC desligado, **configurável** entre modo noite por horário, relógio sempre e tela apagada | não | nada (decisão 1 tomada). Hoje o app só escreve o texto de `ConnectionState.Unreachable` (`Texts.kt`); a escolha fica na tela de configuração do tablet |
 | 4 | `feat/app-atracao` | Tela Atração | não | 3 (reaproveita o relógio). "Horas jogadas hoje": o v1 só traz `hours2w` e `library.hours`, então o app teria de somar o tempo com `steam.game` ativo enquanto conectado, zerando à meia-noite (só conta o que ele viu). A confirmar |
-| 5 | `feat/discord-sinais` | Discord: qualidade da conexão, modo de voz, sair da call, escopos | sim, campos e ações opcionais em `discord` | aprovação do contrato; **primeiro um teste com o Discord real** para saber os escopos |
+| 5 | `feat/discord-sinais` | Discord: qualidade da conexão, sair da call, escopos | sim, campos e ações opcionais em `discord` | aprovação do contrato; **primeiro um teste com o Discord real** para saber os escopos |
 | 6 | `feat/wake-on-lan` | Wake-on-LAN | sim, publicar o MAC (campo opcional) | decisões 2 e 7. O pacote mágico sai **do tablet** (UDP na rede local; o agente está desligado junto com o PC), então talvez nem seja uma ação nova, só o MAC; a confirmar. Só funciona pelo Wi-Fi, não pelo USB |
 | 7 | `feat/app-pin` | Configurações no tablet com PIN | não | nada |
 | 8 | `feat/aviso-transferencia` | Aviso de download ou cópia terminando no PC | a definir (ver "Em risco") | nada para o download; a cópia pode exigir campo novo |
@@ -223,8 +222,8 @@ Um sub-ramo por linha, entrando em `beta/0.3.0` por squash. Dá para começar pe
 
 Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra no `docs/protocolo-v1.md` no mesmo PR da mudança:
 
-- `discord`: qualidade da conexão (estado e ping, `null` sem leitura) e modo de voz (`PUSH_TO_TALK` ou `VOICE_ACTIVITY`).
-- Ações do `discord`: alternar o modo de voz e sair da call (esta com confirmação na tela do tablet).
+- `discord`: qualidade da conexão (estado e ping, `null` sem leitura). Aprovado pelo mantenedor (13/11/2026).
+- Ações do `discord`: sair da call (com confirmação na tela do tablet). Aprovado pelo mantenedor (13/11/2026). O modo de voz foi cancelado.
 - Endereço físico (MAC) do PC publicado pelo agente, para o Wake-on-LAN. Onde fica (`hello` ou `system`) é a decidir.
 - Pareamento e revogação de tablet: mensagens novas no protocolo, o que o v1 hoje lista como "fora do v1".
 
@@ -333,6 +332,8 @@ A `1.0.0` é declarada pelo mantenedor quando:
   extensão do Meet; avaliar depois da `0.5.0`.
 - Google Tasks, aniversários, Gmail, fotos como protetor de tela, Tailscale, amigos da Steam em jogo, AniList, Jellyfin, Letterboxd,
   resets e timers do FFXIV, modo foco.
+- Discord: modo de voz (aperte para falar ou detecção de voz; o `GET_VOICE_SETTINGS` já traz `mode.type`) com etiqueta e ação para alternar. Cancelado da 0.3.0 pelo
+  mantenedor (13/11/2026); issue ou PR bem-vindos.
 - Discord, avaliado e deixado de fora do RPC: `NOTIFICATION_CREATE` (escopo `rpc.notifications.read`; entrega o texto das mensagens, o que o projeto não envia)
   e eventos de mensagem (`MESSAGE_*`, `messages.read` não funciona com `rpc_token` e só vale para canais assinados).
 - Anúncio por mDNS (ou IP fixo no roteador).
@@ -348,7 +349,7 @@ A `1.0.0` é declarada pelo mantenedor quando:
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
 5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
 6. ~~**Porta do agente (#13)**~~ Decidido: faixa de 10 portas, o app a percorre sozinho na rede local (`docs/protocolo-v1.md`).
-7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord`): aprovar antes de qualquer código.
+7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord`, estas já aprovadas): aprovar antes de qualquer código.
 8. **Aviso de download ou cópia (`0.3.0`):** o aviso fica na versão (decidido). Em aberto: se a **cópia** entra (exige campo novo de leitura de disco) ou só o download; e se o pareamento entra na `0.3.0` (decidir depois, no ciclo).
 9. **Discord por pessoa (`0.4.0`):** publicar o id do Discord do membro ou um identificador opaco, e se o avatar fica só em memória ou também em disco.
 
