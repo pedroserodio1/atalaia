@@ -48,7 +48,11 @@ import org.atalaia.app.PanelApp
 import org.atalaia.app.ui.theme.Palette
 import org.atalaia.core.connection.Clock
 import org.atalaia.core.connection.ConnectionState
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import org.atalaia.core.panel.ContextRouter
 import org.atalaia.core.panel.OffView
+import org.atalaia.core.panel.PanelTab
 import org.atalaia.core.panel.offView
 import org.atalaia.core.protocol.UpsData
 import org.atalaia.core.state.AppState
@@ -87,6 +91,13 @@ fun PanelRoot(app: PanelApp) {
             w.attributes = w.attributes.also { it.screenBrightness = if (dim) 0.01f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE }
         }
     }
+    // Troca de aba por contexto. Fica antes dos `return` para acompanhar o estado também com a configuração ou a tela de PC desligado
+    // abertas (sem trocar nada nesse tempo), em vez de ser recriado e ver um degrau falso ao voltar.
+    val router = remember { ContextRouter() }
+    val autoSwitch = remember(configuring) { app.settings.autoSwitch }
+    LaunchedEffect(state, now, configuring, dim) {
+        router.update(state, now, PanelTab.entries[tab], autoSwitch, visible = !configuring && !dim)?.let { tab = it.ordinal }
+    }
     if (configuring) {
         ConfigScreen(app) { configuring = false }
         return
@@ -104,7 +115,12 @@ fun PanelRoot(app: PanelApp) {
         scope.launch { feedback = Texts.actionFeedback(app.connection.sendAction(plugin, action, args)) }
     }
 
-    Column(Modifier.fillMaxSize().background(Palette.Graphite)) {
+    // Cada toque (passe Initial, sem consumir) avisa o roteador, que não troca de aba na cara de quem está mexendo.
+    Column(
+        Modifier.fillMaxSize().background(Palette.Graphite).pointerInput(Unit) {
+            awaitPointerEventScope { while (true) { awaitPointerEvent(PointerEventPass.Initial); router.touch(app.clock.monotonicMs()) } }
+        },
+    ) {
         Row(Modifier.weight(1f).fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             LeftColumn(
                 state, now, feedback,

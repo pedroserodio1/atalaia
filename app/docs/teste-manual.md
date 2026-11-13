@@ -208,6 +208,28 @@ O PC só conta como desligado depois de **1 minuto** sem achar o agente. Padrão
 8. Com o agente com código errado (cenário 9) **esperado:** o painel com a faixa "Código inválido", nunca a tela escura.
 9. Deixe a noite toda no modo escolhido e anote a bateria e a temperatura do tablet. Reabra o app e confira que a escolha continua salva.
 
+## 17. Troca de tela por contexto (jogo, call, volta ao Início)
+
+Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nunca a algo que já estava assim ao conectar.
+
+1. Configuração (toque longo no relógio): o cartão "Troca de tela" mostra "Ligado"; − desliga, + liga. Salve, feche e abra o app: a escolha continua.
+2. Com `--simulate` (o `SimSteam` abre e fecha um jogo de vez em quando; a call do simulador está sempre ativa):
+   - ao conectar, o app **fica na aba em que estava** (a linha de base não puxa a tela);
+   - quando o jogo "abre", vai sozinho para a aba **Jogo**, sem toque;
+   - toque em qualquer lugar e, em menos de 15 s, o jogo reabrir: **não troca**;
+   - numa aba que não seja Jogo nem Discord, 5 min sem tocar: volta ao **Início**;
+   - na aba Jogo com jogo ativo, 5 min parado: **não** volta.
+3. Anti-ruído: com o jogo do simulador ativo, feche e suba o agente de novo: **não troca**. Troque de USB para Wi-Fi (cenário 5) com jogo ativo: **não troca**.
+4. Opção desligada: nada troca e nada volta sozinho, nem depois de 5 min.
+5. Só com o real (Steam e Discord de verdade):
+   - abra um jogo da Steam e anote o atraso até a aba Jogo (esperado: até ~30 s, é o intervalo da Steam);
+   - entre numa call no Discord (sem jogo aberto): a aba Discord abre em ~3 s;
+   - entre numa call **jogando**: fica na aba Jogo;
+   - troque de canal de voz: **não pisca** nem puxa de novo;
+   - feche o jogo estando na aba Jogo: fica ali até completar 5 min sem toque, depois vai ao Início.
+6. Com a configuração aberta, ou com a tela de PC desligado (cenário 16), nada troca; ao sair delas, também não.
+7. Repita a medição de quadros do arrasto (cenário 12): o toque na raiz não pode piorar o slider do mixer.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -226,3 +248,4 @@ O PC só conta como desligado depois de **1 minuto** sem achar o agente. Padrão
 | 12 Desempenho | | |
 | 15 Alertas de limite | | |
 | 16 Tela de PC desligado | | |
+| 17 Troca de tela por contexto | | |
