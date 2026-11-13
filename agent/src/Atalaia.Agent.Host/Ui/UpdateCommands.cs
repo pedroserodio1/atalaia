@@ -29,6 +29,7 @@ internal sealed class UpdateCommands(UpdateCommandServices s, ILogger? logger = 
     private readonly ILogger _log = logger ?? NullLogger.Instance;
     private const int MaxNotesChars = 20_000;
     private readonly InstallJob _apkJob = new();
+    private string? _lastInstalled;   // última versão do app lida no tablet, para mostrar enquanto a instalação roda
 
     public void Register(CommandRouter r)
     {
@@ -100,7 +101,10 @@ internal sealed class UpdateCommands(UpdateCommandServices s, ILogger? logger = 
         var status = await s.Adb.GetStatusAsync(s.Port(), CancellationToken.None);
         var device = status.Devices.FirstOrDefault(d => d.Device.State == AdbDeviceState.Authorized)?.Device;
         string? installed = null;
-        if (device is not null && !_apkJob.Running) installed = await s.Adb.InstalledVersionAsync(device.Serial, CancellationToken.None);
+        if (device is null) _lastInstalled = null;
+        // Durante a instalação o `pm` não é consultado: devolver `null` fazia a janela dizer "app não instalado" (#66). Vale a última versão conhecida.
+        else if (_apkJob.Running) installed = _lastInstalled;
+        else installed = _lastInstalled = await s.Adb.InstalledVersionAsync(device.Serial, CancellationToken.None);
 
         var target = TargetVersion();
         var behind = AtalaiaVersion.TryParse(installed, out var have) && target is { } want && have < want;
