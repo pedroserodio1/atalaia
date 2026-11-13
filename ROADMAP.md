@@ -1,6 +1,6 @@
 # Roadmap do Atalaia
 
-Status em **12/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
+Status em **13/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
 tag e número de versão estão em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Datas não são promessa: a ordem e o
 escopo de cada versão podem mudar, e quem decide é o mantenedor.
 
@@ -14,12 +14,11 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.2`).
-- **Issues abertas:** [#13](https://github.com/pedroserodio1/atalaia/issues/13) (agente crasha com a porta ocupada),
-  [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.4`).
+- **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos).
-  Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak).
+  Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak). Resolvida na 0.2.0 (`beta.3`): #13 (porta ocupada no boot).
 
 ## Resumo das versões
 
@@ -27,7 +26,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 |---|---|---|---|
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
-| **0.2.0** | Primeira experiência | minor, em andamento (`beta.2` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, adiada da 0.1.2); provas e #15 (opção A) feitas |
+| **0.2.0** | Primeira experiência | minor, em andamento (`beta.4` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet; provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14) |
@@ -120,7 +119,7 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
 
 ### Porta ocupada no boot (#13, adiada da 0.1.2)
 
-- [ ] **#13:** o agente não pode cair no boot quando a porta padrão está ocupada (inclusive iniciando com o Windows). Hoje o `StartAsync`
+- [x] **#13 (feita na `0.2.0-beta.3`):** o agente não pode cair no boot quando a porta padrão está ocupada (inclusive iniciando com o Windows). Hoje o `StartAsync`
   falha (`AgentRuntime.cs`) e o `Program.cs` mostra uma caixa e encerra, sem bandeja. Pool de portas com fallback (faixa contígua a partir da
   padrão), erro só se todas falharem, porta em uso mostrada na janela e na bandeja, e o onboarding avisando que o endereço de Wi-Fi mudou.
   - O tablet guarda `host:porta` e assume 8765 quando só o IP é digitado (`Endpoint.parse`). O USB acompanha sozinho (o `adb reverse` já usa a
@@ -129,11 +128,13 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
   - A regra do Firewall é por porta única (`Firewall.cs`): com fallback, passa a ser uma faixa (o avaliador já entende faixas).
   - Feito no código (faixa de 10 portas, `8765-8774`): o agente cai na próxima porta livre, a regra do Firewall cobre a faixa, o `adb reverse` liga o
     `tcp:8765` do tablet à porta real do PC, a janela e a bandeja mostram a porta em uso, e o app varre a faixa na rede local (contrato em
-    `docs/protocolo-v1.md`). **Falta provar** no tablet e no PC de verdade (cenário 13 de `app/docs/teste-manual.md`): por isso o item segue `[ ]`.
+    `docs/protocolo-v1.md`). Provado pelo mantenedor em 11/2026 (cenário 13 de `app/docs/teste-manual.md`).
 
 ### Pequenas melhorias de instalação
 
 - [ ] App do tablet abrindo sozinho ao ligar o aparelho (hoje é só tela cheia e sempre acesa).
+  Código pronto: `BootReceiver` (`RECEIVE_BOOT_COMPLETED`, abre a tela e termina, sem serviço). Vale no Android 8.1 do tablet; do Android 10 em diante o
+  sistema bloqueia. **Falta provar** reiniciando o tablet de verdade (cenário 14 de `app/docs/teste-manual.md`).
 - [ ] App do tablet abrindo sozinho **depois de instalado ou atualizado por USB**. Hoje o `adb install -r` deixa o app fechado. Depois de uma
   instalação bem-sucedida o agente roda `adb shell am start -n org.atalaia.app/.MainActivity` (argumentos fixos, só o pacote do Atalaia),
   no `AdbService.RunInstallAsync`, que serve à atualização automática e ao passo "App no tablet". Falhar ao abrir não deve virar erro de
@@ -239,7 +240,7 @@ A `1.0.0` é declarada pelo mantenedor quando:
 3. **Qual modelo de plugin entra primeiro** (assembly .NET ou processo separado).
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
 5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
-6. **Porta do agente (#13):** o app precisa descobrir a porta nova, ou ela é só mostrada na janela?
+6. ~~**Porta do agente (#13)**~~ Decidido: faixa de 10 portas, o app a percorre sozinho na rede local (`docs/protocolo-v1.md`).
 7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação): aprovar antes de qualquer código.
 
 ## Diferenças em relação ao documento de funcionalidades
