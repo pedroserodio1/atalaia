@@ -51,8 +51,13 @@ import org.atalaia.core.connection.ConnectionState
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import org.atalaia.core.panel.ContextRouter
+import org.atalaia.core.panel.GameLine
+import org.atalaia.core.panel.PlayTimeToday
+import org.atalaia.core.panel.attractWanted
+import org.atalaia.core.panel.gameLine
 import org.atalaia.core.panel.OffView
 import org.atalaia.core.panel.PanelTab
+import org.atalaia.core.settings.Pin
 import org.atalaia.core.panel.offView
 import org.atalaia.core.protocol.UpsData
 import org.atalaia.core.state.AppState
@@ -76,6 +81,12 @@ fun PanelRoot(app: PanelApp) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     // Sem endereço ou sem token guardados, a configuração abre sozinha; depois, por toque longo no relógio ou pela faixa de conexão.
     var configuring by rememberSaveable { mutableStateOf(app.settings.endpoints.isEmpty() || app.settings.token == null) }
+    // PIN opcional: toda entrada na configuração (toque longo no relógio, faixa de erro, tela de PC desligado) passa por aqui. A primeira configuração não pede.
+    var askingPin by rememberSaveable { mutableStateOf(false) }
+    fun requestConfig() {
+        val firstSetup = app.settings.endpoints.isEmpty() || app.settings.token == null
+        if (Pin.needed(app.settings.hasPin, firstSetup)) askingPin = true else configuring = true
+    }
     // Ao sair da configuração o teclado pode ter deixado a barra do sistema à mostra: esconde de novo (tela cheia).
     val view = LocalView.current
     LaunchedEffect(configuring) {
@@ -85,7 +96,7 @@ fun PanelRoot(app: PanelApp) {
     val time by rememberLocalDateTime()
     val offSettings = remember(configuring) { app.settings.offScreen }
     val offLook = offView(state, now, offSettings, time.toLocalTime())
-    val dim = !configuring && offLook != OffView.NORMAL
+    val dim = !configuring && !askingPin && offLook != OffView.NORMAL
     LaunchedEffect(dim) {   // brilho mínimo só nesta janela; ao voltar, devolve o brilho do sistema
         (view.context as? Activity)?.window?.let { w ->
             w.attributes = w.attributes.also { it.screenBrightness = if (dim) 0.01f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE }
@@ -95,15 +106,29 @@ fun PanelRoot(app: PanelApp) {
     // abertas (sem trocar nada nesse tempo), em vez de ser recriado e ver um degrau falso ao voltar.
     val router = remember { ContextRouter() }
     val autoSwitch = remember(configuring) { app.settings.autoSwitch }
-    LaunchedEffect(state, now, configuring, dim) {
-        router.update(state, now, PanelTab.entries[tab], autoSwitch, visible = !configuring && !dim)?.let { tab = it.ordinal }
+    LaunchedEffect(state, now, configuring, askingPin, dim) {
+        router.update(state, now, PanelTab.entries[tab], autoSwitch, visible = !configuring && !askingPin && !dim)?.let { tab = it.ordinal }
     }
+    // Tela de espera: o tempo jogado hoje é somado aqui (em memória, a cada passada do relógio) e a Atração entra com o PC ligado, sem toque e sem nada pedindo atenção.
+    val playToday = remember { PlayTimeToday() }
+    LaunchedEffect(now) { playToday.tick(gameLine(state, now) is GameLine.Playing, now, time.toLocalDate()) }
+    val attractOn = remember(configuring) { app.settings.attract }
+    var attractTouches by remember { mutableIntStateOf(0) }   // lido abaixo para o toque na Atração recompor na hora (sem esperar o próximo passo do relógio)
+    val attract = attractOn && attractTouches >= 0 && !configuring && !askingPin && !dim && attractWanted(state, now, router.sinceTouch(now))
     if (configuring) {
         ConfigScreen(app) { configuring = false }
         return
     }
+    if (askingPin) {
+        PinPrompt(app, onSuccess = { askingPin = false; configuring = true }, onCancel = { askingPin = false })
+        return
+    }
     if (dim) {
-        OffScreen(offLook, time.toLocalTime()) { configuring = true }
+        OffScreen(offLook, time.toLocalTime()) { requestConfig() }
+        return
+    }
+    if (attract) {
+        AttractScreen(state, now, time, playToday) { router.touch(app.clock.monotonicMs()); attractTouches++ }
         return
     }
     val scope = rememberCoroutineScope()
@@ -127,12 +152,13 @@ fun PanelRoot(app: PanelApp) {
                 onMedia = { action, pos ->
                     if (pos != null) act("media", action, buildJsonObject { put("positionSec", pos) }) else act("media", action)
                 },
-                onOpenConfig = { configuring = true },
+                onOpenConfig = ::requestConfig,
+                onDismissDownload = app.store::dismissDownload,
                 modifier = Modifier.width(270.dp).fillMaxHeight(),
             )
             Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 TabBar(tab) { tab = it }
-                ConnectionBanner(state.connection) { configuring = true }
+                ConnectionBanner(state.connection) { requestConfig() }
                 val content = Modifier.weight(1f).fillMaxWidth()
                 when (tab) {
                     0 -> HomeScreen(state, now, onClearNotifications = { act("notifications", "clear_all") }, modifier = content)

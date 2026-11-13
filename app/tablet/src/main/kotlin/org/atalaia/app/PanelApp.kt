@@ -14,6 +14,7 @@ import org.atalaia.core.connection.ConnectionState
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.connection.OkHttpTransport
 import org.atalaia.core.connection.SessionConfig
+import org.atalaia.core.settings.PinLock
 import org.atalaia.core.state.AppStateStore
 
 /** Dono da conexão e do estado: vivem enquanto o processo viver, independente da tela aberta. */
@@ -21,6 +22,8 @@ class PanelApp : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val clock: Clock = Clock.System
     val store = AppStateStore(clock)
+    /** Espera depois de errar o PIN: fica aqui para fechar e reabrir a tela nao zerar a contagem. */
+    val pinLock = PinLock()
     lateinit var settings: SettingsStore
         private set
     lateinit var connection: AgentConnection

@@ -37,6 +37,7 @@ import org.atalaia.core.panel.mediaLine
 import org.atalaia.core.protocol.UpsData
 import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
+import org.atalaia.core.state.downloadDoneActive
 import org.atalaia.core.state.limitAlerts
 import java.time.LocalDateTime
 
@@ -57,16 +58,17 @@ fun LeftColumn(
     feedback: String?,
     onMedia: (action: String, positionSec: Double?) -> Unit,
     onOpenConfig: () -> Unit,
+    onDismissDownload: () -> Unit,
     modifier: Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ClockCard(state, now, onOpenConfig)
+        ClockCard(state, now, onOpenConfig, onDismissDownload)
         MediaCard(state, now, feedback, onMedia, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
+private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDismissDownload: () -> Unit) {
     val time by rememberLocalDateTime()
     // Queda de energia: o próprio cartão do relógio vira coral cheio. Fica na coluna que aparece em todas as abas, não ocupa
     // espaço novo e nada se mexe quando liga ou desliga (a faixa de antes tomava 48 dp e empurrava o layout).
@@ -74,13 +76,15 @@ private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
     val alert = power != null
     // Limite estourado (GPU, RAM, disco): só a borda e a linha de baixo ficam coral; a queda de energia, que é pior, tem prioridade.
     val limits = if (alert) emptyList() else limitAlerts(state, now)
+    // Download terminou no PC: boa notícia, então borda e texto menta (e só se não há nada pior); um toque no cartão dispensa.
+    val download = !alert && limits.isEmpty() && downloadDoneActive(state, now)
     val fg = if (alert) Palette.OnCoral else Palette.Text
     val muted = if (alert) Palette.OnCoral else Palette.TextMuted
     // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel).
     PanelCard(
-        Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }) },
+        Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }, onTap = { onDismissDownload() }) },
         container = if (alert) Palette.Coral else Palette.Panel,
-        line = if (alert || limits.isNotEmpty()) Palette.Coral else Palette.Border,
+        line = if (alert || limits.isNotEmpty()) Palette.Coral else if (download) Palette.Mint else Palette.Border,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             MonoText(Pt.date(time.toLocalDate()), muted)
@@ -94,6 +98,8 @@ private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit) {
                 BodyText(Texts.POWER_ALERT_TITLE + (battery?.let { " · $it%" } ?: ""), Palette.OnCoral, 15)
             } else if (limits.isNotEmpty()) {
                 BodyText(Texts.limitAlertLine(limits), Palette.Coral, 15)
+            } else if (download) {
+                BodyText(Texts.DOWNLOAD_DONE, Palette.Mint, 15)
             } else {
                 when (val line = gameLine(state, now)) {
                     is GameLine.Playing -> { BodyText(Texts.PLAYING_TAG, Palette.Mint, 13); BodyText(line.name, sp = 15) }

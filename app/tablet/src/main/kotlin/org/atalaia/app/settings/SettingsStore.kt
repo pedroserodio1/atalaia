@@ -10,6 +10,7 @@ import android.util.Base64
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.panel.OffMode
 import org.atalaia.core.panel.OffSettings
+import org.atalaia.core.settings.Pin
 import org.atalaia.core.state.LimitSpec
 import org.atalaia.core.state.LimitSpecs
 import org.atalaia.core.state.Limits
@@ -86,9 +87,9 @@ class SettingsStore(context: Context) {
 
     /** Limites dos alertas; `-1` guardado = desligado, ausente = padrão. */
     var limits: Limits
-        get() = Limits(limit("limitGpu", LimitSpecs.GPU_TEMP), limit("limitRam", LimitSpecs.RAM), limit("limitDisk", LimitSpecs.DISK))
+        get() = Limits(limit("limitGpu", LimitSpecs.GPU_TEMP), limit("limitRam", LimitSpecs.RAM), limit("limitDisk", LimitSpecs.DISK), limit("limitDownload", LimitSpecs.DOWNLOAD_MBPS))
         set(v) {
-            prefs.edit().putInt("limitGpu", v.gpuTempC ?: -1).putInt("limitRam", v.ramPercent ?: -1).putInt("limitDisk", v.diskPercent ?: -1).apply()
+            prefs.edit().putInt("limitGpu", v.gpuTempC ?: -1).putInt("limitRam", v.ramPercent ?: -1).putInt("limitDisk", v.diskPercent ?: -1).putInt("limitDownload", v.downloadMbps ?: -1).apply()
         }
 
     private fun limit(key: String, spec: LimitSpec): Int? =
@@ -106,10 +107,32 @@ class SettingsStore(context: Context) {
         }
         set(v) { prefs.edit().putString("offMode", v.mode.name).putInt("offStart", v.nightStartHour).putInt("offEnd", v.nightEndHour).apply() }
 
+    /** Tela de espera (relógio, estado do PC e jogado hoje) depois de 10 min sem toque; ligada por padrão. */
+    var attract: Boolean
+        get() = prefs.getBoolean("attract", true)
+        set(v) { prefs.edit().putBoolean("attract", v).apply() }
+
     /** Trocar de aba sozinho (jogo, call, volta ao Início); ligado por padrão. */
     var autoSwitch: Boolean
         get() = prefs.getBoolean("autoSwitch", true)
         set(v) { prefs.edit().putBoolean("autoSwitch", v).apply() }
+
+    /** PIN opcional da configuração: só sal e hash ficam guardados (nunca o PIN). */
+    val hasPin: Boolean get() = prefs.contains("pinHash")
+
+    fun setPin(pin: String) {
+        val salt = Pin.newSalt()
+        prefs.edit().putString("pinSalt", Base64.encodeToString(salt, Base64.NO_WRAP))
+            .putString("pinHash", Base64.encodeToString(Pin.hash(pin, salt), Base64.NO_WRAP)).apply()
+    }
+
+    fun clearPin() { prefs.edit().remove("pinSalt").remove("pinHash").apply() }
+
+    fun checkPin(pin: String): Boolean {
+        val salt = prefs.getString("pinSalt", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        val hash = prefs.getString("pinHash", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        return Pin.verify(pin, salt, hash)
+    }
 
     val token: String? get() = vault.load()
 

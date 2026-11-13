@@ -244,6 +244,49 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 6. Nome de canal ou de servidor bem longo: o título corta com "…" e o número continua visível.
 7. Feche o agente com a call aberta: o aviso de dado velho (ou de ação recusada) toma o lugar do número no cabeçalho. Com o Discord fechado, aparece só "Discord fechado" em tela cheia.
 
+## 19. Aviso de download terminando no PC
+
+O app deduz o download de `system.net.rxKbps`: **30 Mbps ou mais por 2 min seguidos** é um download; quando o tráfego cai abaixo de **2 Mbps por 30 s**, avisa. O limite de 30 Mbps muda na configuração
+(cartão "Alertas de limite", linha "Aviso de download", de 10 a 100 Mbps; abaixo do mínimo, desliga).
+
+1. Baixe um jogo grande pela Steam (ou outro arquivo grande) numa conexão que passe de 30 Mbps. **Esperado:** nada aparece durante o download. Uns 30 s a 1 min depois do fim, o cartão do relógio
+   troca a linha de baixo por **"Download terminou"** com a borda menta (a linha do jogo/janela volta quando o aviso sai).
+2. O aviso some sozinho em 10 min, ou com um **toque** no cartão do relógio.
+3. Pause o download por uns 10 s no meio e retome. **Esperado:** nenhum aviso (o vale é curto demais).
+4. Deixe um vídeo 1080p rodando 5 min. **Esperado:** nenhum aviso (o tráfego fica abaixo do limite). Teste também com um vídeo 4K ou streaming pesado: se passar de 30 Mbps, suba o limite.
+5. Com o aviso na tela, simule uma queda de energia (cenário 10) ou um alerta de limite (cenário 15). **Esperado:** esses alertas têm prioridade e o aviso de download espera.
+6. Feche e suba o agente no meio de um download. **Esperado:** nenhum aviso falso ao reconectar (a contagem recomeça).
+7. Desligue o aviso na configuração ("Desligado"). **Esperado:** nunca aparece.
+8. Anote: o número que o app vê (aba Sistema) bate com a velocidade do download? (A conta depende de o PC medir `rxKbps` de forma estável, o que não foi provado no Wi-Fi.)
+
+## 20. PIN da configuração
+
+PIN opcional, desligado por padrão: 4 a 6 dígitos pedidos ao abrir a configuração (menos na primeira configuração, sem endereço ou sem código).
+
+1. Abra a configuração (toque longo no relógio). No cartão "PIN da configuração", digite um PIN de 4 a 6 dígitos e toque em **Salvar**. Tente um PIN com 3 dígitos: **esperado:** recusa com a mensagem.
+2. Volte ao painel e toque longo no relógio. **Esperado:** aparece o teclado numérico (teclas grandes, cabe sem cortar nos 505 dp), com bolinhas para os dígitos e "Cancelar". Digite o PIN e toque em **OK**:
+   a configuração abre. **Cancelar** volta ao painel.
+3. Erre o PIN uma vez: **esperado:** "PIN errado" e as bolinhas esvaziam. Erre **5 vezes seguidas**: **esperado:** "Muitas tentativas. Tente de novo em N s." com contagem, teclas apagadas por 30 s.
+   Saia e toque de novo durante a espera: a espera **continua** (não zera por fechar a tela). Passados os 30 s, o PIN certo abre.
+4. Com o agente fechado e a tela de PC desligado (cenário 16), segure o dedo na tela escura: **esperado:** pede o PIN (e o brilho volta ao normal enquanto o teclado está na tela). A faixa de erro de
+   conexão ("Código inválido...") também pede o PIN ao ser tocada.
+5. Troque o PIN (digite outro e salve) e confirme que só o novo vale. Toque em **Remover o PIN** e salve: **esperado:** a configuração volta a abrir direto.
+6. Reinstalar o app (primeira configuração, sem endereço ou sem código): **esperado:** não pede PIN. Esqueceu o PIN: o caminho é reinstalar pela janela do agente ("Desinstalar e instalar"), o que apaga a configuração do app.
+
+## 21. Tela Atração (relógio, estado do PC e jogado hoje)
+
+Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a uma tela de espera. Ligada por padrão; desliga na configuração (cartão "Troca de tela", linha "Relógio após 10 min parado").
+
+1. Deixe o painel parado por 10 min, sem tocar. **Esperado:** a tela vira o relógio grande com a data, "PC ligado" e, se houve jogo, "Jogado hoje · N min". Sem animação, no brilho normal.
+2. Toque em qualquer ponto. **Esperado:** o painel volta na hora (e não reabre a espera antes de mais 10 min sem toque).
+3. Jogue uns 20 min pela Steam (com o tablet parado). **Esperado:** na espera aparece "● jogando" com o nome do jogo e "Jogado hoje" crescendo (confira o total contra o relógio).
+4. Pausa longa sem conexão (feche o agente por uns minutos e suba de novo): **esperado:** o tempo sem conexão **não** entra no "Jogado hoje". Reiniciar o app zera a conta (isso é esperado, não é defeito).
+5. A virada da meia-noite zera o "Jogado hoje" (deixe o tablet ligado de um dia para o outro com a espera ativa).
+6. A espera **não** aparece por cima de: queda de energia (cenário 10), alerta de limite (cenário 15) ou call de voz no Discord. Com um desses ativos e 10 min parado, o painel fica.
+7. Sem conexão com o PC, a espera não entra (vale a tela de PC desligado, cenário 16).
+8. Desligue "Relógio após 10 min parado" na configuração e salve. **Esperado:** a espera nunca aparece.
+9. Anote a bateria e a temperatura do tablet depois de uma noite com a espera ativa (a tela fica acesa com o relógio).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -264,3 +307,6 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 | 16 Tela de PC desligado | | |
 | 17 Troca de tela por contexto | | |
 | 18 Discord: tela mais clara | | |
+| 19 Aviso de download | | |
+| 20 PIN da configuração | | |
+| 21 Tela Atração | | |

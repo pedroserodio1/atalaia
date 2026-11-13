@@ -14,10 +14,11 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) publicadas em 13/11/2026; `beta.4` (aba Discord nova) em publicação).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) em publicação).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
-  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1).
+  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1),
+  [#66](https://github.com/pedroserodio1/atalaia/issues/66) (a janela dizia que o app não está instalado durante a atualização por USB; corrigida na 0.3.0-beta.5, falta provar).
   Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak). Resolvida na 0.2.0 (`beta.3`): #13 (porta ocupada no boot).
 
 ## Resumo das versões
@@ -27,7 +28,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.3` publicada, `beta.4` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
+| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.4` publicada, `beta.5` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
 | **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
@@ -172,6 +173,9 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
 - [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
   com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
+  Código e testes prontos (ramo `feat/app-atracao`): com o PC conectado e 10 min sem toque, o painel dá lugar a um relógio com a data, o que o PC faz ("PC ligado" ou "jogando" e o nome do jogo) e "Jogado hoje".
+  Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
+  tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Falta provar no tablet (cenário 21 de `app/docs/teste-manual.md`).
 - [ ] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
   ações são acréscimos opcionais ao `discord` do v1, então MINOR, mas é mudança de contrato: combinar com o mantenedor antes.
   - [ ] **Qualidade da conexão:** assinar `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostrar "Conectado · 38 ms" no cabeçalho do canal.
@@ -181,15 +185,21 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   - [ ] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`. Ação com **confirmação na própria tela** (regra do app).
   - [ ] **Escopos:** a doc não diz quais escopos cada comando de voz exige. Provar com o Discord real; se pedir escopo novo, atualizar o tutorial
     (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
-- [ ] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
+- [x] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
   com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
   Código e testes prontos (ramo `feat/app-discord-tela`): layout novo com a faixa de controles à esquerda (botões redondos de microfone e fones no alto, volumes em pé embaixo) e a lista da call à
   direita, com a altura toda; o número de pessoas no cabeçalho do canal (ícone e número); estados por **ícone** (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo)
   no lugar dos textos "falando", "mudo" e "surdo"; ensurdecer mostra o microfone desligado também (como no Discord). Ícones do Tabler (MIT), só seis copiados, sem biblioteca. Sem a marca "você":
-  decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Falta provar no tablet de verdade (cenário 18 de `app/docs/teste-manual.md`), com a call real, 5 ou mais
-  pessoas e a altura de 505 dp, e conferir o slider em pé no dedo.
+  decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Provado pelo mantenedor no tablet, em 13/11/2026 (`0.3.0-beta.4`, cenário 18 de
+  `app/docs/teste-manual.md`): a tela ficou como desenhada.
 - [ ] **Aviso de download ou cópia terminando no PC.**
+  Download: código e testes prontos (ramo `feat/app-aviso-download`). O app deduz de `system.net.rxKbps`: tráfego a partir de 30 Mbps (configurável de 10 a 100, ou desligado) por 2 min seguidos é um
+  download; quando cai abaixo de 2 Mbps por 30 s, o cartão do relógio mostra "Download terminou" (borda menta) por 10 min ou até um toque. Reconectar zera a contagem. Sem mudança de contrato.
+  Falta provar no tablet (cenário 19 de `app/docs/teste-manual.md`). **Cópia de arquivos: fora da 0.3.0** (pede leitura de disco nova), vai para a 0.4.0 junto com "Tráfego de rede".
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
+  Código e testes prontos (ramo `feat/app-pin`): PIN opcional (desligado por padrão) de 4 a 6 dígitos, definido ou removido no cartão "PIN da configuração"; pedido em toda entrada na configuração
+  (toque longo no relógio, faixa de erro de conexão e toque longo na tela de PC desligado), menos na primeira configuração. Guarda só sal e hash PBKDF2, nunca o PIN; cinco erros seguidos trancam
+  por 30 s. Esqueceu o PIN: reinstalar o app (janela do agente, "Desinstalar e instalar"). Falta provar no tablet (cenário 20 de `app/docs/teste-manual.md`), inclusive o teclado nos 505 dp.
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo
   novo, então só entra se o mantenedor aprovar a mudança de contrato.
 
@@ -242,6 +252,9 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
   `cliff-notas.toml` não define `tag_pattern`, então o git-cliff trata cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
   que nunca casa, comentado no arquivo, e um teste (ou passo do ensaio `dry_run` do `release.yml`) que falha se um grupo aparecer duas vezes.
   A 0.2.0 ainda saiu com o defeito.
+- [ ] **#66 (corrigida no ciclo da 0.3.0, ramo `fix/agente-update-usb`; sai na `0.3.0-beta.5`):** durante "Atualizar por USB" a janela do agente mostrava "O app do Atalaia não está instalado no tablet", embora ele esteja.
+  Causa confirmada: `TabletGet` (`UpdateCommands.cs`) não consultava a versão com o job rodando e devolvia `null`, que a página lia como "não instalado". Agora devolve a última versão conhecida e a página
+  mostra "Atualizando o app no tablet…". Teste que segura o job rodando (falha sem a correção). Falta provar numa atualização real por USB.
 
 ## 0.4.0: mais fontes de dados
 

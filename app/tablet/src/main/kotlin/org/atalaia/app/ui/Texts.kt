@@ -102,6 +102,11 @@ object Texts {
 
     const val POWER_ALERT_TITLE = "Sem energia da rede"
 
+    const val ATTRACT_LABEL = "Relógio após 10 min parado"
+    const val ATTRACT_PC_ON = "PC ligado"
+
+    fun attractPlayed(time: String): String = "Jogado hoje · $time"
+
     const val AUTO_SWITCH_TITLE = "Troca de tela"
     const val AUTO_SWITCH_HINT = "Vai sozinho para a aba Jogo ou Discord e volta ao Início depois de 5 min sem toque."
     const val AUTO_SWITCH_LABEL = "Trocar de aba sozinho"
@@ -123,6 +128,21 @@ object Texts {
     }
 
     fun hour(h: Int): String = "%02dh".format(h)
+
+    const val PIN_TITLE = "PIN da configuração"
+    const val PIN_HINT = "Opcional: 4 a 6 dígitos pedidos ao abrir esta tela."
+    const val PIN_SET_HINT = "Já há um PIN. Digite outro para trocar."
+    const val PIN_PLACEHOLDER = "novo PIN"
+    const val PIN_REMOVE = "Remover o PIN"
+    const val PIN_KEEP = "Manter o PIN"
+    const val PIN_INVALID = "O PIN tem de ter de 4 a 6 dígitos."
+    const val PIN_ENTER = "Digite o PIN"
+    const val PIN_WRONG = "PIN errado"
+
+    fun pinLocked(seconds: Long): String = "Muitas tentativas. Tente de novo em $seconds s."
+
+    const val DOWNLOAD_DONE = "Download terminou"
+    const val LIMIT_DOWNLOAD = "Aviso de download"
 
     const val LIMITS_TITLE = "Alertas de limite"
     const val LIMITS_HINT = "Avisa no relógio quando passa do limite por 10 s. Abaixo do mínimo, desliga."

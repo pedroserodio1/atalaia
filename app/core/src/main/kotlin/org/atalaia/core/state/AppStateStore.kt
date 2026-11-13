@@ -33,6 +33,7 @@ class AppStateStore(private val clock: Clock = Clock.System) {
     /** Limites dos alertas (configuração do tablet). Valem a partir da próxima leitura de `system` ou `gpu`. */
     @Volatile var limits: Limits = Limits()
     private val limitTracker = LimitTracker()
+    private val downloadWatcher = DownloadWatcher()
 
     /** Começa a coletar da conexão. Chame antes de `AgentConnection.start`: o fluxo de mensagens não guarda histórico. */
     fun attach(scope: CoroutineScope, connection: AgentConnection): Job =
@@ -49,11 +50,16 @@ class AppStateStore(private val clock: Clock = Clock.System) {
         }
     }
 
+    /** Dispensa o aviso de download terminado (toque no relógio). */
+    fun dismissDownload() { _state.update { it.copy(downloadDoneMono = null) } }
+
     fun onMessage(m: Incoming) {
         val now = clock.monotonicMs()
         when (m) {
             is Incoming.Hello -> _state.update { s ->
+                downloadWatcher.reset()   // conexão nova: o que estava contando de antes não vale
                 s.copy(
+                    downloadDoneMono = null,
                     agent = AgentInfo(m.agent, m.version, m.host, m.protocol),
                     plugins = m.plugins.associateByTo(LinkedHashMap()) { it.id },
                     anchor = if (m.ts > 0) ClockAnchor(m.ts, now) else null,
@@ -74,6 +80,7 @@ class AppStateStore(private val clock: Clock = Clock.System) {
         // Fora do `update` (que pode repetir a lambda): o tempo acima do limite é contado pela chegada do dado, no relógio do tablet.
         val isLimitSource = data is SystemData || data is GpuData
         if (isLimitSource) limitTracker.observe(data, limits, now)
+        val downloadEnded = data is SystemData && downloadWatcher.observe(data.net.rxKbps, limits.downloadMbps?.let { it * 1_000L }, now)
 
         _state.update { s ->
             val old = s.sources[source]
@@ -100,6 +107,7 @@ class AppStateStore(private val clock: Clock = Clock.System) {
             s.copy(
                 sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history,
                 limitAlerts = if (isLimitSource) limitTracker.active() else s.limitAlerts,
+                downloadDoneMono = if (downloadEnded) now else s.downloadDoneMono,
             )
         }
     }
