@@ -8,6 +8,9 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import org.atalaia.core.connection.Endpoint
+import org.atalaia.core.state.LimitSpec
+import org.atalaia.core.state.LimitSpecs
+import org.atalaia.core.state.Limits
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -78,6 +81,16 @@ class SettingsStore(context: Context) {
     var endpoints: List<Endpoint>
         get() = Endpoint.parseList(prefs.getString("endpoints", "") ?: "") ?: emptyList()
         set(value) { prefs.edit().putString("endpoints", value.joinToString(",") { it.toConfigString() }).apply() }
+
+    /** Limites dos alertas; `-1` guardado = desligado, ausente = padrão. */
+    var limits: Limits
+        get() = Limits(limit("limitGpu", LimitSpecs.GPU_TEMP), limit("limitRam", LimitSpecs.RAM), limit("limitDisk", LimitSpecs.DISK))
+        set(v) {
+            prefs.edit().putInt("limitGpu", v.gpuTempC ?: -1).putInt("limitRam", v.ramPercent ?: -1).putInt("limitDisk", v.diskPercent ?: -1).apply()
+        }
+
+    private fun limit(key: String, spec: LimitSpec): Int? =
+        prefs.getInt(key, spec.default).let { if (it < 0) null else it }
 
     val token: String? get() = vault.load()
 
