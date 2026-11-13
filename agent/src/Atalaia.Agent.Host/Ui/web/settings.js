@@ -171,6 +171,7 @@ function tabletUpdateCard() {
     const mismatch = job.state === 'error' && job.outcome === 'SignatureMismatch';
     const pct = Math.round(job.progress * 100);
     const status = !d.device ? 'Nenhum tablet pelo cabo agora.'
+      : running ? 'Atualizando o app no tablet…'
       : d.installedVersion === null ? 'O app do Atalaia não está instalado no tablet (instale pelo passo "App no tablet" da primeira configuração).'
       : d.canUpdate ? `No tablet: ${d.installedVersion} · a release traz ${d.targetVersion}`
       : `No tablet: ${d.installedVersion}. Nada a atualizar.`;
