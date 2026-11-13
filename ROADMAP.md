@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite) e `v0.3.0-beta.2` (tela de PC desligado) publicadas em 13/11/2026; `beta.3` (troca de tela por contexto) em publicação).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) publicadas em 13/11/2026; `beta.4` (aba Discord nova) em publicação).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1).
@@ -27,7 +27,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.2` publicada, `beta.3` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
+| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.3` publicada, `beta.4` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
 | **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
@@ -157,7 +157,7 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
 - [ ] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
   Código e testes prontos (ramo `feat/app-contexto`): gatilho do jogo só `steam.game` (decidido; atraso de até 30 s e jogo fora da Steam não dispara), call depois de 3 s, volta ao
   Início após 5 min sem toque (menos se a aba é a do contexto ainda ativo); ligada por padrão, com opção de desligar na configuração. Não puxa a tela ao reconectar com jogo ou call
-  em andamento, nem de quem está mexendo (toque nos últimos 15 s). Falta provar no tablet de verdade (cenário 17 de `app/docs/teste-manual.md`), com Steam e Discord reais.
+  em andamento, nem de quem está mexendo (toque nos últimos 15 s). Provado pelo mantenedor no tablet (Discord e Steam reais, 13/11/2026): a call leva à aba Discord e o jogo da Steam leva à aba Jogo. Falta provar (cenário 17 de `app/docs/teste-manual.md`): a volta ao Início após 5 min, o anti-ruído (reconectar com jogo ou call em andamento, trocar de canal), a opção de desligar e a medição de quadros do arrasto.
 - [x] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
   (o nobreak já chegou a dar 95 quedas em ~2 dias).
   Feito na `0.3.0-beta.1`: padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
@@ -183,6 +183,11 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
     (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
 - [ ] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
   com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
+  Código e testes prontos (ramo `feat/app-discord-tela`): layout novo com a faixa de controles à esquerda (botões redondos de microfone e fones no alto, volumes em pé embaixo) e a lista da call à
+  direita, com a altura toda; o número de pessoas no cabeçalho do canal (ícone e número); estados por **ícone** (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo)
+  no lugar dos textos "falando", "mudo" e "surdo"; ensurdecer mostra o microfone desligado também (como no Discord). Ícones do Tabler (MIT), só seis copiados, sem biblioteca. Sem a marca "você":
+  decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Falta provar no tablet de verdade (cenário 18 de `app/docs/teste-manual.md`), com a call real, 5 ou mais
+  pessoas e a altura de 505 dp, e conferir o slider em pé no dedo.
 - [ ] **Aviso de download ou cópia terminando no PC.**
 - [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo

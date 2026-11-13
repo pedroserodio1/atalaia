@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -128,35 +129,55 @@ private fun MixerRow(
 
 // ---------------------------------------------------------------- Discord
 
+/**
+ * Faixa de controles à esquerda (botões de microfone e fones no alto, volumes em pé embaixo) e a lista da call à direita, com a altura
+ * toda. Estados por ícone: o forma diz o estado, a cor só reforça.
+ */
 @Composable
 fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, send: ActionSender, modifier: Modifier) {
     val d = state.dataOf<DiscordData>("discord")
     val freshness = state.freshness("discord", now)
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PanelCard(Modifier.fillMaxWidth()) {
+    if (d == null || !d.connected) {
+        PanelCard(modifier.fillMaxWidth()) {
             CardLabel(Texts.DISCORD, freshness, alert = feedback)
-            when {
-                d == null -> Box(Modifier.fillMaxWidth().height(96.dp), contentAlignment = Alignment.CenterStart) { MonoText(freshnessTag(freshness) ?: "") }
-                !d.connected -> Box(Modifier.fillMaxWidth().height(96.dp), contentAlignment = Alignment.CenterStart) { BodyText(Texts.DISCORD_CLOSED, Palette.TextMuted, 18) }
-                else -> Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Column(Modifier.width(150.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StateButton(if (d.mute) Texts.MIC_MUTED else Texts.MIC_ON, d.mute, state.hasAction("discord", "toggle_mute"), Modifier.fillMaxWidth()) { send.send("discord", "toggle_mute") }
-                        StateButton(if (d.deaf) Texts.DEAF_ON else Texts.DEAF_OFF, d.deaf, state.hasAction("discord", "toggle_deaf"), Modifier.fillMaxWidth()) { send.send("discord", "toggle_deaf") }
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.SpaceBetween) {
-                        VolumeLine(Texts.MIC_VOLUME, d.inputVolume, 100, state.hasAction("discord", "set_input_volume"), clock) { send("discord", "set_input_volume", intArgs("value" to it)) }
-                        VolumeLine(Texts.OUT_VOLUME, d.outputVolume, 200, state.hasAction("discord", "set_output_volume"), clock) { send("discord", "set_output_volume", intArgs("value" to it)) }
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (d == null) MonoText(freshnessTag(freshness) ?: "") else BodyText(Texts.DISCORD_CLOSED, Palette.TextMuted, 18)
+            }
+        }
+        return
+    }
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        PanelCard(Modifier.width(150.dp).fillMaxHeight()) {
+            // Ensurdecer também cala o microfone no Discord: com os fones desligados o microfone aparece desligado junto.
+            val micOff = d.mute || d.deaf
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                IconToggle(if (micOff) IconKind.MIC_OFF else IconKind.MIC, micOff, state.hasAction("discord", "toggle_mute")) { send.send("discord", "toggle_mute") }
+                IconToggle(if (d.deaf) IconKind.HEADPHONES_OFF else IconKind.HEADPHONES, d.deaf, state.hasAction("discord", "toggle_deaf")) { send.send("discord", "toggle_deaf") }
+            }
+            Row(Modifier.fillMaxWidth().weight(1f).padding(top = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                VolumeColumn(IconKind.MIC, d.inputVolume, 100, state.hasAction("discord", "set_input_volume"), clock) { send("discord", "set_input_volume", intArgs("value" to it)) }
+                VolumeColumn(IconKind.VOLUME, d.outputVolume, 200, state.hasAction("discord", "set_output_volume"), clock) { send("discord", "set_output_volume", intArgs("value" to it)) }
+            }
+        }
+        PanelCard(Modifier.weight(1f).fillMaxHeight()) {
+            val channel = d.channel
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                // O título cede espaço (corta com "…") para a contagem nunca ser espremida por um nome longo.
+                Box(Modifier.weight(1f)) { MonoText(if (channel != null) "${channel.name} · ${channel.guild}" else Texts.VOICE_CHANNEL) }
+                val tag = freshnessTag(freshness)
+                when {
+                    feedback != null -> MonoText(feedback, Palette.Coral)
+                    tag != null -> MonoText(tag, Palette.Coral)
+                    channel != null -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        PanelIcon(IconKind.USERS, Palette.TextMuted, 16.dp)
+                        MonoText("${channel.members.size}")
                     }
                 }
             }
-        }
-        PanelCard(Modifier.fillMaxWidth().weight(1f)) {
-            val channel = d?.channel
-            CardLabel(if (channel != null) "${channel.name} · ${channel.guild}" else Texts.VOICE_CHANNEL)
-            when {
-                d == null || !d.connected -> Unit
-                channel == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
-                else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            if (channel == null) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
+            } else {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     channel.members.forEach { MemberRow(it) }
                 }
             }
@@ -164,27 +185,31 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, s
     }
 }
 
+/** Volume em pé: ícone no alto, controle deslizante no meio (envia ao soltar) e a porcentagem embaixo. */
 @Composable
-private fun VolumeLine(label: String, value: Int?, max: Int, enabled: Boolean, clock: Clock, onSend: (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(Modifier.width(96.dp)) {
-            BodyText(label, sp = 13)
-            MonoText(value?.let { "$it%" } ?: Texts.NO_VALUE, sp = 12)
-        }
-        HeldSlider(value, max, enabled, clock, onSend, Modifier.weight(1f))
+private fun VolumeColumn(icon: IconKind, value: Int?, max: Int, enabled: Boolean, clock: Clock, onSend: (Int) -> Unit) {
+    Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+        PanelIcon(icon, Palette.TextMuted, 22.dp)
+        HeldSlider(value, max, enabled, clock, onSend, Modifier.weight(1f).padding(vertical = 6.dp), vertical = true)
+        MonoText(value?.let { "$it%" } ?: Texts.NO_VALUE, sp = 12)
     }
 }
 
 @Composable
 private fun MemberRow(m: DiscordMember) {
-    Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Quem fala ganha anel menta E o texto "falando": o estado nunca depende só da cor.
+    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Quem fala ganha anel menta, nome em menta e o ícone de som; mudo e surdo são ícones cortados (o estado nunca depende só da cor).
         Box(
             Modifier.size(34.dp).background(Palette.Border, CircleShape).border(if (m.speaking) 3.dp else 1.dp, if (m.speaking) Palette.Mint else Palette.Border, CircleShape),
             contentAlignment = Alignment.Center,
         ) { BodyText(m.name.take(1).uppercase(), sp = 14) }
-        Box(Modifier.weight(1f)) { BodyText(m.name, sp = 16) }
-        if (m.speaking) MonoText(Texts.SPEAKING, Palette.Mint)
-        if (m.deafened) MonoText(Texts.DEAF_TAG, Palette.Coral) else if (m.muted) MonoText(Texts.MUTED_TAG, Palette.Coral)
+        Box(Modifier.weight(1f)) { BodyText(m.name, if (m.speaking) Palette.Mint else Palette.Text, 16) }
+        if (m.speaking) PanelIcon(IconKind.VOLUME, Palette.Mint, 22.dp)
+        if (m.deafened) {
+            PanelIcon(IconKind.MIC_OFF, Palette.Coral, 22.dp)
+            PanelIcon(IconKind.HEADPHONES_OFF, Palette.Coral, 22.dp)
+        } else if (m.muted) {
+            PanelIcon(IconKind.MIC_OFF, Palette.Coral, 22.dp)
+        }
     }
 }
