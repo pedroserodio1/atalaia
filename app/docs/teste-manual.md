@@ -165,10 +165,11 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
 
 ## 14. Abrir sozinho ao ligar o tablet
 
-1. Com o app instalado e já configurado, desligue o tablet e ligue de novo (ou reinicie). **Esperado:** depois que o Android termina de ligar, o painel abre
-   sozinho, em tela cheia, e conecta ao agente sem toque.
+1. Com o app instalado e já configurado, e a **tela de bloqueio desligada**, desligue o tablet e ligue de novo (ou reinicie). **Esperado:** uns 25 a 30 s depois
+   de o Android terminar de ligar, o painel abre sozinho, em tela cheia, e conecta ao agente sem toque. Não toque em nada nesse tempo.
 2. Reinicie com o PC desligado. **Esperado:** o app abre e fica no estado de espera ("PC desligado ou inalcançável"), sem erro, e conecta quando o agente subir.
-3. Com o tablet bloqueado por PIN/padrão, reinicie. **Esperado:** o app abre depois do desbloqueio (antes disso o Android não entrega o aviso de boot concluído).
+3. Com a tela de bloqueio ligada, reinicie. **Esperado:** o painel abre **atrás** dela; é preciso deslizar para vê-lo. (Com PIN ou padrão o Android só entrega o aviso de
+   boot depois do desbloqueio; isso não foi medido.)
 4. Anote a versão do Android do aparelho: do Android 10 em diante o sistema bloqueia e o app não abre sozinho (isso é esperado, não é defeito).
 
 ## Resultado

@@ -105,12 +105,15 @@ public class RuntimeRestartTests
         return held;
     }
 
-    /// <summary>Uma porta livre cuja faixa inteira também está livre (para o teste ocupar só o que quer).</summary>
+    /// <summary>
+    /// Uma porta livre cuja faixa inteira também está livre (para o teste ocupar só o que quer). Fora da faixa dinâmica do Windows (49152 em diante), onde
+    /// uma conexão de saída de outro programa pode tomar uma porta da faixa entre a conferência e o uso.
+    /// </summary>
     private static int FreeRangeStart()
     {
         for (var i = 0; i < 50; i++)
         {
-            var first = FreePort();
+            var first = Random.Shared.Next(20000, 30000);
             var held = Occupy(first, PortRangeCount);
             var all = held.Count == PortRangeCount;
             foreach (var l in held) l.Stop();
