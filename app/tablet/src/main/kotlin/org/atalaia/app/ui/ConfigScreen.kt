@@ -63,6 +63,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     var token by remember { mutableStateOf("") }
     var limits by remember { mutableStateOf(app.settings.limits) }
     var off by remember { mutableStateOf(app.settings.offScreen) }
+    var autoSwitch by remember { mutableStateOf(app.settings.autoSwitch) }
     var showToken by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -83,6 +84,7 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
         app.settings.limits = limits
         app.store.limits = limits
         app.settings.offScreen = off
+        app.settings.autoSwitch = autoSwitch
         onClose()
     }
 
@@ -165,6 +167,11 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                         style = TextStyle(color = Palette.Coral, fontFamily = org.atalaia.app.ui.theme.Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
                     )
                 }
+            }
+            PanelCard(Modifier.fillMaxWidth()) {
+                MonoText(Texts.AUTO_SWITCH_TITLE)
+                MonoText(Texts.AUTO_SWITCH_HINT, sp = 12)
+                LimitRow(Texts.AUTO_SWITCH_LABEL, Texts.onOff(autoSwitch), autoSwitch, !autoSwitch, { autoSwitch = false }, { autoSwitch = true })
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (app.settings.endpoints.isNotEmpty() && hadToken) ActionButton(Texts.CONFIG_CANCEL, false, Modifier.weight(1f), onClose)
