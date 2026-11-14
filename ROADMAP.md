@@ -14,10 +14,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) em publicação).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) e `beta.6` (Discord: ping da call e sair da call) publicadas em 13/11/2026; `beta.7` (Wake-on-LAN e #23) em preparo).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
-  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1),
+  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.0),
   [#66](https://github.com/pedroserodio1/atalaia/issues/66) (a janela dizia que o app não está instalado durante a atualização por USB; corrigida na 0.3.0-beta.5, falta provar).
   Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak). Resolvida na 0.2.0 (`beta.3`): #13 (porta ocupada no boot).
 
@@ -28,8 +28,8 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.4` publicada, `beta.5` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
-| **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
+| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.6` publicada, `beta.7` em preparo) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
+| **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV e LoL |
@@ -237,6 +237,12 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
   continua só com a opção A (que já resolve o dia a dia).
 - **Wake-on-LAN** depende das decisões 2 e 7 (abaixo); sem elas, a linha 6 não começa.
 
+- [ ] **#23:** as notas da release estável saem com os grupos repetidos (um bloco "Novidades", "Correções" e "Outros" por beta). Causa: o
+  `cliff-notas.toml` não definia `tag_pattern`, então o git-cliff tratava cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
+  que nunca casa, comentado no arquivo, e uma guarda no job `notas` do `release.yml` que falha se um título `###` aparecer duas vezes.
+  Código pronto (ramo `fix/notas-grupos`); conferido com o git-cliff 2.14.2 em `v0.2.0..HEAD` (antes repetia "Novidades" e "Outros", depois nenhum grupo repete).
+  Falta ver nas notas da `v0.3.0` publicada (vira `[x]` quando sair sem grupo repetido). A 0.2.0 ainda saiu com o defeito.
+
 ### Pronto quando
 
 - Cada item só vira `[x]` com prova no tablet de verdade; o que depende de hardware (Wake-on-LAN com o PC desligado, Discord real) fica `[ ]` com o que falta provar.
@@ -247,10 +253,6 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
 
 Só correção compatível, sem mexer no protocolo nem na configuração.
 
-- [ ] **#23:** as notas da release estável saem com os grupos repetidos (um bloco "Novidades", "Correções" e "Outros" por beta). Causa: o
-  `cliff-notas.toml` não define `tag_pattern`, então o git-cliff trata cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
-  que nunca casa, comentado no arquivo, e um teste (ou passo do ensaio `dry_run` do `release.yml`) que falha se um grupo aparecer duas vezes.
-  A 0.2.0 ainda saiu com o defeito.
 - [ ] **#66 (corrigida no ciclo da 0.3.0, ramo `fix/agente-update-usb`; sai na `0.3.0-beta.5`):** durante "Atualizar por USB" a janela do agente mostrava "O app do Atalaia não está instalado no tablet", embora ele esteja.
   Causa confirmada: `TabletGet` (`UpdateCommands.cs`) não consultava a versão com o job rodando e devolvia `null`, que a página lia como "não instalado". Agora devolve a última versão conhecida e a página
   mostra "Atualizando o app no tablet…". Teste que segura o job rodando (falha sem a correção). Falta provar numa atualização real por USB.
