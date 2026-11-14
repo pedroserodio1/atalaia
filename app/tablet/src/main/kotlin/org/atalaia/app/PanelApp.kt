@@ -7,6 +7,11 @@ import android.app.Application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import java.io.File
 import org.atalaia.app.settings.SettingsStore
 import org.atalaia.core.connection.AgentConnection
 import org.atalaia.core.connection.Clock
@@ -14,6 +19,8 @@ import org.atalaia.core.connection.ConnectionState
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.connection.OkHttpTransport
 import org.atalaia.core.connection.SessionConfig
+import org.atalaia.core.panel.WakeOnLan
+import org.atalaia.core.protocol.SystemData
 import org.atalaia.core.settings.PinLock
 import org.atalaia.core.state.AppStateStore
 
@@ -30,6 +37,8 @@ class PanelApp : Application() {
         private set
     lateinit var covers: CoverRepository
         private set
+    lateinit var wake: WakeSender
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -43,6 +52,13 @@ class PanelApp : Application() {
             if (endpoint != null && token != null) endpoint to token else null
         })
         store.attach(scope, connection)   // antes do start: o fluxo de mensagens não guarda histórico
+        wake = WakeSender(scope, clock, store) { getExternalFilesDir(null)?.let { File(it, "wol.log") } }
+        // Guarda o último MAC de cabo que o agente publicou, para ligar o PC quando ele estiver desligado. Nulo (PC no Wi-Fi) não apaga o guardado.
+        scope.launch {
+            store.state.map { it.dataOf<SystemData>("system")?.net?.mac }.filterNotNull().distinctUntilChanged().collect { mac ->
+                if (WakeOnLan.parseMac(mac) != null && mac != settings.lastMac) settings.lastMac = mac
+            }
+        }
         startIfConfigured()
     }
 

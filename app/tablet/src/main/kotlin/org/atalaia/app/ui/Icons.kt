@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 
-enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS, PHONE_OFF }
+enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS, PHONE_OFF, POWER }
 
 /** Ícones simples desenhados em uma grade de 24 × 24, sem biblioteca de ícones (menos memória no tablet). */
 @Composable
@@ -47,7 +47,7 @@ private fun DrawScope.fill(color: Color, vararg points: Float) {
 
 /**
  * Ícones do Tabler Icons (MIT, v3.19.0; licença em `app/third-party/tabler-icons-LICENSE.txt`), no contorno original de 24 × 24 com
- * traço de 2. Só estes sete foram copiados, em vez de uma biblioteca de ícones inteira (peso no APK e memória do tablet). Os
+ * traço de 2. Só estes oito foram copiados, em vez de uma biblioteca de ícones inteira (peso no APK e memória do tablet). Os
  * caminhos são lidos uma vez e guardados.
  */
 private val tablerPaths: Map<IconKind, List<String>> = mapOf(
@@ -74,6 +74,7 @@ private val tablerPaths: Map<IconKind, List<String>> = mapOf(
     IconKind.USERS to listOf(
         "M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0", "M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2", "M16 3.13a4 4 0 0 1 0 7.75", "M21 21v-2a4 4 0 0 0 -3 -3.85",
     ),
+    IconKind.POWER to listOf("M7 6a7.75 7.75 0 1 0 10 0", "M12 4l0 8"),
     IconKind.PHONE_OFF to listOf(
         "M3 21l18 -18",
         "M5.831 14.161a15.946 15.946 0 0 1 -2.831 -8.161a2 2 0 0 1 2 -2h4l2 5l-2.5 1.5c.108 .22 .223 .435 .345 .645m1.751 2.277c.843 .84 1.822 1.544 2.904 2.078l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a15.963 15.963 0 0 1 -10.344 -4.657",
@@ -132,7 +133,7 @@ private fun DrawScope.draw(kind: IconKind, c: Color) {
             drawCircle(c, 1f, Offset(16f, 11f))
             drawCircle(c, 1f, Offset(18f, 13f))
         }
-        IconKind.MIC, IconKind.MIC_OFF, IconKind.HEADPHONES, IconKind.HEADPHONES_OFF, IconKind.VOLUME, IconKind.USERS, IconKind.PHONE_OFF -> tabler(kind, c)
+        IconKind.MIC, IconKind.MIC_OFF, IconKind.HEADPHONES, IconKind.HEADPHONES_OFF, IconKind.VOLUME, IconKind.USERS, IconKind.PHONE_OFF, IconKind.POWER -> tabler(kind, c)
         IconKind.TRASH -> {
             line(c, 4f, 7f, 20f, 7f)
             line(c, 6f, 7f, 7f, 20f, 17f, 20f, 18f, 7f)

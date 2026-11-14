@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -72,6 +73,9 @@ private fun rememberNow(clock: Clock, everyMs: Long = 2_000): State<Long> =
         }
     }
 
+/** Quanto tempo a tela apagada fica acordada, com o botão, depois de um toque. */
+private const val PEEK_MS = 15_000L
+
 @OptIn(FlowPreview::class)
 @Composable
 fun PanelRoot(app: PanelApp) {
@@ -97,9 +101,15 @@ fun PanelRoot(app: PanelApp) {
     val offSettings = remember(configuring) { app.settings.offScreen }
     val offLook = offView(state, now, offSettings, time.toLocalTime())
     val dim = !configuring && !askingPin && offLook != OffView.NORMAL
-    LaunchedEffect(dim) {   // brilho mínimo só nesta janela; ao voltar, devolve o brilho do sistema
+    // "Ligar PC": só com um MAC de cabo guardado. Na tela apagada um toque acorda a tela por 15 s com o botão (o toque longo continua abrindo a configuração).
+    val wakeStatus by app.wake.status.collectAsStateWithLifecycle()
+    val canWake = app.settings.lastMac != null
+    var peekUntil by remember { mutableLongStateOf(0L) }
+    val peeking = offLook == OffView.BLANK && canWake && now < peekUntil
+    val lowLight = dim && !peeking
+    LaunchedEffect(lowLight) {   // brilho mínimo só nesta janela; ao voltar, devolve o brilho do sistema
         (view.context as? Activity)?.window?.let { w ->
-            w.attributes = w.attributes.also { it.screenBrightness = if (dim) 0.01f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE }
+            w.attributes = w.attributes.also { it.screenBrightness = if (lowLight) 0.01f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE }
         }
     }
     // Troca de aba por contexto. Fica antes dos `return` para acompanhar o estado também com a configuração ou a tela de PC desligado
@@ -124,7 +134,15 @@ fun PanelRoot(app: PanelApp) {
         return
     }
     if (dim) {
-        OffScreen(offLook, time.toLocalTime()) { requestConfig() }
+        val wake = if (canWake) WakeUi(wakeStatus, now) {
+            app.settings.lastMac?.let(app.wake::wake)
+            if (offLook == OffView.BLANK) peekUntil = app.clock.monotonicMs() + PEEK_MS   // mantém a tela acordada para ver o desfecho
+        } else null
+        OffScreen(
+            look = if (peeking) OffView.CLOCK else offLook, time = time.toLocalTime(), wake = wake,
+            onTap = { if (offLook == OffView.BLANK && canWake) peekUntil = app.clock.monotonicMs() + PEEK_MS },
+            onOpenConfig = { requestConfig() },
+        )
         return
     }
     if (attract) {

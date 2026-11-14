@@ -51,7 +51,7 @@ public sealed class SimSystem() : SimBase("system", "Sistema")
             cpu = new { percent = (int)Math.Round(_cpu) },
             ram = new { usedMb = (int)Math.Round(_ram), totalMb = 32768 },
             disks = new[] { new { name = "C:", usedGb = 412.0, totalGb = 931.0 }, new { name = "D:", usedGb = 1210.0, totalGb = 1863.0 } },
-            net = new { rxKbps = (int)Rand(0, 9000), txKbps = (int)Rand(0, 800) },
+            net = new { rxKbps = (int)Rand(0, 9000), txKbps = (int)Rand(0, 800), mac = "AA:BB:CC:DD:EE:FF" },
         });
     }
 }

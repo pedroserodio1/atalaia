@@ -13,7 +13,7 @@ Em dúvida, abra uma *issue* antes de escrever código. É mais rápido do que r
 - Correções, testes e documentação.
 
 **Converse antes** (abra uma issue) se a ideia mexe no contrato entre agente e app (`docs/protocolo-v1.md`), traz uma
-dependência nova, ou está na lista "fora do escopo" do [README](README.md) (Deck, Wake-on-LAN, modo kiosk, etc.).
+dependência nova, ou está na lista "fora do escopo" do [README](README.md) (Deck, modo kiosk, etc.).
 
 ## Idioma
 

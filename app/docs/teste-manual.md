@@ -297,6 +297,37 @@ Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a um
 5. Altura: com a conexão no cabeçalho e 5 ou mais pessoas na call, nada corta nos 505 dp (a lista rola, os volumes ficam inteiros, o botão inteiro).
 6. Agente antigo (beta.5) com o app novo: sem ping e sem botão, nada quebra.
 
+## 23. Wake-on-LAN (botão "Ligar PC")
+
+Pré-requisitos: PC no cabo, com o Wake-on-LAN já funcionando por outro meio; tablet no **Wi-Fi da mesma rede** (pelo USB não funciona).
+O botão segue o desenho "Layout 5" (círculo menta no centro, relógio no alto).
+
+1. Com o PC ligado e conectado pelo Wi-Fi, espere uns segundos (o tablet guarda o MAC). Com `--simulate` o MAC é o falso `AA:BB:CC:DD:EE:FF`
+   e não liga nada: use o agente real.
+2. Desligue o PC pelo Windows (desligar, não suspender). No modo relógio (cenário 16) a tela de PC desligado mostra o relógio no alto e o botão
+   redondo **Ligar PC** no centro, com "toque para enviar Wake-on-LAN". Confira se o botão fica legível no brilho mínimo.
+3. Toque no botão. **Esperado:** o botão apaga por 10 s e a legenda vira "Pedido enviado; o PC leva até 1 min". O PC liga? Quando ele conecta, a tela some e volta o painel.
+4. Modo tela apagada: um toque acorda a tela (brilho normal) mostrando o botão por 15 s e depois volta a apagar; o toque longo ainda abre a configuração (e o PIN).
+5. Modo noite dentro do horário: igual ao modo relógio. Fora do horário: o painel normal aparece **sem** botão (isso é esperado).
+6. Tablet nunca conectado a um agente que mandou MAC (app recém-configurado): o botão não aparece.
+7. Sem o PC ligar, espere 3 min: **esperado:** o botão volta ao repouso e a legenda mostra "Sem resposta. Veja o registro".
+8. Desligue o Wi-Fi do tablet e toque em Ligar PC: **esperado:** "Não consegui enviar o pedido. Veja o registro" e o botão volta ao repouso.
+9. Leia o registro e confira as linhas esperadas:
+   - `pedido mac=**:**:**:DD:EE:FF porta 9: 102 bytes; porta 7: 102 bytes` (os 3 primeiros bytes mascarados, nada de IP ou nome de rede);
+   - depois, `desfecho: PC voltou em N s` ou `desfecho: sem resposta em 3 min`.
+   "Erro" na linha do pedido = o pacote não saiu do tablet (Wi-Fi desligado, rede sem broadcast). "Sem resposta" com 102 bytes nas duas portas
+   = o pacote saiu e o PC não ligou (roteador bloqueando broadcast, Inicialização rápida, BIOS).
+
+Como ler o registro (tablet no USB; o app de release não permite `run-as`, por isso o arquivo fica na pasta externa do app):
+
+```bash
+adb pull /sdcard/Android/data/org.atalaia.app/files/wol.log wol.log
+adb logcat -d -s AtalaiaWol
+```
+
+Limitação: o registro só existe a partir da 0.3.0-beta.7, só no tablet, guarda as últimas ~100 linhas, e **reinstalar o app apaga** (a pasta do app sai junto).
+Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -321,3 +352,4 @@ Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a um
 | 20 PIN da configuração | | |
 | 21 Tela Atração | | |
 | 22 Discord: ping e sair da call | | |
+| 23 Wake-on-LAN | | |
