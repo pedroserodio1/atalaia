@@ -205,6 +205,42 @@ class SourcesTest {
     }
 
     @Test
+    fun discord_com_conexao() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"user":"U","channel":{"name":"Geral","guild":"S","connection":{"state":"connected","pingMs":38},"members":[]}}""",
+        )
+        assertEquals("connected", d.channel!!.connection!!.state)
+        assertEquals(38, d.channel.connection.pingMs)
+    }
+
+    @Test
+    fun discord_conexao_nula_ou_sem_ping() {
+        val nula = decode<DiscordData>("discord", """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","connection":null,"members":[]}}""")
+        assertNull(nula.channel!!.connection)
+        val semPing = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","connection":{"state":"connecting","pingMs":null},"members":[]}}""",
+        )
+        assertNull(semPing.channel!!.connection!!.pingMs)
+    }
+
+    @Test
+    fun discord_sem_campo_conexao_agente_da_beta_5() {
+        val d = decode<DiscordData>("discord", """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","members":[]}}""")
+        assertNull(d.channel!!.connection)
+    }
+
+    @Test
+    fun discord_conexao_com_campo_extra_e_ignorada_sem_erro() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","connection":{"state":"connected","pingMs":9,"futuro":1},"members":[]}}""",
+        )
+        assertEquals(9, d.channel!!.connection!!.pingMs)
+    }
+
+    @Test
     fun discord_fechado_nao_e_erro() {
         val d = decode<DiscordData>("discord", """{"connected":false,"user":"","mute":false,"deaf":false,"inputVolume":0,"outputVolume":0,"channel":null}""")
         assertFalse(d.connected)

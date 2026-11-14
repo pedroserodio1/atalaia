@@ -240,6 +240,76 @@ public class DiscordTests
         Assert.Equal("", s.ToJson().GetProperty("user").GetString());
     }
 
+    [Theory]
+    [InlineData("VOICE_CONNECTED", "connected")]
+    [InlineData("CONNECTED", "connected")]
+    [InlineData("AWAITING_ENDPOINT", "connecting")]
+    [InlineData("AUTHENTICATING", "connecting")]
+    [InlineData("CONNECTING", "connecting")]
+    [InlineData("ICE_CHECKING", "connecting")]
+    [InlineData("VOICE_CONNECTING", "connecting")]
+    [InlineData("DISCONNECTED", "connecting")]
+    [InlineData("VOICE_DISCONNECTED", "connecting")]
+    [InlineData("NO_ROUTE", "no_route")]
+    [InlineData("OUTRO", null)]
+    [InlineData("", null)]
+    [InlineData("voice_connected", null)]   // comparação ordinal
+    public void Mapa_do_estado_da_conexao_de_voz(string discord, string? esperado) =>
+        Assert.Equal(esperado, DiscordState.MapConnectionState(discord));
+
+    private static DiscordState InCall()
+    {
+        var s = new DiscordState();
+        s.SetConnected("Eu");
+        s.ApplyChannel(P("""{"id":"c1","name":"Geral","guild_id":"g1","voice_states":[]}"""), new Dictionary<string, string>());
+        return s;
+    }
+
+    private static JsonElement Conn(DiscordState s) => s.ToJson().GetProperty("channel").GetProperty("connection");
+
+    [Fact]
+    public void Status_da_conexao_publica_estado_e_ping_arredondado_sem_hostname()
+    {
+        var s = InCall();
+        Assert.Equal(JsonValueKind.Null, Conn(s).ValueKind);   // ainda sem evento
+
+        s.ApplyDispatch("VOICE_CONNECTION_STATUS",
+            P("""{"state":"VOICE_CONNECTED","hostname":"rtc.exemplo.test","pings":[30,40],"average_ping":37.6,"last_ping":40}"""));
+        Assert.Equal("connected", Conn(s).GetProperty("state").GetString());
+        Assert.Equal(38, Conn(s).GetProperty("pingMs").GetInt32());
+        Assert.DoesNotContain("exemplo", s.ToJson().GetRawText());   // hostname nunca é publicado
+    }
+
+    [Fact]
+    public void Ping_so_em_connected_e_nulo_sem_average_ping()
+    {
+        var s = InCall();
+        s.ApplyDispatch("VOICE_CONNECTION_STATUS", P("""{"state":"CONNECTING","average_ping":50}"""));
+        Assert.Equal("connecting", Conn(s).GetProperty("state").GetString());
+        Assert.Equal(JsonValueKind.Null, Conn(s).GetProperty("pingMs").ValueKind);
+
+        s.ApplyDispatch("VOICE_CONNECTION_STATUS", P("""{"state":"VOICE_CONNECTED"}"""));
+        Assert.Equal(JsonValueKind.Null, Conn(s).GetProperty("pingMs").ValueKind);
+
+        s.ApplyDispatch("VOICE_CONNECTION_STATUS", P("""{"state":"ESTADO_NOVO","average_ping":50}"""));
+        Assert.Equal(JsonValueKind.Null, Conn(s).ValueKind);   // estado desconhecido = sem leitura
+    }
+
+    [Fact]
+    public void Status_fora_de_canal_e_ignorado_e_sair_do_canal_zera_a_conexao()
+    {
+        var s = new DiscordState();
+        s.SetConnected("Eu");
+        s.ApplyDispatch("VOICE_CONNECTION_STATUS", P("""{"state":"VOICE_CONNECTED","average_ping":10}"""));
+        Assert.Equal(JsonValueKind.Null, s.ToJson().GetProperty("channel").ValueKind);
+
+        s = InCall();
+        s.ApplyDispatch("VOICE_CONNECTION_STATUS", P("""{"state":"VOICE_CONNECTED","average_ping":10}"""));
+        s.ApplyChannel(P("null"), new Dictionary<string, string>());   // saiu da call
+        s.ApplyChannel(P("""{"id":"c2","name":"Outra","guild_id":"g1","voice_states":[]}"""), new Dictionary<string, string>());
+        Assert.Equal(JsonValueKind.Null, Conn(s).ValueKind);   // o ping do canal anterior não volta
+    }
+
     private static JsonElement Member(DiscordState s, string name) =>
         s.ToJson().GetProperty("channel").GetProperty("members").EnumerateArray().First(m => m.GetProperty("name").GetString() == name);
 }

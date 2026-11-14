@@ -5,6 +5,7 @@ package org.atalaia.app.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +19,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -169,6 +177,7 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, s
                     feedback != null -> MonoText(feedback, Palette.Coral)
                     tag != null -> MonoText(tag, Palette.Coral)
                     channel != null -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Pt.voiceConnection(channel.connection)?.let { MonoText(it) }   // "Conectado · 38 ms"; some sem leitura
                         PanelIcon(IconKind.USERS, Palette.TextMuted, 16.dp)
                         MonoText("${channel.members.size}")
                     }
@@ -177,10 +186,40 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, s
             if (channel == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
             } else {
-                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
                     channel.members.forEach { MemberRow(it) }
                 }
+                if (state.hasAction("discord", "leave_call")) LeaveCallBar { send.send("discord", "leave_call") }
             }
+        }
+    }
+}
+
+/** "Sair da call" derruba a call do PC: pede confirmação na própria tela e desiste sozinho depois de 5 s sem resposta. */
+@Composable
+private fun LeaveCallBar(onLeave: () -> Unit) {
+    var asking by remember { mutableStateOf(false) }
+    LaunchedEffect(asking) {
+        if (asking) {
+            delay(5_000)
+            asking = false
+        }
+    }
+    val shape = RoundedCornerShape(20.dp)
+    if (!asking) {
+        Row(
+            Modifier.fillMaxWidth().padding(top = 6.dp).height(48.dp).background(Palette.Panel, shape).border(1.dp, Palette.Border, shape)
+                .clickable { asking = true },
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
+        ) {
+            PanelIcon(IconKind.PHONE_OFF, Palette.Text, 22.dp)
+            Box(Modifier.padding(start = 8.dp)) { BodyText(Texts.DISCORD_LEAVE, sp = 14) }
+        }
+    } else {
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(Modifier.weight(1f)) { BodyText(Texts.DISCORD_LEAVE_ASK, Palette.Coral, 14) }
+            StateButton(Texts.DISCORD_LEAVE_YES, bad = true, enabled = true, modifier = Modifier.width(76.dp)) { asking = false; onLeave() }
+            StateButton(Texts.CONFIG_CANCEL, bad = false, enabled = true, modifier = Modifier.width(96.dp)) { asking = false }
         }
     }
 }

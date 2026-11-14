@@ -45,7 +45,7 @@ usado para rodar os testes: não é distribuído junto com o programa.
 ## Ícones (MIT)
 
 - **Tabler Icons** v3.19.0, Copyright (c) 2020-2024 Paweł Kuna ([tabler/tabler-icons](https://github.com/tabler/tabler-icons)), licença MIT.
-  Só seis ícones do estilo outline (microfone, microfone cortado, fones, fones cortados, volume e pessoas) têm o desenho copiado em
+  Só sete ícones do estilo outline (microfone, microfone cortado, fones, fones cortados, volume, pessoas e telefone cortado) têm o desenho copiado em
   `app/tablet/src/main/kotlin/org/atalaia/app/ui/Icons.kt`; não há dependência da biblioteca. A licença original está em
   [`app/third-party/tabler-icons-LICENSE.txt`](app/third-party/tabler-icons-LICENSE.txt).
 
