@@ -182,12 +182,12 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   Código e testes prontos (ramo `feat/app-atracao`): com o PC conectado e 10 min sem toque, o painel dá lugar a um relógio com a data, o que o PC faz ("PC ligado" ou "jogando" e o nome do jogo) e "Jogado hoje".
   Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
   tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Falta provar no tablet (cenário 21 de `app/docs/teste-manual.md`).
-- [ ] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
+- [x] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
   ações são acréscimos opcionais ao `discord` do v1 (MINOR). Contrato aprovado pelo mantenedor em 13/11/2026. O modo de voz foi cancelado da 0.3.0 (veja "Ideias sem versão").
-  - [ ] **Qualidade da conexão:** assina `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostra "Conectado · 38 ms" no cabeçalho do canal; campo `channel.connection`,
-    opcional (`null` sem leitura). Código e testes prontos (ramo `feat/discord-sinais`); falta provar no tablet (cenário 22 de `app/docs/teste-manual.md`).
-  - [ ] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`, ação `leave_call`, com **confirmação na própria tela**. Código e testes prontos (ramo `feat/discord-sinais`);
-    falta provar no tablet (cenário 22).
+  - [x] **Qualidade da conexão:** assina `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostra "Conectado · 38 ms" no cabeçalho do canal; campo `channel.connection`,
+    opcional (`null` sem leitura). Entrou na `0.3.0-beta.6`. Provado pelo mantenedor no tablet com o Discord real (13/11/2026, cenário 22 de `app/docs/teste-manual.md`).
+  - [x] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`, ação `leave_call`, com **confirmação na própria tela**. Entrou na `0.3.0-beta.6`. Provado pelo mantenedor no tablet
+    com o Discord real (13/11/2026, cenário 22).
   - [x] **Escopos:** teste com o Discord real em 13/11/2026 (agente `--console`, descartável): o ping, o ensurdecer e o `SELECT_VOICE_CHANNEL` com canal nulo funcionam com os escopos de
     hoje (`rpc`, `rpc.voice.read`, `identify`). Não há escopo novo, então a autorização não aparece de novo. O evento chega ao assinar e depois a cada ~5 s; no ensurdecer o `mute` não muda.
 - [x] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
