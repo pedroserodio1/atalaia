@@ -100,6 +100,8 @@ jobs:
           faixa="$fim"; if [ -n "$base" ]; then faixa="$base..$fim"; fi
           echo "Faixa das notas: $faixa"
           git-cliff --config cliff-notas.toml "$faixa" --output notas.md
+          dup=$(grep '^### ' notas.md | sort | uniq -d || true)
+          if [ -n "$dup" ]; then echo "::error::grupo repetido nas notas: $dup"; exit 1; fi
           cat notas.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:

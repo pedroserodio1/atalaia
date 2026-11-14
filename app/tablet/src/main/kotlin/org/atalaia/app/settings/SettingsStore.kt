@@ -112,6 +112,14 @@ class SettingsStore(context: Context) {
         get() = prefs.getBoolean("attract", true)
         set(v) { prefs.edit().putBoolean("attract", v).apply() }
 
+    /**
+     * Último MAC de cabo que o agente publicou (`system.net.mac`), para o "Ligar PC" com o PC desligado. Um valor nulo do agente
+     * (PC no Wi-Fi) nunca apaga este: quem grava só grava MAC válido.
+     */
+    var lastMac: String?
+        get() = prefs.getString("lastMac", null)
+        set(v) { prefs.edit().putString("lastMac", v).apply() }
+
     /** Trocar de aba sozinho (jogo, call, volta ao Início); ligado por padrão. */
     var autoSwitch: Boolean
         get() = prefs.getBoolean("autoSwitch", true)

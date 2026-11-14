@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Pedro Serôdio
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -20,6 +21,7 @@ public sealed class SystemPlugin : IPlugin
     private IPluginContext _ctx = null!;
     private PerformanceCounter? _cpu, _available;
     private NetworkInterface? _nic;
+    private string? _mac;   // MAC de cabo da placa escolhida; nulo no Wi-Fi ou sem placa
     private string _preferredNic = "";
     private long _rx, _tx, _netStamp;
     private bool _netBaseline;
@@ -62,7 +64,7 @@ public sealed class SystemPlugin : IPlugin
             cpu = new { percent = cpu },
             ram = new { usedMb = (int)Math.Round(usedMb), totalMb = (int)Math.Round(totalMb) },
             disks = ReadDisks(),
-            net = new { rxKbps = rx, txKbps = tx },
+            net = new { rxKbps = rx, txKbps = tx, mac = _mac },
         }));
     }
 
@@ -91,7 +93,11 @@ public sealed class SystemPlugin : IPlugin
     {
         try
         {
-            _nic ??= PickNic(_preferredNic, _ctx.Logger);
+            if (_nic is null)
+            {
+                _nic = PickNic(_preferredNic, _ctx.Logger);
+                _mac = WiredMac(_nic);   // o MAC não muda entre coletas e nunca vai para o log
+            }
             if (_nic is null) { _netBaseline = false; return (0, 0); }
 
             var s = _nic.GetIPv4Statistics();
@@ -110,6 +116,7 @@ public sealed class SystemPlugin : IPlugin
         catch (NetworkInformationException)
         {
             _nic = null;   // a placa sumiu; escolhe de novo na próxima coleta
+            _mac = null;
             _netBaseline = false;
             return (0, 0);
         }
@@ -132,6 +139,21 @@ public sealed class SystemPlugin : IPlugin
         logger?.LogInformation("Placa de rede escolhida: {Nic}", chosen?.Name ?? "(nenhuma)");
         return chosen;
     }
+
+    /// <summary>MAC em hexadecimal maiúsculo separado por <c>:</c>; nulo se não tiver 6 bytes ou for tudo zero.</summary>
+    public static string? FormatMac(byte[]? bytes)
+    {
+        if (bytes is not { Length: 6 } || bytes.All(b => b == 0)) return null;
+        return string.Join(':', bytes.Select(b => b.ToString("X2", CultureInfo.InvariantCulture)));
+    }
+
+    /// <summary>Só placa de cabo: o Wake-on-LAN não funciona pelo Wi-Fi.</summary>
+    public static bool IsWired(NetworkInterfaceType t) => t is NetworkInterfaceType.Ethernet or NetworkInterfaceType.GigabitEthernet
+        or NetworkInterfaceType.FastEthernetT or NetworkInterfaceType.FastEthernetFx or NetworkInterfaceType.Ethernet3Megabit;
+
+    /// <summary>MAC da placa se ela for de cabo; senão <c>null</c>.</summary>
+    public static string? WiredMac(NetworkInterface? nic) =>
+        nic is not null && IsWired(nic.NetworkInterfaceType) ? FormatMac(nic.GetPhysicalAddress().GetAddressBytes()) : null;
 
     private static bool HasIPv4Gateway(NetworkInterface n) =>
         n.GetIPProperties().GatewayAddresses.Any(g =>

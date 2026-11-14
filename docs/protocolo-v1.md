@@ -106,8 +106,14 @@ tensões, `freqHz`, `powerW`. Campo sem leitura vai como `null`.
 ```json
 { "cpu": { "percent": 0 }, "ram": { "usedMb": 0, "totalMb": 0 },
   "disks": [ { "name": "C:", "usedGb": 0, "totalGb": 0 } ],
-  "net": { "rxKbps": 0, "txKbps": 0 } }
+  "net": { "rxKbps": 0, "txKbps": 0, "mac": "AA:BB:CC:DD:EE:FF" } }
 ```
+
+- `net.mac` (acréscimo opcional da 0.3.0): MAC da placa que o plugin escolhe para o `rxKbps`, **só se ela for de cabo**
+  (Ethernet, GigabitEthernet, FastEthernetT, FastEthernetFx ou Ethernet3Megabit), em hexadecimal **maiúsculo** separado por `:`.
+  Placa Wi-Fi ou nenhuma placa: `null`. Não muda entre coletas (não gera `update` a mais) e nunca vai para o log.
+  Serve para o tablet guardar o último MAC e enviar o pacote mágico (UDP, broadcast na rede local) quando o PC está desligado;
+  não é uma ação do agente. Clientes antigos ignoram o campo.
 
 ### `gpu`
 

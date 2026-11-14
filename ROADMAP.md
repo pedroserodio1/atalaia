@@ -14,10 +14,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) em publicação).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) e `beta.6` (Discord: ping da call e sair da call) publicadas em 13/11/2026; `beta.7` (Wake-on-LAN e #23) em preparo).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
-  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1),
+  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.0),
   [#66](https://github.com/pedroserodio1/atalaia/issues/66) (a janela dizia que o app não está instalado durante a atualização por USB; corrigida na 0.3.0-beta.5, falta provar).
   Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak). Resolvida na 0.2.0 (`beta.3`): #13 (porta ocupada no boot).
 
@@ -28,8 +28,8 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.4` publicada, `beta.5` em publicação) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
-| **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
+| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.6` publicada, `beta.7` em preparo) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
+| **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV e LoL |
@@ -170,8 +170,12 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   Código e testes prontos (ramo `feat/app-pc-desligado`): vale depois de **1 min** sem achar o PC (o failover USB e Wi-Fi não conta); modo noite (padrão 22h às 07h; fora do
   horário o painel segue como antes), relógio sempre ou tela apagada (preta no brilho mínimo, com a tela ainda ligada); segurar na tela abre a configuração. Falta provar no
   tablet de verdade (cenário 16 de `app/docs/teste-manual.md`): o preto e o brilho mínimo no T68, o horário virando a meia-noite e o consumo a noite toda.
-- [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
-  com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
+- [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Decidido (13/11/2026): PC no **cabo**; o mantenedor já liga o PC por Wake-on-LAN (BIOS e Windows prontos).
+  Código e testes prontos (ramo `feat/wake-on-lan`): o agente publica `system.net.mac` só da placa de cabo (`null` no Wi-Fi; contrato MINOR e opcional, aprovado); o tablet guarda o último MAC
+  e, com o PC desligado, mostra o botão redondo **Ligar PC** (desenho "Layout 5", no modo relógio e, com um toque, na tela apagada por 15 s), que manda o pacote mágico (UDP, broadcast, portas 9 e 7).
+  Cada pedido e o desfecho vão para `wol.log` na pasta do app (MAC mascarado, sem IP) e para o `logcat` (tag `AtalaiaWol`). A janela do agente mostra o MAC e o preparo (BIOS, Windows).
+  Sem ação nova no agente. Falta provar com o PC desligado de verdade (cenário 23 de `app/docs/teste-manual.md`), inclusive se o botão fica legível no brilho mínimo.
+  Fora da 0.3.0 (ideias sem versão): "Última sessão · jogo · tempo" na tela de PC desligado, botão na faixa "PC desligado ou inalcançável" (0.3.1, se fizer falta) e no Deck/configuração (0.5.0).
 - [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
   Código e testes prontos (ramo `feat/app-atracao`): com o PC conectado e 10 min sem toque, o painel dá lugar a um relógio com a data, o que o PC faz ("PC ligado" ou "jogando" e o nome do jogo) e "Jogado hoje".
   Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
@@ -213,7 +217,7 @@ Um sub-ramo por linha, entrando em `beta/0.3.0` por squash. Dá para começar pe
 | 3 | `feat/app-pc-desligado` | Tela de PC desligado, **configurável** entre modo noite por horário, relógio sempre e tela apagada | não | nada (decisão 1 tomada). Hoje o app só escreve o texto de `ConnectionState.Unreachable` (`Texts.kt`); a escolha fica na tela de configuração do tablet |
 | 4 | `feat/app-atracao` | Tela Atração | não | 3 (reaproveita o relógio). "Horas jogadas hoje": o v1 só traz `hours2w` e `library.hours`, então o app teria de somar o tempo com `steam.game` ativo enquanto conectado, zerando à meia-noite (só conta o que ele viu). A confirmar |
 | 5 | `feat/discord-sinais` | Discord: qualidade da conexão, sair da call, escopos | sim, campos e ações opcionais em `discord` | aprovação do contrato; **primeiro um teste com o Discord real** para saber os escopos |
-| 6 | `feat/wake-on-lan` | Wake-on-LAN | sim, publicar o MAC (campo opcional) | decisões 2 e 7. O pacote mágico sai **do tablet** (UDP na rede local; o agente está desligado junto com o PC), então talvez nem seja uma ação nova, só o MAC; a confirmar. Só funciona pelo Wi-Fi, não pelo USB |
+| 6 | `feat/wake-on-lan` | Wake-on-LAN | sim, publicar o MAC (campo opcional, aprovado) | decisões 2 e 7 tomadas. O pacote mágico sai **do tablet** (UDP na rede local; o agente está desligado junto com o PC), então talvez nem seja uma ação nova, só o MAC; a confirmar. Só funciona pelo Wi-Fi, não pelo USB |
 | 7 | `feat/app-pin` | Configurações no tablet com PIN | não | nada |
 | 8 | `feat/aviso-transferencia` | Aviso de download ou cópia terminando no PC | a definir (ver "Em risco") | nada para o download; a cópia pode exigir campo novo |
 | 9 | `feat/pareamento` | Pareamento com validade e lista de tablets | sim, mensagens novas | aprovação do contrato; é o item maior e mais arriscado, deixar por último |
@@ -224,7 +228,7 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
 
 - `discord`: qualidade da conexão (estado e ping, `null` sem leitura). Aprovado pelo mantenedor (13/11/2026).
 - Ações do `discord`: sair da call (com confirmação na tela do tablet). Aprovado pelo mantenedor (13/11/2026). O modo de voz foi cancelado.
-- Endereço físico (MAC) do PC publicado pelo agente, para o Wake-on-LAN. Onde fica (`hello` ou `system`) é a decidir.
+- Endereço físico (MAC) da placa de cabo do PC publicado pelo agente em `system.net.mac`, para o Wake-on-LAN. Aprovado pelo mantenedor (13/11/2026).
 - Pareamento e revogação de tablet: mensagens novas no protocolo, o que o v1 hoje lista como "fora do v1".
 
 ### Em risco
@@ -235,7 +239,12 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
   disco, que o `system` não tem: seria campo novo e opcional (MINOR), combinar antes. A confirmar com o mantenedor se a cópia entra nesta versão.
 - **Pareamento:** é o único item que pode sozinho adiar a versão. Proposta: decidir no começo do ciclo se entra; se não entrar, vai para a 0.4.0 e a #15
   continua só com a opção A (que já resolve o dia a dia).
-- **Wake-on-LAN** depende das decisões 2 e 7 (abaixo); sem elas, a linha 6 não começa.
+
+- [ ] **#23:** as notas da release estável saem com os grupos repetidos (um bloco "Novidades", "Correções" e "Outros" por beta). Causa: o
+  `cliff-notas.toml` não definia `tag_pattern`, então o git-cliff tratava cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
+  que nunca casa, comentado no arquivo, e uma guarda no job `notas` do `release.yml` que falha se um título `###` aparecer duas vezes.
+  Código pronto (ramo `fix/notas-grupos`); conferido com o git-cliff 2.14.2 em `v0.2.0..HEAD` (antes repetia "Novidades" e "Outros", depois nenhum grupo repete).
+  Falta ver nas notas da `v0.3.0` publicada (vira `[x]` quando sair sem grupo repetido). A 0.2.0 ainda saiu com o defeito.
 
 ### Pronto quando
 
@@ -247,10 +256,6 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
 
 Só correção compatível, sem mexer no protocolo nem na configuração.
 
-- [ ] **#23:** as notas da release estável saem com os grupos repetidos (um bloco "Novidades", "Correções" e "Outros" por beta). Causa: o
-  `cliff-notas.toml` não define `tag_pattern`, então o git-cliff trata cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
-  que nunca casa, comentado no arquivo, e um teste (ou passo do ensaio `dry_run` do `release.yml`) que falha se um grupo aparecer duas vezes.
-  A 0.2.0 ainda saiu com o defeito.
 - [ ] **#66 (corrigida no ciclo da 0.3.0, ramo `fix/agente-update-usb`; sai na `0.3.0-beta.5`):** durante "Atualizar por USB" a janela do agente mostrava "O app do Atalaia não está instalado no tablet", embora ele esteja.
   Causa confirmada: `TabletGet` (`UpdateCommands.cs`) não consultava a versão com o job rodando e devolvia `null`, que a página lia como "não instalado". Agora devolve a última versão conhecida e a página
   mostra "Atualizando o app no tablet…". Teste que segura o job rodando (falha sem a correção). Falta provar numa atualização real por USB.
@@ -332,6 +337,8 @@ A `1.0.0` é declarada pelo mantenedor quando:
   extensão do Meet; avaliar depois da `0.5.0`.
 - Google Tasks, aniversários, Gmail, fotos como protetor de tela, Tailscale, amigos da Steam em jogo, AniList, Jellyfin, Letterboxd,
   resets e timers do FFXIV, modo foco.
+- Tela de PC desligado: "Última sessão · jogo · tempo" (do desenho "Layout 5"; exigiria o tablet guardar a última sessão) e o botão Ligar PC também na faixa
+  "PC desligado ou inalcançável" do painel normal (0.3.1, se fizer falta), no Deck e na configuração do tablet (0.5.0).
 - Discord: modo de voz (aperte para falar ou detecção de voz; o `GET_VOICE_SETTINGS` já traz `mode.type`) com etiqueta e ação para alternar. Cancelado da 0.3.0 pelo
   mantenedor (13/11/2026); issue ou PR bem-vindos.
 - Discord, avaliado e deixado de fora do RPC: `NOTIFICATION_CREATE` (escopo `rpc.notifications.read`; entrega o texto das mensagens, o que o projeto não envia)
@@ -344,12 +351,12 @@ A `1.0.0` é declarada pelo mantenedor quando:
 ## Decisões em aberto
 
 1. ~~**O que o tablet mostra quando o PC está desligado**~~ Decidido: **configurável** entre modo noite por horário, relógio sempre e tela apagada.
-2. **PC no cabo ou no Wi-Fi:** define se o Wake-on-LAN é viável.
+2. ~~**PC no cabo ou no Wi-Fi:** define se o Wake-on-LAN é viável.~~ Decidido: cabo.
 3. **Qual modelo de plugin entra primeiro** (assembly .NET ou processo separado).
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
 5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
 6. ~~**Porta do agente (#13)**~~ Decidido: faixa de 10 portas, o app a percorre sozinho na rede local (`docs/protocolo-v1.md`).
-7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord`, estas já aprovadas): aprovar antes de qualquer código.
+7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord` e o MAC do `system`, estes já aprovados): aprovar antes de qualquer código.
 8. **Aviso de download ou cópia (`0.3.0`):** o aviso fica na versão (decidido). Em aberto: se a **cópia** entra (exige campo novo de leitura de disco) ou só o download; e se o pareamento entra na `0.3.0` (decidir depois, no ciclo).
 9. **Discord por pessoa (`0.4.0`):** publicar o id do Discord do membro ou um identificador opaco, e se o avatar fica só em memória ou também em disco.
 

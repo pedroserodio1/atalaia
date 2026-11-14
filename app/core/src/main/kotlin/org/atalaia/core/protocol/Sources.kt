@@ -18,7 +18,8 @@ sealed interface SourceData
 @Serializable data class Cpu(val percent: Int? = null)
 @Serializable data class Ram(val usedMb: Long? = null, val totalMb: Long? = null)
 @Serializable data class Disk(val name: String = "", val usedGb: Double? = null, val totalGb: Double? = null)
-@Serializable data class Net(val rxKbps: Long? = null, val txKbps: Long? = null)
+/** `mac`: MAC da placa de cabo do PC (`AA:BB:CC:DD:EE:FF`) para o Wake-on-LAN; `null` no Wi-Fi ou sem leitura. */
+@Serializable data class Net(val rxKbps: Long? = null, val txKbps: Long? = null, val mac: String? = null)
 
 @Serializable
 data class SystemData(
