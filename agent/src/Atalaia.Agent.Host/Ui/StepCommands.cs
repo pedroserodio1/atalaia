@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Pedro Serôdio
 
+using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Atalaia.Agent.Core;
@@ -12,6 +13,7 @@ using Atalaia.Agent.Host.Sources;
 using Atalaia.Agent.Host.Startup;
 using Atalaia.Agent.Host.Updates;
 using Atalaia.Agent.Host.Usb;
+using Atalaia.Agent.Plugins.System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -559,6 +561,9 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         var enabled = sources["sources"]!.AsArray().Count(x => x!["enabled"]!.GetValue<bool>());
         var needSetup = sources["sources"]!.AsArray().Count(x => x!["enabled"]!.GetValue<bool>() && x["needs"]!.AsArray().Count > 0);
         var clients = s.Runtime.Clients;
+        // A mesma placa que o plugin `system` escolhe (Plugins:system:netInterface), e não a da janela (Network:PreferredAdapter): é o MAC que o tablet recebe.
+        // Sem logger: o summary.get roda a cada 6 s e o PickNic registra a escolha a cada chamada.
+        var nic = SystemPlugin.PickNic(s.Runtime.Config["Plugins:system:netInterface"]?.Trim() ?? "", null);
 
         JsonNode Item(string key, string status, string text) => new JsonObject { ["key"] = key, ["status"] = status, ["text"] = text };
 
@@ -581,6 +586,8 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         return new JsonObject
         {
             ["items"] = new JsonArray(network, usb, app, tablet, src),
+            ["mac"] = SystemPlugin.WiredMac(nic),   // nulo no Wi-Fi ou sem placa
+            ["macWifi"] = nic?.NetworkInterfaceType == NetworkInterfaceType.Wireless80211,
             ["startup"] = s.Autostart.State.ToString().ToLowerInvariant(),   // off | on | otherpath
             ["autoCheck"] = AutoCheck(),
         };

@@ -123,6 +123,12 @@ object Texts {
     const val OFF_NIGHT_END = "Modo noite termina"
     const val OFF_SCREEN_LABEL = "PC desligado"
     const val OFF_HOLD_TO_CONFIG = "Segure para configurar"
+    const val OFF_STANDBY = "PC desligado · tablet em espera"
+    const val WAKE_PC = "Ligar PC"
+    const val WAKE_TAP = "toque para enviar Wake-on-LAN"
+    const val WAKE_SENT = "Pedido enviado; o PC leva até 1 min"
+    const val WAKE_NO_ANSWER = "Sem resposta. Veja o registro"
+    const val WAKE_FAILED = "Não consegui enviar o pedido. Veja o registro"
 
     fun offMode(m: OffMode): String = when (m) {
         OffMode.NIGHT -> "Modo noite"

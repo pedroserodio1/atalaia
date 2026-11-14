@@ -43,6 +43,13 @@ class SourcesTest {
     }
 
     @Test
+    fun system_com_mac_de_cabo_nulo_ausente_e_campo_extra() {
+        assertEquals("AA:BB:CC:DD:EE:FF", decode<SystemData>("system", """{"net":{"rxKbps":1,"txKbps":2,"mac":"AA:BB:CC:DD:EE:FF","novo":true}}""").net.mac)
+        assertNull(decode<SystemData>("system", """{"net":{"rxKbps":1,"txKbps":2,"mac":null}}""").net.mac)   // PC no Wi-Fi
+        assertNull(decode<SystemData>("system", """{"net":{"rxKbps":1,"txKbps":2}}""").net.mac)            // agente anterior à 0.3.0-beta.7
+    }
+
+    @Test
     fun gpu() {
         val d = decode<GpuData>("gpu", """{"name":"RTX","tempC":61,"utilPercent":78,"vramUsedMb":5200,"vramTotalMb":8192,"powerW":123.4}""")
         assertEquals("RTX", d.name)

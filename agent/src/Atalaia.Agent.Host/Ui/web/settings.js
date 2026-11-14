@@ -4,7 +4,7 @@
 // As telas de configuração (o que a janela mostra depois da primeira configuração): Conexão, Fontes de dados, Jogos e ações e
 // Atualizações. Reaproveitam as mesmas peças dos passos do onboarding, então mostram o mesmo estado real. Notas de release são texto de
 // fora: entram só por textContent (h() usa createTextNode), nunca como HTML. O que o agente v1 ainda não
-// tem (lista de tablets pareados, "Gerar novo", mDNS, Wake-on-LAN, cenas e ações por jogo) aparece desabilitado como "em breve",
+// tem (lista de tablets pareados, "Gerar novo", mDNS, cenas e ações por jogo) aparece desabilitado como "em breve",
 // nunca como se funcionasse.
 'use strict';
 
@@ -61,7 +61,13 @@ function systemCard() {
       row('Iniciar com o Windows', d.startup === 'otherpath' ? 'Está ligado, mas para outra cópia do programa. Ligue de novo para corrigir.' : 'Sobe em segundo plano',
         toggle('Iniciar com o Windows', d.startup === 'on', (on) => v.run('Gravando…', () => call('startup.set', { enabled: on })), v.busy)),
       soonRow('Anunciar na rede (mDNS)', 'O tablet acharia o PC sozinho'),
-      soonRow('Endereço MAC (Wake-on-LAN)', 'Ligar o PC pelo tablet'),
+      row('Endereço MAC (Wake-on-LAN)',
+        d.mac ? 'Do cabo de rede. O tablet guarda este endereço para ligar o PC.'
+          : d.macWifi ? 'PC no Wi-Fi: ligar pelo tablet não funciona. Use o cabo de rede.' : 'Nenhuma placa de rede de cabo ativa.',
+        h('span', { class: 'hint' }, d.mac || '—')),
+      h('div', { class: 'hint' }, 'Para o PC ligar pelo tablet: na BIOS, ligue "Wake on LAN" ou "Power On by PCI-E" (e desligue o "ErP"); no Gerenciador de Dispositivos, '
+        + 'na placa de rede, em Gerenciamento de Energia, marque "Permitir que este dispositivo ative o computador" e "Somente pacote mágico"; '
+        + 'desligue a "Inicialização rápida" do Windows. Só funciona com o PC no cabo e o tablet no Wi-Fi da mesma rede (pelo USB não funciona).'),
     ), busyNote(v)];
   }, 6000);
   return view.box;
