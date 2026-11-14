@@ -92,7 +92,7 @@ Regras fixas:
 
 Commits seguem [Conventional Commits](https://www.conventionalcommits.org/pt-br/): `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`. Um `!` depois do tipo (ou `BREAKING CHANGE:` no corpo) marca quebra. Quem decide o número é o Pedro, e a esteira confere o que dá: se há `feat`, o número não pode ser só patch; se há quebra, o número precisa ser minor (antes da 1.0) ou major.
 
-As notas saem dos commits com o **git-cliff** (`cliff.toml`, em português), agrupadas em **Novidades** (`feat`), **Correções** (`fix`) e **Outros**. Beta: desde a beta anterior da mesma versão (a primeira, desde a última estável). Estável: tudo desde a última estável, somando o que passou pelos betas. O texto das notas aparece na tela Atualizações do agente. O `CHANGELOG.md` é gerado **só nas estáveis**, no PR `development` para `main`; a esteira confere que a seção da versão existe.
+As notas saem dos commits com o **git-cliff** (`cliff.toml`, em português), agrupadas em **Novidades** (`feat`), **Correções** (`fix`) e **Outros**. Beta: desde a beta anterior da mesma versão (a primeira, desde a última estável). Estável: tudo desde a última estável, somando o que passou pelos betas. As notas usam o `cliff-notas.toml`, que não reconhece tag nenhuma como fronteira: a faixa vem pronta do `release.yml` e o job falha se um grupo sair repetido. O texto das notas aparece na tela Atualizações do agente. O `CHANGELOG.md` é gerado **só nas estáveis**, no PR `development` para `main`; a esteira confere que a seção da versão existe.
 
 ## 6. O que cada release publica
 
