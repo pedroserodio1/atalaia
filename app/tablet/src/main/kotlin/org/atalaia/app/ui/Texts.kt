@@ -56,6 +56,9 @@ object Texts {
     const val DISCORD_CLOSED = "Discord fechado"
     const val VOICE_CHANNEL = "Canal de voz"
     const val NOT_IN_CALL = "Fora de um canal de voz"
+    const val DISCORD_LEAVE = "Sair da call"
+    const val DISCORD_LEAVE_ASK = "Sair da call?"
+    const val DISCORD_LEAVE_YES = "Sair"
     const val MIC_VOLUME = "Microfone"
     const val OUT_VOLUME = "Saída"
 

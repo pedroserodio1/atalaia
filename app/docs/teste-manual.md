@@ -287,6 +287,16 @@ Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a um
 8. Desligue "Relógio após 10 min parado" na configuração e salve. **Esperado:** a espera nunca aparece.
 9. Anote a bateria e a temperatura do tablet depois de uma noite com a espera ativa (a tela fica acesa com o relógio).
 
+## 22. Discord: ping da call e sair da call
+
+1. Com `--simulate`: o cabeçalho do canal mostra "Conectado · 38 ms" ao lado do número de pessoas. O botão "Sair da call" (48 dp) aparece embaixo da lista.
+   Toque: a barra vira "Sair da call?" com Sair e Cancelar; sem tocar, volta sozinha em 5 s. Cancelar volta; Sair tira o canal ("Fora de um canal de voz") e ele volta em ~10 s.
+2. Com o Discord real numa call: o ping aparece (em até ~5 s) e muda de vez em quando. Troque de canal: o ping some e volta em até ~5 s.
+3. "Sair da call" com o Discord real: a call cai no PC e a tela mostra "Fora de um canal de voz". Fora da call o botão não aparece.
+4. Ensurdeça pelo tablet e religue os fones: o microfone volta sozinho no Discord e o botão do tablet mostra o mesmo (o spike mostrou `mute` sem mudar; confira na tela).
+5. Altura: com a conexão no cabeçalho e 5 ou mais pessoas na call, nada corta nos 505 dp (a lista rola, os volumes ficam inteiros, o botão inteiro).
+6. Agente antigo (beta.5) com o app novo: sem ping e sem botão, nada quebra.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -310,3 +320,4 @@ Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a um
 | 19 Aviso de download | | |
 | 20 PIN da configuração | | |
 | 21 Tela Atração | | |
+| 22 Discord: ping e sair da call | | |

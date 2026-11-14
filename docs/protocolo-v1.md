@@ -243,14 +243,20 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 
 ```json
 { "connected": false, "user": "", "mute": false, "deaf": false, "inputVolume": 0, "outputVolume": 0,
-  "channel": { "name": "", "guild": "", "members": [ { "name": "", "muted": false, "deafened": false, "speaking": false } ] } }
+  "channel": { "name": "", "guild": "", "connection": { "state": "connected", "pingMs": 38 },
+               "members": [ { "name": "", "muted": false, "deafened": false, "speaking": false } ] } }
 ```
 
 - Fala com o Discord **desktop** pelo pipe local. `connected: false` (com o resto vazio e `channel: null`)
   quando o Discord está fechado: isso não é erro do plugin. `channel` é `null` fora de canais de voz.
+- `channel.connection` (acréscimo opcional da 0.3.0): qualidade da conexão de voz, do evento `VOICE_CONNECTION_STATUS`
+  (chega logo ao assinar e depois a cada ~5 s). `state` é `connected`, `connecting` (inclui reconectando) ou `no_route`;
+  `pingMs` é o `average_ping` arredondado, só em `connected`, senão `null`. O objeto todo é `null` quando não há leitura
+  (ainda sem evento ou estado desconhecido). O `hostname` do evento nunca é publicado. Clientes antigos ignoram o campo.
 - Atualiza por eventos (quem fala, mudo, troca de canal), publicados no ritmo do intervalo (padrão 1 s).
-- Escopos `rpc`, `rpc.voice.read` e `identify`. Na primeira vez o Discord mostra um pop-up de autorização
-  (até ~2 min para aceitar); o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json`, nunca no log.
+- Escopos `rpc`, `rpc.voice.read` e `identify` (bastam também para o ping e para sair da call). Na primeira vez o Discord
+  mostra um pop-up de autorização (até 3 min para aceitar); o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json`,
+  nunca no log.
 - Exige `clientId` e `clientSecret` na configuração (variável de ambiente ou `.env`).
 
 ## Ações por fonte
@@ -268,6 +274,7 @@ dispara coleta imediata). `args` é `{}` quando não há argumento.
 | `discord` | `toggle_deaf` | — | Liga/desliga o áudio (ensurdecer) |
 | `discord` | `set_input_volume` | `{ "value": 0..100 }` | Volume do microfone |
 | `discord` | `set_output_volume` | `{ "value": 0..200 }` | Volume de saída |
+| `discord` | `leave_call` | — | Sai do canal de voz (`SELECT_VOICE_CHANNEL` com `channel_id: null`). Fora de um canal devolve `ok` sem fazer nada. O tablet pede confirmação na tela |
 | `notifications` | `clear_all` | — | Descarta **todas** as notificações do Windows (não há como desfazer) |
 | `weather`, `steam`, `claude`, `ups`, `notifications` | `refresh` | — | Coleta de novo agora (no `steam`, recarrega também nível, biblioteca, recentes e amigos) |
 
