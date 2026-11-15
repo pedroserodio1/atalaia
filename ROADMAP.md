@@ -30,9 +30,9 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.7` publicada) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
-| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Fortnite (log do jogo), Discord (volume por pessoa e avatares) |
+| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
-| **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV e LoL |
+| **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL e Fortnite |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
 
 ---
@@ -286,18 +286,6 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   agente baixa, reduz (~64 px) e serve pelo `GET /cover/{hash}` que já existe (mesmo hash de 16 caracteres do SHA-256), e o membro ganha um `avatarHash`
   opcional. Cuidados: o agente só fala com **um endereço fixo** do CDN, definido no código (nunca vindo do conteúdo); falha de rede mantém a inicial no círculo;
   no app, `inSampleSize` e cache pequeno (poucos avatares), nada de `Bitmap` grande. A conferir: formato da URL do avatar e se vale guardar em disco ou só em memória.
-- [ ] **Fortnite (log do jogo):** fonte nova, desligada por padrão. Só **lê arquivo**, nunca a memória do processo nem injeção (é o que o Easy Anti-Cheat
-  existe para barrar). Lê `%LOCALAPPDATA%\FortniteGame\Saved\Logs\FortniteGame.log`, aberto com compartilhamento de leitura, em UTF-8 (as horas do log
-  estão em UTC). Sondagem de 15/11/2026, com o jogo aberto (5 partidas): dá para tirar o modo (`MatchmakingLog`: região, tamanho do time, construção,
-  ranqueado), os vivos e o modo em texto pronto (`LogEOSSDK`, campo `RichText`), a fase (`LogBattleRoyaleGamePhaseLogic`: Aircraft, SafeZones, EndGame),
-  a etapa da tempestade, o pulo do ônibus, os jogadores eliminados (`LogPlayerKills`, só o apelido de quem caiu) e a vitória
-  (`GetLocalPlayerHasWinningPlacement`, coroa). **Não dá** para saber quem fez o abate, nem o seu número de abates, nem a colocação exata (isso só no replay
-  de `Demos\`, e o parser não foi testado); partida que acaba sem `EndGame` fica "sem resultado".
-  Cuidados: o log traz **token de sessão da Epic, IDs de conta e apelidos de outros jogadores**, então o plugin extrai só campos prontos e **nunca** repassa
-  linha crua; o formato é interno da Unreal e muda com a versão do jogo (parser tolerante, que ignora o que não conhece); com o jogo fechado, o dado
-  aparece como velho. Fonte nova é mudança de contrato (`docs/protocolo-v1.md`): combinar com o mantenedor antes. Tela: 5 estados (em partida, lobby,
-  vitória, eliminado, dado velho) dentro da aba Jogo, em esboço no artefato de design. Falta provar: lobby e fila (sem sinal claro no log), etapas da
-  tempestade além de `StormHolding` e o parser de replay.
 
 ## 0.5.0: ações no PC
 
@@ -325,6 +313,18 @@ Para outras pessoas criarem fontes sem mexer no núcleo.
 - [ ] **Estrutura do repositório:** pastas `plugins/` e `examples/`; guia para escrever plugin; documentação **em português e inglês**.
 - [ ] **Jogos:** FFXIV (próximas mecânicas, cooldowns, DPS; via Dalamud ou OverlayPlugin) e LoL (tempo, placar, KDA, CS, ouro, objetivos).
   Jogos extras a definir.
+- [ ] **Jogos: Fortnite (log do jogo).** Fonte desligada por padrão. Só **lê arquivo**, nunca a memória do processo nem injeção (é o que o Easy Anti-Cheat
+  existe para barrar). Lê `%LOCALAPPDATA%\FortniteGame\Saved\Logs\FortniteGame.log`, aberto com compartilhamento de leitura, em UTF-8 (as horas do log
+  estão em UTC). Sondagem de 15/11/2026, com o jogo aberto (5 partidas): dá para tirar o modo (`MatchmakingLog`: região, tamanho do time, construção,
+  ranqueado), os vivos e o modo em texto pronto (`LogEOSSDK`, campo `RichText`), a fase (`LogBattleRoyaleGamePhaseLogic`: Aircraft, SafeZones, EndGame),
+  a etapa da tempestade, o pulo do ônibus, os jogadores eliminados (`LogPlayerKills`, só o apelido de quem caiu) e a vitória
+  (`GetLocalPlayerHasWinningPlacement`, coroa). **Não dá** para saber quem fez o abate, nem o seu número de abates, nem a colocação exata (isso só no replay
+  de `Demos\`, e o parser não foi testado); partida que acaba sem `EndGame` fica "sem resultado".
+  Cuidados: o log traz **token de sessão da Epic, IDs de conta e apelidos de outros jogadores**, então o plugin extrai só campos prontos e **nunca** repassa
+  linha crua; o formato é interno da Unreal e muda com a versão do jogo (parser tolerante, que ignora o que não conhece); com o jogo fechado, o dado
+  aparece como velho. Fonte nova é mudança de contrato (`docs/protocolo-v1.md`): combinar com o mantenedor antes. Tela: 5 estados (em partida, lobby,
+  vitória, eliminado, dado velho) dentro da aba Jogo, em esboço no artefato de design. Falta provar: lobby e fila (sem sinal claro no log), etapas da
+  tempestade além de `StormHolding` e o parser de replay.
 - [ ] Extras: promoções da wishlist da Steam; timers, pomodoro e contagens regressivas.
 - [ ] A barra de abas já não comporta uma 7ª aba com ícone em cima: virar rolável ou ter um "Mais".
 
