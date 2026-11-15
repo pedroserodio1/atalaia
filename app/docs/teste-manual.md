@@ -344,6 +344,20 @@ Hoje só a Mídia tem submenu (Tocando agora e Mixer). Início, Sistema, Jogo e 
 8. Sair e voltar ao app (ou recriar a atividade): continua na mesma tela e na mesma barra.
 9. Desempenho: sem animação; repetir a medição de quadros do arrasto (cenário 12) com o arco aberto.
 
+## 25. Agenda (Início › Agenda)
+
+Precisa de um link iCal secreto de verdade (ou `--simulate`, que traz eventos de exemplo e um que começa daqui a ~16 min). Na janela do agente: Fontes de dados, Agenda, Configurar: `Trabalho https://...; Pessoal https://...`.
+
+1. Início › toque em **Início**: a barra vira `‹ | Principal | Agenda`. Toque em **Agenda**: abre o **Dia** e a barra vira `‹ | Dia | Semana | Mês`. Os eventos de hoje aparecem em ordem, o próximo com contorno menta.
+2. **Semana** e **Mês**: as setas andam no tempo e "Hoje" volta; as setas param no mês atual e no seguinte (é o que o agente traz). O dia de hoje fica destacado. Com mais de uma agenda, a legenda mostra o nome e a cor de cada uma.
+3. **Chips da legenda:** tocar numa agenda a esconde na tela (a bolinha fica vazada e o nome apagado); tocar de novo mostra. Conferir que o **aviso do cartão do relógio** continua valendo para a agenda escondida.
+4. **Modal do dia:** na Semana ou no Mês, tocar num dia abre o modal por cima (véu escuro, nada se mexe): o dia por extenso, os eventos, setas para o dia anterior e o seguinte, X e "Abrir o dia". Tocar fora fecha; "Abrir o dia" leva à tela Dia daquela data.
+5. **Aviso:** com um evento começando em até 15 min, o cartão do relógio mostra "Em N min · título" com borda menta (abaixo de queda de energia e de limite, que mandam). O tablet toca **um bipe em 15 min e dois em 5 min**, uma vez por evento. Conferir o volume de notificação do tablet e que a opção "Som do aviso de agenda" (configuração) desliga o som.
+6. **Anti-ruído do som:** abrir o app faltando 4 min toca só o de 5 min (não dobra); reconectar o agente não repete o som; evento de dia inteiro nunca toca.
+7. Dado velho, fonte desligada ou sem link: a tela Agenda diz "desligada ou sem link" / "velho" em vez de números fingindo ser atuais, e não toca nem avisa.
+8. Eventos que se repetem (reunião toda segunda), de dia inteiro, que viram a meia-noite e de agendas com fuso diferente do PC aparecem nos dias certos.
+9. Desempenho: o modal e a troca de visão não podem pesar (sem animação); repetir a medição de quadros do arrasto (cenário 12) na tela do Mês.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -370,3 +384,4 @@ Hoje só a Mídia tem submenu (Tocando agora e Mixer). Início, Sistema, Jogo e 
 | 22 Discord: ping e sair da call | | |
 | 23 Wake-on-LAN | | |
 | 24 Submenus e arco | | |
+| 25 Agenda | | |
