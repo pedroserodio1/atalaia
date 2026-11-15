@@ -1,6 +1,6 @@
 # Roadmap do Atalaia
 
-Status em **13/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
+Status em **15/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
 tag e número de versão estão em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Datas não são promessa: a ordem e o
 escopo de cada versão podem mudar, e quem decide é o mantenedor.
 
@@ -14,11 +14,11 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está em andamento (ciclo `beta/0.3.0` aberto; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está pronta para a estável (`v0.3.0` em publicação, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
-  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.0),
-  [#66](https://github.com/pedroserodio1/atalaia/issues/66) (a janela dizia que o app não está instalado durante a atualização por USB; corrigida na 0.3.0-beta.5, falta provar).
+  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida na 0.3.0, falta ver nas notas da `v0.3.0` publicada),
+  [#66](https://github.com/pedroserodio1/atalaia/issues/66) (a janela dizia que o app não está instalado durante a atualização por USB; corrigida na 0.3.0-beta.5 e provada no tablet).
   Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak). Resolvida na 0.2.0 (`beta.3`): #13 (porta ocupada no boot).
 
 ## Resumo das versões
@@ -28,7 +28,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor, em andamento (ciclo `beta/0.3.0` aberto, `beta.7` publicada) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
+| **0.3.0** | Tablet esperto | minor, pronta para a estável (`v0.3.0` em publicação; `beta.7` foi a última beta) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
@@ -155,21 +155,21 @@ Comportamentos que fazem o painel "se virar" sozinho. Quase tudo usa dados que o
 Objetivo: o tablet deixa de ser só um espelho do PC e passa a reagir ao que acontece (jogo abriu, GPU esquentando, PC desligou) sem ninguém mexer nele.
 Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu de `development` com `VERSION` em `0.3.0`.
 
-- [ ] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
+- [x] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
   Código e testes prontos (ramo `feat/app-contexto`): gatilho do jogo só `steam.game` (decidido; atraso de até 30 s e jogo fora da Steam não dispara), call depois de 3 s, volta ao
   Início após 5 min sem toque (menos se a aba é a do contexto ainda ativo); ligada por padrão, com opção de desligar na configuração. Não puxa a tela ao reconectar com jogo ou call
-  em andamento, nem de quem está mexendo (toque nos últimos 15 s). Provado pelo mantenedor no tablet (Discord e Steam reais, 13/11/2026): a call leva à aba Discord e o jogo da Steam leva à aba Jogo. Falta provar (cenário 17 de `app/docs/teste-manual.md`): a volta ao Início após 5 min, o anti-ruído (reconectar com jogo ou call em andamento, trocar de canal), a opção de desligar e a medição de quadros do arrasto.
+  em andamento, nem de quem está mexendo (toque nos últimos 15 s). Provado pelo mantenedor no tablet (Discord e Steam reais, 13/11/2026): a call leva à aba Discord e o jogo da Steam leva à aba Jogo. O resto do cenário 17 de `app/docs/teste-manual.md` (volta ao Início após 5 min, anti-ruído, opção de desligar e quadros do arrasto) foi provado pelo mantenedor no tablet em 15/11/2026.
 - [x] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
   (o nobreak já chegou a dar 95 quedas em ~2 dias).
   Feito na `0.3.0-beta.1`: padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
   de 10 s acima do limite e só desliga 5 pontos abaixo, aparece no cartão do relógio (a queda de energia continua mandando). Provado pelo mantenedor no tablet, em 13/11/2026
   (roteiro: cenário 15 de `app/docs/teste-manual.md`).
-- [ ] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
+- [x] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
   acesa mostrando isso. Decidido: **configurável** na tela de configuração do tablet entre **modo noite por horário**, **relógio discreto sempre** e
   **tela apagada**.
   Código e testes prontos (ramo `feat/app-pc-desligado`): vale depois de **1 min** sem achar o PC (o failover USB e Wi-Fi não conta); modo noite (padrão 22h às 07h; fora do
-  horário o painel segue como antes), relógio sempre ou tela apagada (preta no brilho mínimo, com a tela ainda ligada); segurar na tela abre a configuração. Falta provar no
-  tablet de verdade (cenário 16 de `app/docs/teste-manual.md`): o preto e o brilho mínimo no T68, o horário virando a meia-noite e o consumo a noite toda.
+  horário o painel segue como antes), relógio sempre ou tela apagada (preta no brilho mínimo, com a tela ainda ligada); segurar na tela abre a configuração. O cenário 16 de
+  `app/docs/teste-manual.md` (o preto e o brilho mínimo no T68, o horário virando a meia-noite e o consumo a noite toda) foi provado pelo mantenedor no tablet em 15/11/2026.
 - [x] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Decidido (13/11/2026): PC no **cabo**; o mantenedor já liga o PC por Wake-on-LAN (BIOS e Windows prontos).
   `system.net.mac` só da placa de cabo (`null` no Wi-Fi; contrato MINOR e opcional, aprovado); o tablet guarda o último MAC e, com o PC desligado, mostra o botão redondo **Ligar PC**
   (desenho "Layout 5"), que manda o pacote mágico (UDP, broadcast, portas 9 e 7). Cada pedido e o desfecho vão para `wol.log` na pasta do app (MAC mascarado, sem IP) e para o `logcat`
@@ -178,10 +178,10 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   e "PC voltou em 77 s" (do toque até o tablet ver o agente de novo, boot incluído).
   Falta conferir (secundário): a tela apagada acordando com um toque por 15 s, a legenda "Sem resposta" depois de 3 min e a de falha com o Wi-Fi do tablet desligado, e a legibilidade do botão no brilho mínimo.
   Fora da 0.3.0 (ideias sem versão): "Última sessão · jogo · tempo" na tela de PC desligado, botão na faixa "PC desligado ou inalcançável" (0.3.1, se fizer falta) e no Deck/configuração (0.5.0).
-- [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
+- [x] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
   Código e testes prontos (ramo `feat/app-atracao`): com o PC conectado e 10 min sem toque, o painel dá lugar a um relógio com a data, o que o PC faz ("PC ligado" ou "jogando" e o nome do jogo) e "Jogado hoje".
   Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
-  tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Falta provar no tablet (cenário 21 de `app/docs/teste-manual.md`).
+  tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Provado pelo mantenedor no tablet em 15/11/2026 (cenário 21 de `app/docs/teste-manual.md`).
 - [x] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
   ações são acréscimos opcionais ao `discord` do v1 (MINOR). Contrato aprovado pelo mantenedor em 13/11/2026. O modo de voz foi cancelado da 0.3.0 (veja "Ideias sem versão").
   - [x] **Qualidade da conexão:** assina `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostra "Conectado · 38 ms" no cabeçalho do canal; campo `channel.connection`,
@@ -197,14 +197,14 @@ Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu d
   no lugar dos textos "falando", "mudo" e "surdo"; ensurdecer mostra o microfone desligado também (como no Discord). Ícones do Tabler (MIT), só seis copiados, sem biblioteca. Sem a marca "você":
   decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Provado pelo mantenedor no tablet, em 13/11/2026 (`0.3.0-beta.4`, cenário 18 de
   `app/docs/teste-manual.md`): a tela ficou como desenhada.
-- [ ] **Aviso de download ou cópia terminando no PC.**
+- [x] **Aviso de download ou cópia terminando no PC.**
   Download: código e testes prontos (ramo `feat/app-aviso-download`). O app deduz de `system.net.rxKbps`: tráfego a partir de 30 Mbps (configurável de 10 a 100, ou desligado) por 2 min seguidos é um
   download; quando cai abaixo de 2 Mbps por 30 s, o cartão do relógio mostra "Download terminou" (borda menta) por 10 min ou até um toque. Reconectar zera a contagem. Sem mudança de contrato.
-  Falta provar no tablet (cenário 19 de `app/docs/teste-manual.md`). **Cópia de arquivos: fora da 0.3.0** (pede leitura de disco nova), vai para a 0.4.0 junto com "Tráfego de rede".
-- [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
+  Provado pelo mantenedor no tablet em 15/11/2026 (cenário 19 de `app/docs/teste-manual.md`). **Cópia de arquivos: fora da 0.3.0** (pede leitura de disco nova), vai para a 0.4.0 junto com "Tráfego de rede".
+- [x] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
   Código e testes prontos (ramo `feat/app-pin`): PIN opcional (desligado por padrão) de 4 a 6 dígitos, definido ou removido no cartão "PIN da configuração"; pedido em toda entrada na configuração
   (toque longo no relógio, faixa de erro de conexão e toque longo na tela de PC desligado), menos na primeira configuração. Guarda só sal e hash PBKDF2, nunca o PIN; cinco erros seguidos trancam
-  por 30 s. Esqueceu o PIN: reinstalar o app (janela do agente, "Desinstalar e instalar"). Falta provar no tablet (cenário 20 de `app/docs/teste-manual.md`), inclusive o teclado nos 505 dp.
+  por 30 s. Esqueceu o PIN: reinstalar o app (janela do agente, "Desinstalar e instalar"). Provado pelo mantenedor no tablet em 15/11/2026 (cenário 20 de `app/docs/teste-manual.md`), inclusive o teclado nos 505 dp.
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo
   novo, então só entra se o mantenedor aprovar a mudança de contrato.
 
@@ -258,9 +258,9 @@ Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra 
 
 Só correção compatível, sem mexer no protocolo nem na configuração.
 
-- [ ] **#66 (corrigida no ciclo da 0.3.0, ramo `fix/agente-update-usb`; sai na `0.3.0-beta.5`):** durante "Atualizar por USB" a janela do agente mostrava "O app do Atalaia não está instalado no tablet", embora ele esteja.
+- [x] **#66 (corrigida no ciclo da 0.3.0, ramo `fix/agente-update-usb`; saiu na `0.3.0-beta.5`):** durante "Atualizar por USB" a janela do agente mostrava "O app do Atalaia não está instalado no tablet", embora ele esteja.
   Causa confirmada: `TabletGet` (`UpdateCommands.cs`) não consultava a versão com o job rodando e devolvia `null`, que a página lia como "não instalado". Agora devolve a última versão conhecida e a página
-  mostra "Atualizando o app no tablet…". Teste que segura o job rodando (falha sem a correção). Falta provar numa atualização real por USB.
+  mostra "Atualizando o app no tablet…". Teste que segura o job rodando (falha sem a correção). Provado pelo mantenedor numa atualização real por USB em 15/11/2026.
 
 ## 0.4.0: mais fontes de dados
 
