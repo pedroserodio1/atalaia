@@ -150,6 +150,27 @@ data class WeatherData(
     val updatedAt: String? = null,
 ) : SourceData
 
+/** Uma agenda configurada no agente (o nome é o que o usuário escreveu) e se ela respondeu nesta rodada. */
+@Serializable data class CalendarInfo(val name: String = "", val ok: Boolean = true)
+
+/** Um evento: `start` e `end` em ISO-8601 com o offset do PC; `calendar` é o índice em [CalendarData.calendars]. Dia inteiro começa à meia-noite. */
+@Serializable
+data class CalendarEvent(
+    val title: String = "",
+    val start: String = "",
+    val end: String = "",
+    val allDay: Boolean = false,
+    val calendar: Int = 0,
+)
+
+/** Agenda por link iCal: os eventos do mês atual e do seguinte, só com título e horário. */
+@Serializable
+data class CalendarData(
+    val calendars: List<CalendarInfo> = emptyList(),
+    val events: List<CalendarEvent> = emptyList(),
+    val updatedAt: String? = null,
+) : SourceData
+
 /** Só o nome do app e a contagem: o agente nunca manda título nem texto das notificações. */
 @Serializable data class NotificationApp(val name: String = "", val count: Int = 0)
 
@@ -221,6 +242,7 @@ object Sources {
                     "weather" -> json.decodeFromJsonElement(WeatherData.serializer(), data)
                     "notifications" -> json.decodeFromJsonElement(NotificationsData.serializer(), data)
                     "discord" -> json.decodeFromJsonElement(DiscordData.serializer(), data)
+                    "calendar" -> json.decodeFromJsonElement(CalendarData.serializer(), data)
                     else -> return Decoded.UnknownSource
                 },
             )

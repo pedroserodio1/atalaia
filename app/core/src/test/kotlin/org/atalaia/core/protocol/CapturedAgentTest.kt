@@ -34,8 +34,8 @@ class CapturedAgentTest {
     }
 
     @Test
-    fun todos_os_updates_e_snapshots_das_11_fontes_decodificam() {
-        val modeled = setOf("system", "gpu", "media", "ups", "activeWindow", "claude", "steam", "audio", "weather", "notifications", "discord")
+    fun todos_os_updates_e_snapshots_das_12_fontes_decodificam() {
+        val modeled = setOf("system", "gpu", "media", "ups", "activeWindow", "claude", "steam", "audio", "weather", "notifications", "discord", "calendar")
         var count = 0
         val seen = mutableSetOf<String>()
         parsed.forEach { m ->
@@ -51,7 +51,7 @@ class CapturedAgentTest {
             seen += source
         }
         assertTrue(count > 50)
-        assertEquals(modeled, seen, "o agente simulado manda as 11 fontes e todas têm modelo")
+        assertEquals(modeled, seen, "o agente simulado manda as 12 fontes e todas têm modelo")
     }
 
     @Test

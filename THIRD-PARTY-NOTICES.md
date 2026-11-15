@@ -12,6 +12,7 @@ Esta lista cobre as **dependências diretas**. As transitivas (puxadas por elas)
 |---|---|---|---|
 | [NAudio](https://naudio.github.io/NAudio/) | 3.3.0 | MIT | Volume e sessões de áudio do Windows |
 | Microsoft.Data.Sqlite | 10.0.14 | MIT | Leitura (somente leitura) do banco do nobreak |
+| [Ical.Net](https://github.com/rianjs/ical.net) | 5.2.4 | MIT | Leitura dos arquivos iCal da Agenda e expansão dos eventos que se repetem. Traz o [NodaTime](https://nodatime.org/) 3.2.2 (Apache-2.0) para os fusos |
 | Microsoft.Extensions.Configuration (Abstractions, Binder) | 10.0.14 | MIT | Configuração |
 | Microsoft.Extensions.Logging.Abstractions | 10.0.14 | MIT | Log |
 | System.Diagnostics.PerformanceCounter | 10.0.14 | MIT | CPU e memória |

@@ -11,8 +11,12 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 - **Coluna "agora"** (em todas as telas): relógio, canal ativo (USB, Wi-Fi ou sem conexão), jogo ou janela em foco, mídia com
   controles.
 - **Navegação em submenus:** a barra de cima mostra os contextos (Início, Sistema, Mídia, Jogo e Comunicação). Tocar num que tem filhos abre a tela principal dele e a barra **troca** por `‹ voltar` e os botões dele
-  (hoje só a Mídia: Tocando agora e Mixer; cada fonte nova entra como filho). A profundidade não tem limite fixo: a tela é um caminho de ids (`media/mixer`), definido em `Nav.kt` no `:core`. **Segurar** um botão que tem filhos abre um arco por cima da tela
+  (hoje a Mídia, com Tocando agora e Mixer, e o Início, com Principal e Agenda; cada fonte nova entra como filho). A profundidade não tem limite fixo: a tela é um caminho de ids (`media/mixer`), definido em `Nav.kt` no `:core`. **Segurar** um botão que tem filhos abre um arco por cima da tela
   (sem empurrar nada); arrastar até um dos botões e soltar vai direto para ele, e soltar fora cancela.
+- **Agenda (Início › Agenda):** eventos de até 5 agendas por link iCal secreto (a fonte `calendar` do agente, desligada por padrão). Três visões, na barra de cima: **Dia** (lista, com os de dia inteiro no alto e o próximo evento em destaque),
+  **Semana** (sete colunas, de domingo a sábado) e **Mês** (grade com barrinhas por agenda). Tocar num dia da semana ou do mês abre um **modal** por cima, com setas para o dia anterior e o seguinte e "Abrir o dia".
+  Cada agenda tem o nome que o usuário deu (nunca o de dentro do arquivo) e uma cor pela ordem; os chips da legenda ligam e desligam cada uma na tela. **Aviso:** nos últimos 15 min antes de um evento o cartão do relógio
+  fica menta com "Em N min · título", e o tablet toca um bipe em 15 min e dois em 5 min (liga e desliga na configuração, "Som do aviso de agenda"; só toca com o app aberto e com dado fresco). O aviso olha todas as agendas, mesmo as desligadas na tela.
 - **Telas:** Início, Sistema, Mídia (Tocando agora, com a capa, e Mixer por aplicativo), Jogo (Steam) e Comunicação (o Discord). Na Comunicação a faixa da esquerda tem os botões de microfone e fones (ensurdecer desliga o microfone também) e os volumes em pé; a lista da call fica à direita, com o número de pessoas
   no cabeçalho e os estados por ícone (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo).
 - **Conexão:** lista de endereços em ordem de prioridade (padrão: USB em `127.0.0.1`, depois o IP do PC no Wi-Fi). Uma conexão
@@ -84,7 +88,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (288 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (307 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.

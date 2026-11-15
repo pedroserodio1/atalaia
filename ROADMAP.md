@@ -280,8 +280,13 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   o `ContextRouter` passa a devolver o caminho completo (jogo abriu → `Jogo/Principal`, call → `Comunicação/Principal`), e a volta ao Início por
   inatividade zera o submenu. Só interface, não muda o protocolo. A conferir no tablet: alvo de toque ≥ 48 dp na barra trocada e que "voltar"
   fique no mesmo lugar em todo nível.
-- [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando (antecedência a definir, ex.: 15 e 5
-  min). O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
+- [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando. O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
+  Decidido em 15/11/2026: até 5 agendas, cada uma com o **nome que o usuário escreve** (`Nome https://link`, o nome de dentro do arquivo pode ser o e-mail da conta e nunca é usado) e uma cor pela ordem; só **título, horário e agenda**
+  de cada evento passam pela rede (nada de local, descrição ou participantes); eventos que se repetem expandidos pelo Ical.Net (MIT, dependência nova, fixada em 5.2.4); o agente publica o mês atual e o seguinte.
+  No tablet, **Início › Agenda** com Dia, Semana e Mês, **modal do dia** ao tocar num dia da semana ou do mês, e **chips** que ligam e desligam cada agenda na tela. **Aviso:** cartão do relógio nos últimos 15 min e **som**
+  (um bipe em 15 min, dois em 5 min, com opção de desligar). Contrato: `calendar` em `docs/protocolo-v1.md`.
+  Código e testes prontos (ramo `feat/agenda-ical`): plugin, simulador, tutorial e configuração pela janela; modelo, telas, aviso e som no app. **Falta provar** com um link iCal real e no tablet (cenário 25 de `app/docs/teste-manual.md`);
+  a tela foi desenhada em mock mas nunca rodou num aparelho.
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,

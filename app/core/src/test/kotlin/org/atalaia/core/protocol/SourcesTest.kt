@@ -188,6 +188,22 @@ class SourcesTest {
     }
 
     @Test
+    fun calendar() {
+        val d = decode<CalendarData>("calendar", """{"calendars":[{"name":"Trabalho","ok":true},{"name":"Pessoal","ok":false}],"events":[{"title":"Reunião","start":"2026-11-16T09:00:00-03:00","end":"2026-11-16T10:00:00-03:00","allDay":false,"calendar":0},{"title":"Feriado","start":"2026-11-20T00:00:00-03:00","end":"2026-11-21T00:00:00-03:00","allDay":true,"calendar":1}],"updatedAt":"2026-11-15T12:00:00-03:00"}""")
+        assertEquals(listOf("Trabalho", "Pessoal"), d.calendars.map { it.name })
+        assertFalse(d.calendars[1].ok)
+        assertEquals(2, d.events.size)
+        assertEquals("Reunião", d.events[0].title)
+        assertTrue(d.events[1].allDay)
+        assertEquals(1, d.events[1].calendar)
+        // campo ausente, null e campo extra
+        assertEquals(0, decode<CalendarData>("calendar", """{}""").events.size)
+        assertEquals(0, decode<CalendarData>("calendar", """{"events":[],"calendars":[],"novo":1}""").calendars.size)
+        assertNull(decode<CalendarData>("calendar", """{"updatedAt":null}""").updatedAt)
+        assertEquals("", decode<CalendarData>("calendar", """{"events":[{"start":"2026-11-16T09:00:00-03:00"}]}""").events.single().title)   // evento sem título
+    }
+
+    @Test
     fun notifications_so_nome_e_contagem() {
         val d = decode<NotificationsData>("notifications", """{"count":4,"apps":[{"name":"Discord","count":2},{"name":"WhatsApp","count":1}]}""")
         assertEquals(4, d.count)

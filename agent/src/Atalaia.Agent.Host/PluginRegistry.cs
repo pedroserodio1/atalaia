@@ -9,6 +9,7 @@ using Atalaia.Agent.Plugins.Discord;
 using Atalaia.Agent.Plugins.Notifications;
 using Atalaia.Agent.Plugins.Steam;
 using Atalaia.Agent.Plugins.Weather;
+using Atalaia.Agent.Plugins.Calendar;
 using Atalaia.Agent.Plugins.Gpu;
 using Atalaia.Agent.Plugins.Media;
 using Atalaia.Agent.Plugins.Simulator;
@@ -32,6 +33,7 @@ internal static class PluginRegistry
         ("notifications", () => new NotificationsPlugin()),
         ("steam", () => new SteamPlugin()),
         ("discord", () => new DiscordPlugin()),
+        ("calendar", () => new CalendarPlugin()),
     ];
 
     public static List<PluginRegistration> Build(IConfiguration config, bool simulate)

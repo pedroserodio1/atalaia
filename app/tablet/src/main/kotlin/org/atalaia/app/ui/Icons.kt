@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 
-enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS, PHONE_OFF, POWER, SLIDERS, CHEVRON_LEFT }
+enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS, PHONE_OFF, POWER, SLIDERS, CHEVRON_LEFT, CHEVRON_RIGHT, CALENDAR, CALENDAR_DAY, CALENDAR_WEEK, CALENDAR_MONTH, CLOSE }
 
 /** Ícones simples desenhados em uma grade de 24 × 24, sem biblioteca de ícones (menos memória no tablet). */
 @Composable
@@ -135,6 +135,17 @@ private fun DrawScope.draw(kind: IconKind, c: Color) {
         }
         IconKind.MIC, IconKind.MIC_OFF, IconKind.HEADPHONES, IconKind.HEADPHONES_OFF, IconKind.VOLUME, IconKind.USERS, IconKind.PHONE_OFF, IconKind.POWER -> tabler(kind, c)
         IconKind.CHEVRON_LEFT -> line(c, 14f, 6f, 8f, 12f, 14f, 18f)
+        IconKind.CHEVRON_RIGHT -> line(c, 10f, 6f, 16f, 12f, 10f, 18f)
+        IconKind.CLOSE -> { line(c, 6f, 6f, 18f, 18f); line(c, 18f, 6f, 6f, 18f) }
+        IconKind.CALENDAR, IconKind.CALENDAR_DAY, IconKind.CALENDAR_WEEK, IconKind.CALENDAR_MONTH -> {
+            line(c, 4f, 6f, 20f, 6f, 20f, 20f, 4f, 20f, 4f, 6f)
+            line(c, 4f, 10f, 20f, 10f)
+            line(c, 8f, 3f, 8f, 7f)
+            line(c, 16f, 3f, 16f, 7f)
+            if (kind == IconKind.CALENDAR_DAY) line(c, 8f, 15f, 16f, 15f)
+            if (kind == IconKind.CALENDAR_WEEK) { line(c, 9.5f, 10f, 9.5f, 20f); line(c, 14.5f, 10f, 14.5f, 20f) }
+            if (kind == IconKind.CALENDAR_MONTH) { line(c, 9.5f, 10f, 9.5f, 20f); line(c, 14.5f, 10f, 14.5f, 20f); line(c, 4f, 15f, 20f, 15f) }
+        }
         IconKind.SLIDERS -> {
             for (x in listOf(5f, 12f, 19f)) line(c, x, 4f, x, 20f)
             drawCircle(c, 2.2f, Offset(5f, 9f), style = Stroke(2f))

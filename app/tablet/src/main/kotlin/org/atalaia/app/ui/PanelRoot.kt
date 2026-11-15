@@ -62,11 +62,19 @@ import org.atalaia.core.panel.PlayTimeToday
 import org.atalaia.core.panel.attractWanted
 import org.atalaia.core.panel.gameLine
 import org.atalaia.core.panel.OffView
+import org.atalaia.core.panel.Agenda
+import org.atalaia.core.panel.AgendaReminders
 import org.atalaia.core.panel.Nav
 import org.atalaia.core.panel.NavState
 import org.atalaia.core.settings.Pin
 import org.atalaia.core.panel.offView
+import org.atalaia.core.protocol.CalendarData
 import org.atalaia.core.protocol.UpsData
+import org.atalaia.core.state.Freshness
+import org.atalaia.app.AgendaBeeper
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.YearMonth
 import org.atalaia.core.state.AppState
 
 /** Relógio monotônico do tablet, atualizado a cada [everyMs] só para a idade dos dados (limite de 15 s) poder aparecer. */
@@ -89,6 +97,10 @@ fun PanelRoot(app: PanelApp) {
     val state by remember { app.store.state.sample(500) }.collectAsStateWithLifecycle(app.store.state.value)
     val now by rememberNow(app.clock)
     var nav by rememberSaveable(stateSaver = NavSaver) { mutableStateOf(NavState()) }
+    // Agenda: o dia aberto nas telas Dia, Semana e Mês, as agendas desligadas nos chips e o dia aberto no modal (por cima de tudo).
+    var agendaDate by rememberSaveable(stateSaver = DateSaver) { mutableStateOf(LocalDate.now()) }
+    var hiddenCals by rememberSaveable(stateSaver = IntSetSaver) { mutableStateOf(emptySet<Int>()) }
+    var modalDay by remember { mutableStateOf<LocalDate?>(null) }
     var arc by remember { mutableStateOf<ArcUi?>(null) }          // o arco aberto ao segurar uma aba (por cima de tudo)
     var barBounds by remember { mutableStateOf<Rect?>(null) }      // onde a barra de cima está, para o véu do arco deixá-la à vista
     var rootPx by remember { mutableStateOf(IntSize.Zero) }
@@ -122,6 +134,16 @@ fun PanelRoot(app: PanelApp) {
         (view.context as? Activity)?.window?.let { w ->
             w.attributes = w.attributes.also { it.screenBrightness = if (lowLight) 0.01f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE }
         }
+    }
+    // Aviso de evento chegando: o cartão do relógio (últimos 15 min) e o som em 15 e em 5 min. Olha todas as agendas, mesmo as desligadas na tela, e só com dado fresco.
+    val calendar = state.dataOf<CalendarData>("calendar")
+    val calendarFresh = state.freshness("calendar", now) == Freshness.FRESH
+    val allEvents = remember(calendar) { Agenda.events(calendar) }
+    val agendaAlert = if (calendarFresh) Agenda.alert(allEvents, time) else null
+    val reminders = remember { AgendaReminders() }
+    val beeper = remember { AgendaBeeper() }
+    LaunchedEffect(now, calendar) {
+        if (calendarFresh && app.settings.agendaSound) reminders.poll(allEvents, LocalDateTime.now()).forEach { beeper.play(urgent = it.minutes <= 5) }
     }
     // Troca de tela por contexto. Fica antes dos `return` para acompanhar o estado também com a configuração ou a tela de PC desligado
     // abertas (sem trocar nada nesse tempo), em vez de ser recriado e ver um degrau falso ao voltar.
@@ -184,6 +206,7 @@ fun PanelRoot(app: PanelApp) {
                     },
                     onOpenConfig = ::requestConfig,
                     onDismissDownload = app.store::dismissDownload,
+                    agendaAlert = agendaAlert,
                     modifier = Modifier.width(270.dp).fillMaxHeight(),
                 )
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -201,16 +224,40 @@ fun PanelRoot(app: PanelApp) {
                         Nav.MIXER -> MixerScreen(state, now, app.clock, ::act, content)
                         Nav.COMM -> DiscordScreen(state, now, feedback, app.clock, ::act, content)
                         Nav.GAME -> GameScreen(state, now, content)
+                        Nav.AGENDA, Nav.AGENDA_WEEK, Nav.AGENDA_MONTH -> AgendaScreen(
+                            view = when (nav.dest) { Nav.AGENDA_WEEK -> AgendaView.WEEK; Nav.AGENDA_MONTH -> AgendaView.MONTH; else -> AgendaView.DAY },
+                            state = state, now = now, time = time, date = agendaDate, hidden = hiddenCals,
+                            onDate = { agendaDate = it },
+                            onToggleCalendar = { i -> hiddenCals = if (i in hiddenCals) hiddenCals - i else hiddenCals + i },
+                            onOpenDay = { modalDay = it },
+                            modifier = content,
+                        )
                         else -> HomeScreen(state, now, onClearNotifications = { act("notifications", "clear_all") }, modifier = content)
                     }
                 }
             }
         }
         arc?.let { ArcOverlay(it, barBounds, screenDp) }
+        val day = modalDay
+        if (day != null && calendar != null) {
+            val today = time.toLocalDate()
+            DayModal(
+                date = day, events = Agenda.events(calendar, hiddenCals), data = calendar, time = time,
+                first = YearMonth.from(today).atDay(1), last = YearMonth.from(today).plusMonths(1).atEndOfMonth(),
+                onShift = { modalDay = it },
+                onOpenDay = { agendaDate = day; modalDay = null; nav = nav.goTo(Nav.AGENDA) },
+                onClose = { modalDay = null },
+            )
+        }
     }
 }
 
 private val NavSaver = Saver<NavState, String>(save = { it.encode() }, restore = { NavState.decode(it) })
+private val DateSaver = Saver<LocalDate, String>(save = { it.toString() }, restore = { LocalDate.parse(it) })
+private val IntSetSaver = Saver<Set<Int>, String>(
+    save = { s -> s.sorted().joinToString(",") },
+    restore = { text -> text.split(",").filter { it.isNotEmpty() }.mapNotNull { it.toIntOrNull() }.toSet() },
+)
 
 /** Faixa de estado da conexão: some quando está conectado. */
 @Composable

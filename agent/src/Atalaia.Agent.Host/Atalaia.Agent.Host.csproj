@@ -38,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Weather\Atalaia.Agent.Plugins.Weather.csproj" />
+    <ProjectReference Include="..\Atalaia.Agent.Plugins.Calendar\Atalaia.Agent.Plugins.Calendar.csproj" />
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Notifications\Atalaia.Agent.Plugins.Notifications.csproj" />
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Steam\Atalaia.Agent.Plugins.Steam.csproj" />
     <ProjectReference Include="..\Atalaia.Agent.Plugins.Discord\Atalaia.Agent.Plugins.Discord.csproj" />

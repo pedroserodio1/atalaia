@@ -20,6 +20,9 @@ object Palette {
     val TextMuted = Color(0xFF8A94A3)
     val OnMint = Color(0xFF08120E)   // texto sobre fundo menta
     val OnCoral = Color(0xFF2B1813)  // texto sobre fundo coral
+
+    /** Uma cor por agenda, na ordem do link (o nome fica sempre ao lado: a cor nunca vai sozinha). O coral fica de fora, que é o dos alertas. */
+    val Calendars = listOf(Mint, Color(0xFF8AB4FF), Color(0xFFF2C46D), Color(0xFFB69CFF), Color(0xFFF59BC1))
 }
 
 /**
