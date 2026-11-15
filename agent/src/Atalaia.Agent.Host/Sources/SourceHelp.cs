@@ -20,6 +20,7 @@ internal sealed record SourceHelp(string Title, IReadOnlyList<string> Steps, IRe
         ["steam"] = "https://steamcommunity.com/dev/apikey",
         ["discord"] = "https://discord.com/developers/applications",
         ["weather"] = "https://www.openstreetmap.org/",
+        ["calendar"] = "https://calendar.google.com/calendar/r/settings",
     };
 
     private static readonly Dictionary<string, SourceHelp> All = new(StringComparer.Ordinal)
@@ -69,6 +70,22 @@ internal sealed record SourceHelp(string Title, IReadOnlyList<string> Steps, IRe
                 "Sem resposta: pode ser a internet ou o Open-Meteo fora do ar. Tente de novo em instantes.",
             ],
             "Abrir o mapa"),
+
+        ["calendar"] = new(
+            "Como pegar o link iCal secreto da agenda",
+            [
+                "Abra as configurações do Google Agenda no computador e, na lateral, escolha a agenda em Configurações das minhas agendas.",
+                "Em Integrar agenda, copie o Endereço secreto no formato iCal (um link que começa com https:// e termina em basic.ics).",
+                "Cole em Agendas, no formato Nome link (por exemplo, Trabalho https://...). O link é o segredo: quem o tem lê a agenda. Aqui ele fica criptografado neste PC. Para mais de uma agenda, separe com ponto e vírgula (até 5): a cor de cada uma segue a ordem. O nome é só seu; o do arquivo, que pode ser o seu e-mail, nunca é usado.",
+                "Privacidade: só o título, o horário e o nome da agenda de cada evento vão para o tablet, pela rede local. Local, descrição e participantes não saem deste PC.",
+                "Para invalidar um link que vazou, use Redefinir o endereço secreto na mesma tela e cole o novo.",
+            ],
+            [
+                "Link recusado: ele precisa começar com https:// e estar inteiro, sem espaços no meio. O nome tem no máximo 24 caracteres. Uma agenda se separa da outra por ponto e vírgula.",
+                "Agenda vazia ou sem resposta: confira a internet e se o link não foi redefinido.",
+                "Agenda da empresa: o administrador pode bloquear o endereço secreto, e aí ele não aparece em Integrar agenda.",
+            ],
+            "Abrir o Google Agenda"),
 
         ["ups"] = new(
             "Quando o nobreak funciona",

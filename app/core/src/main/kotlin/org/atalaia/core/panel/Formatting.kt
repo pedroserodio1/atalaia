@@ -16,6 +16,24 @@ object Pt {
 
     fun date(d: LocalDate): String = "${weekdays[d.dayOfWeek.value - 1]} · ${d.dayOfMonth} ${months[d.monthValue - 1]}"
 
+    private val weekdaysLong = arrayOf("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
+    private val monthsLong = arrayOf("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro")
+    private val weekdaysShort = arrayOf("SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM")
+
+    private fun cap(s: String) = s.substring(0, 1).uppercase(locale) + s.substring(1)
+
+    /** `Domingo, 15 de novembro`. */
+    fun dayLong(d: LocalDate): String = "${cap(weekdaysLong[d.dayOfWeek.value - 1])}, ${d.dayOfMonth} de ${monthsLong[d.monthValue - 1]}"
+
+    /** `Novembro 2026`. */
+    fun monthYear(m: java.time.YearMonth): String = "${cap(monthsLong[m.monthValue - 1])} ${m.year}"
+
+    /** `15 nov – 21 nov`. */
+    fun weekRange(first: LocalDate, last: LocalDate): String = "${first.dayOfMonth} ${months[first.monthValue - 1]} – ${last.dayOfMonth} ${months[last.monthValue - 1]}"
+
+    /** `DOM`, `SEG`... (o dia da semana abreviado, em maiúsculas). */
+    fun weekdayShort(d: LocalDate): String = weekdaysShort[d.dayOfWeek.value - 1]
+
     fun clock(t: LocalTime): String = "%02d:%02d".format(t.hour, t.minute)
 
     fun decimal(v: Double, digits: Int = 1): String = String.format(locale, "%.${digits}f", v)

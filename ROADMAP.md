@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026, ainda sem beta); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) publicada em 15/11/2026); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -274,12 +274,19 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   Início (Agenda, Notificações), Sistema (CPU, Rede, Servidores, Nobreak), Mídia (Tocando agora, Mixer, Anime), Jogo (FPS) e Comunicação (Pessoas). **Hoje** só a Mídia tem filhos (a tela Mídia foi separada em
   Tocando agora e Mixer); cada fonte nova entra como filho da árvore, junto com a tela dela. Segurar um botão com filhos abre um **arco** por cima da tela (um nível, sem empurrar nada): arrasta e solta no destino.
   Código e testes prontos (ramo `feat/app-submenus`: `Nav.kt` e `ArcMenu.kt` no `:core`, `NavUi.kt` no tablet; 288 testes passando, APK de debug compila); **falta provar no tablet** (cenário 24 de `app/docs/teste-manual.md`).
+  Saiu na `0.4.0-beta.1`. Primeira prova no tablet (15/11/2026) achou um defeito: ao soltar o dedo no arco nada acontecia e o arco ficava aberto (o app consumia o evento antes de checar o levantar do dedo);
+  corrigido em `fix/app-arco-soltar` (vai na `beta.2`), junto com a aba "Tocando agora", que aparecia cortada. O item só vira `[x]` depois de provar o arco de novo, com o dedo, na `beta.2`.
   Pontos de implementação: `PanelTab` (enum plano) vira destino em caminho, descrito em dado e com a lógica no `:core` (teste na JVM);
   o `ContextRouter` passa a devolver o caminho completo (jogo abriu → `Jogo/Principal`, call → `Comunicação/Principal`), e a volta ao Início por
   inatividade zera o submenu. Só interface, não muda o protocolo. A conferir no tablet: alvo de toque ≥ 48 dp na barra trocada e que "voltar"
   fique no mesmo lugar em todo nível.
-- [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando (antecedência a definir, ex.: 15 e 5
-  min). O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
+- [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando. O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
+  Decidido em 15/11/2026: até 5 agendas, cada uma com o **nome que o usuário escreve** (`Nome https://link`, o nome de dentro do arquivo pode ser o e-mail da conta e nunca é usado) e uma cor pela ordem; só **título, horário e agenda**
+  de cada evento passam pela rede (nada de local, descrição ou participantes); eventos que se repetem expandidos pelo Ical.Net (MIT, dependência nova, fixada em 5.2.4); o agente publica o mês atual e o seguinte.
+  No tablet, **Início › Agenda** com Dia, Semana e Mês, **modal do dia** ao tocar num dia da semana ou do mês, e **chips** que ligam e desligam cada agenda na tela. **Aviso:** cartão do relógio nos últimos 15 min e **som**
+  (um bipe em 15 min, dois em 5 min, com opção de desligar). Contrato: `calendar` em `docs/protocolo-v1.md`.
+  Código e testes prontos (ramo `feat/agenda-ical`): plugin, simulador, tutorial e configuração pela janela; modelo, telas, aviso e som no app. **Falta provar** com um link iCal real e no tablet (cenário 25 de `app/docs/teste-manual.md`);
+  a tela foi desenhada em mock mas nunca rodou num aparelho.
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,

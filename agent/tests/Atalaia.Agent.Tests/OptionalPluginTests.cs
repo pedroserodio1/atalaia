@@ -317,7 +317,7 @@ public class DiscordTests
 public class OptionalSourcesServerTests
 {
     private static readonly string[] AllIds =
-        ["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord"];
+        ["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord", "calendar"];
 
     [Fact]
     public async Task Simulador_tem_os_dez_ids_e_todos_publicam()

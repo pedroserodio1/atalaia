@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.BasicText
@@ -71,6 +72,7 @@ private object NavLook {
     /** `asMain`: o botão é a tela principal do nó que a barra mostra (ou a primeira opção do arco). */
     fun label(path: Dest, asMain: Boolean): String = when {
         asMain && path == Nav.MEDIA -> Texts.NAV_NOW_PLAYING
+        asMain && path == Nav.AGENDA -> Texts.NAV_DAY
         asMain -> Texts.NAV_MAIN
         else -> when (path.lastOrNull()) {
             "home" -> Texts.TAB_HOME
@@ -79,12 +81,16 @@ private object NavLook {
             "mixer" -> Texts.MIXER
             "game" -> Texts.TAB_GAME
             "comm" -> Texts.TAB_COMM
+            "agenda" -> Texts.NAV_AGENDA
+            "week" -> Texts.NAV_WEEK
+            "month" -> Texts.NAV_MONTH
             else -> path.lastOrNull() ?: ""
         }
     }
 
     fun icon(path: Dest, asMain: Boolean): IconKind = when {
         asMain && path == Nav.MEDIA -> IconKind.PLAY
+        asMain && path == Nav.AGENDA -> IconKind.CALENDAR_DAY
         else -> when (path.lastOrNull()) {
             "home" -> IconKind.HOME
             "system" -> IconKind.CPU
@@ -92,6 +98,9 @@ private object NavLook {
             "mixer" -> IconKind.SLIDERS
             "game" -> IconKind.GAMEPAD
             "comm" -> IconKind.HEADSET
+            "agenda" -> IconKind.CALENDAR
+            "week" -> IconKind.CALENDAR_WEEK
+            "month" -> IconKind.CALENDAR_MONTH
             else -> IconKind.HOME
         }
     }
@@ -125,7 +134,9 @@ fun NavBar(
         for (entry in nav.entries()) {
             val main = entry == nav.bar
             NavTab(
-                icon = NavLook.icon(entry, main), label = NavLook.label(entry, main), on = entry == selected, width = 88.dp,
+                icon = NavLook.icon(entry, main), label = NavLook.label(entry, main), on = entry == selected,
+                // na raiz as abas têm todas 88 dp; num submenu a largura acompanha o nome ("Tocando agora" não cabe em 88)
+                width = if (nav.canBack) (NavLook.label(entry, main).length * 7.2 + 26).dp.coerceIn(88.dp, 128.dp) else 88.dp,
                 options = Nav.arcOptions(entry, nav.bar), bar = nav.bar, screenDp = screenDp,
                 onTap = { onTap(entry) }, onArc = onArc, onPick = onPick,
             )
@@ -174,17 +185,21 @@ private fun NavTab(
                             val pivot = Offset((origin.x + sizePx.width / 2f) / density, (origin.y + sizePx.height) / density - 4f)
                             val points = arcLayout(pivot.x.toDouble(), pivot.y.toDouble(), options.size, screen.first, screen.second)
                             var hot = -1
-                            arcOut(ArcUi(pivot, options, points, hot))
-                            while (true) {
-                                val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                                val x = (origin.x + change.position.x) / d
-                                val y = (origin.y + change.position.y) / d
-                                val now = arcHit(points, x, y)
-                                if (now != hot) { hot = now; arcOut(ArcUi(pivot, options, points, hot)) }
-                                change.consume()
-                                if (change.changedToUp()) break
+                            try {
+                                arcOut(ArcUi(pivot, options, points, hot))
+                                while (true) {
+                                    val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                                    val x = (origin.x + change.position.x) / d
+                                    val y = (origin.y + change.position.y) / d
+                                    val now = arcHit(points, x, y)
+                                    if (now != hot) { hot = now; arcOut(ArcUi(pivot, options, points, hot)) }
+                                    // `pressed` e não `changedToUp()`: este devolve falso para um evento já consumido, e o arco nunca perceberia que o dedo saiu.
+                                    if (!change.pressed) break
+                                    change.consume()
+                                }
+                            } finally {
+                                arcOut(null)   // o arco nunca fica aberto, nem se o gesto for cancelado
                             }
-                            arcOut(null)
                             if (hot >= 0) pick(options[hot])
                         }
                     }

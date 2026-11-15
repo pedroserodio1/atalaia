@@ -142,7 +142,22 @@ class NavTest {
         assertNull(Nav.nodeAt(emptyList()))
         val s = NavState().tap(Nav.MEDIA)
         assertEquals(listOf(Nav.MEDIA, Nav.MIXER), s.entries())
-        // Início, Sistema, Jogo e Comunicação ainda não têm filhos: tocar neles não troca a barra.
-        for (leaf in listOf(Nav.HOME, Nav.SYSTEM, Nav.GAME, Nav.COMM)) assertFalse(NavState().tap(leaf).canBack)
+        // Sistema, Jogo e Comunicação ainda não têm filhos: tocar neles não troca a barra.
+        for (leaf in listOf(Nav.SYSTEM, Nav.GAME, Nav.COMM)) assertFalse(NavState().tap(leaf).canBack)
+    }
+
+    @Test
+    fun a_agenda_fica_dentro_de_inicio_com_dia_semana_e_mes() {
+        val inicio = NavState().tap(Nav.HOME)
+        assertEquals(listOf(Nav.HOME, Nav.AGENDA), inicio.entries())
+        val agenda = inicio.tap(Nav.AGENDA)
+        assertEquals(Nav.AGENDA, agenda.dest)
+        assertEquals(listOf(Nav.AGENDA, Nav.AGENDA_WEEK, Nav.AGENDA_MONTH), agenda.entries())    // Dia (a principal), Semana e Mês
+        val mes = agenda.tap(Nav.AGENDA_MONTH)
+        assertEquals(Nav.AGENDA_MONTH, mes.dest)
+        assertEquals(Nav.AGENDA, mes.bar)
+        assertEquals(Nav.HOME, mes.back().bar)                                                       // voltar sobe um nível
+        assertEquals(NavState(Nav.HOME, emptyList()), mes.auto(Nav.HOME))                           // inatividade zera o submenu
+        assertEquals(NavState(Nav.AGENDA_WEEK, Nav.AGENDA), NavState().goTo(Nav.AGENDA_WEEK))
     }
 }
