@@ -30,7 +30,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor, fechada (`v0.3.0`) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
-| **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
+| **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), AniList, Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL e Fortnite |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
@@ -279,6 +279,21 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   min). O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
+- [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
+  nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).
+  - **API:** `POST https://graphql.anilist.co` (GraphQL), uma consulta por coleta juntando tudo. Provado: estatísticas do perfil (totais de anime e mangá, episódios e
+    capítulos, minutos, gêneros, estúdios), lista "assistindo agora" com `progress` e `nextAiringEpisode`, últimas atividades (precisa do `userId` numérico, que vem do `User`)
+    e contagem de seguidores e seguindo. Exige login e **fica fora**: `Viewer`, notificações não lidas (vêm `null` sem token), mensagens e qualquer mutação.
+  - **Limite:** a API respondeu 30 req/min em 15/11/2026 (a documentação diz 90, "modo degradado"). Coleta a cada 10 min (`intervalMs` 600000) sobra.
+  - **Armadilhas já vistas:** `MediaListCollection` repete os títulos nas listas personalizadas (filtrar `isCustomList`); quem não dá nota vem com `meanScore` 0 (não mostrar nota);
+    `releaseYears` só ordena por contagem, id, progresso ou nota (ordenar por ano no cliente).
+  - **Dado proposto** (campo sem leitura = `null`; nomes originais do AniList, a tradução fica no app): `user`, `animeCount`, `mangaCount`, `episodesWatched`, `minutesWatched`,
+    `chaptersRead`, `genres[{name,count}]` (5 a 6), `studios[{name,count,minutes}]`, `watching[{title,progress,episodes,nextEpisode,airingAt}]`, `recent[{title,type,action,progress,at}]`
+    (3 a 10), `followers`, `following`, `updatedAt`. Das atividades só título, ação e progresso (sem texto livre). Imagens (avatar e capa) ficam fora do v1.
+  - **Agente:** plugin `anilist` (fluxo `/novo-plugin-agente`): conversão pura e estática, par simulado, testes e linha no `agent/README.md`. **App:** modelo em `Sources.kt`, cartões, textos em `Texts.kt`
+    (fluxo `/fonte-no-app`). Onde aparece: um cartão "Anime" na aba Início (mais barato) ou uma tela própria; com a navegação em submenus (item acima) a tela pode entrar sem disputar a barra. A decidir.
+  - **Contrato:** **muda** `docs/protocolo-v1.md` (fonte opcional nova; acréscimo compatível, o app antigo ignora a fonte), então precisa ser combinado com o mantenedor antes do código. Sem ação de efeito no PC.
+  - **Falta provar:** formato real de `nextAiringEpisode` (o usuário de teste não tinha anime no ar), perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
 - [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
   é decisão do mantenedor.
 - [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).
