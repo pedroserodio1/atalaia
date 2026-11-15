@@ -10,12 +10,25 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 
 - **Coluna "agora"** (em todas as telas): relógio, canal ativo (USB, Wi-Fi ou sem conexão), jogo ou janela em foco, mídia com
   controles.
-- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord e Jogo (Steam).
+- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord e Jogo (Steam). Na aba Discord a faixa da esquerda tem os botões de microfone e fones (ensurdecer desliga o microfone também) e os volumes em pé; a lista da call fica à direita, com o número de pessoas
+  no cabeçalho e os estados por ícone (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo).
 - **Conexão:** lista de endereços em ordem de prioridade (padrão: USB em `127.0.0.1`, depois o IP do PC no Wi-Fi). Uma conexão
   por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 5 s e volta quando ele fica pronto.
 - **Segurança:** só aceita endereços de loopback e rede local; o token fica cifrado no Keystore e não é exibido de volta.
   Uma ação que ficou sem resposta por queda de conexão nunca é reenviada sozinha.
 - **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; "velho", "desligado" ou "erro" em vez de número desatualizado.
+  **Limites:** GPU quente (85 °C), RAM no fim (90 %) e disco cheio (90 %) acendem a borda do relógio e trocam a linha do jogo por "RAM no fim · 93%" (com "+N" se houver mais de um).
+  Só liga depois de 10 s acima do limite e só desliga 5 pontos abaixo dele; os limites (ou "Desligado") se ajustam na configuração.
+- **PC desligado:** depois de 1 min sem achar o PC (a troca USB e Wi-Fi não conta), a tela vira, conforme a configuração, **modo noite** (relógio escuro no horário escolhido, padrão 22h às 07h;
+  fora dele o painel segue normal), **relógio** sempre ou **tela apagada** (preta, brilho mínimo, tela ainda ligada). Voltou a conectar, volta o painel. Segurar na tela abre a configuração.
+- **Aviso de download:** tráfego de rede do PC a partir de 30 Mbps (configurável) por 2 min seguidos conta como download; quando cai abaixo de 2 Mbps por 30 s o relógio mostra "Download terminou"
+  por 10 min ou até um toque. Deduzido só de `system.net.rxKbps`, sem mudar o protocolo.
+- **Ligar PC (Wake-on-LAN):** com o PC desligado e um MAC de cabo guardado (o agente publica `system.net.mac`; Wi-Fi não vale), a tela de PC desligado mostra o botão redondo **Ligar PC**, que manda o pacote mágico (UDP, broadcast, portas 9 e 7) pela rede do tablet. Na tela apagada, um toque mostra o botão por 15 s. Cada pedido, com o desfecho, vai para `wol.log` na pasta do app (`Android/data/org.atalaia.app/files/`, as últimas ~100 linhas, MAC mascarado, sem IP) e para o `logcat` (tag `AtalaiaWol`). O registro só existe a partir da 0.3.0-beta.7, só no tablet, e reinstalar o app o apaga.
+- **Tela Atração:** com o PC conectado e 10 min sem toque, o painel vira um relógio com a data, o estado do PC e "Jogado hoje" (tempo com `steam.game` ativo visto pelo tablet, só em memória); um toque sai.
+  Não entra por cima de queda de energia, alerta de limite ou call. Desliga na configuração.
+- **Troca de tela por contexto:** jogo da Steam que abre leva à aba Jogo; call no Discord (sem jogo aberto) leva à aba Discord; depois de 5 min sem toque volta ao Início (menos se a aba
+  é a do contexto ainda ativo). Só reage a um começo (reconectar com jogo ou call em andamento não puxa a tela, nem quem está mexendo). Ligada por padrão; desliga na configuração.
+- **PIN da configuração (opcional):** 4 a 6 dígitos pedidos ao abrir a configuração (menos na primeira); guarda só sal e hash, cinco erros seguidos trancam por 30 s. Esqueceu: reinstalar o app.
 - **Configuração:** abre sozinha na primeira vez, por toque longo no relógio ou tocando na faixa de erro de conexão.
 
 ## Estrutura
@@ -68,7 +81,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (168 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (248 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.

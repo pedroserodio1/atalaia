@@ -1,6 +1,6 @@
 # Roadmap do Atalaia
 
-Status em **13/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
+Status em **15/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
 tag e número de versão estão em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Datas não são promessa: a ordem e o
 escopo de cada versão podem mudar, e quem decide é o mantenedor.
 
@@ -14,10 +14,11 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1 e a 0.1.2 estão fechadas; a 0.2.0 está em beta (`v0.2.0-beta.5`).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está pronta para a estável (`v0.3.0` em publicação, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
-  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; planejada para a 0.3.1).
+  [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida na 0.3.0, falta ver nas notas da `v0.3.0` publicada),
+  [#66](https://github.com/pedroserodio1/atalaia/issues/66) (a janela dizia que o app não está instalado durante a atualização por USB; corrigida na 0.3.0-beta.5 e provada no tablet).
   Fechadas na 0.1.2: #12 (Steam), #16 (Wi-Fi), #17 (nobreak). Resolvida na 0.2.0 (`beta.3`): #13 (porta ocupada no boot).
 
 ## Resumo das versões
@@ -26,12 +27,12 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 |---|---|---|---|
 | **0.1.1** | Primeira release pública | fechada | Janela, onboarding, atualização automática, primeira release |
 | **0.1.2** | Correções | fechada (`v0.1.2`) | #12, #16 (Wi-Fi), #17 (nobreak), fonte Claude desativada |
-| **0.2.0** | Primeira experiência | minor, em andamento (`beta.5` publicada) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
-| **0.3.0** | Tablet esperto | minor | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, modo de voz, sair da call, tela mais clara) |
-| **0.3.1** | Correções | patch | #23 (notas da release estável com grupos repetidos) |
+| **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
+| **0.3.0** | Tablet esperto | minor, pronta para a estável (`v0.3.0` em publicação; `beta.7` foi a última beta) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
+| **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
 | **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
-| **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV e LoL |
+| **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL e Fortnite |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
 
 ---
@@ -63,7 +64,7 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
   alerta de limite da 0.3.0) ficam suspensos. Voltar a ligar é uma decisão futura, quando houver fonte confiável.
 - [ ] Qualquer bug achado na `0.1.1` que não tenha entrado nela.
 
-## 0.2.0: primeira experiência
+## 0.2.0: primeira experiência (fechada, `v0.2.0`)
 
 Objetivo: alguém que acabou de instalar consegue deixar tudo funcionando **sozinho**, sem ler código nem pedir ajuda.
 
@@ -148,40 +149,118 @@ Conteúdo mínimo de cada tutorial (a confirmar passo a passo contra os sites re
 
 ## 0.3.0: tablet esperto
 
-Comportamentos que fazem o painel "se virar" sozinho. Quase tudo usa dados que o agente já envia.
+Comportamentos que fazem o painel "se virar" sozinho. Quase tudo usa dados que o agente já envia (as exceções estão em "Em risco" e em
+"Mudanças de contrato", abaixo).
 
-- [ ] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
-- [ ] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
+Objetivo: o tablet deixa de ser só um espelho do PC e passa a reagir ao que acontece (jogo abriu, GPU esquentando, PC desligou) sem ninguém mexer nele.
+Fluxo do ciclo em `docs/versionamento-e-releases.md`. O ramo `beta/0.3.0` saiu de `development` com `VERSION` em `0.3.0`.
+
+- [x] **Troca de tela por contexto:** jogo abriu leva à aba Jogo; call no Discord leva à aba Discord; volta ao Início depois de um tempo sem uso.
+  Código e testes prontos (ramo `feat/app-contexto`): gatilho do jogo só `steam.game` (decidido; atraso de até 30 s e jogo fora da Steam não dispara), call depois de 3 s, volta ao
+  Início após 5 min sem toque (menos se a aba é a do contexto ainda ativo); ligada por padrão, com opção de desligar na configuração. Não puxa a tela ao reconectar com jogo ou call
+  em andamento, nem de quem está mexendo (toque nos últimos 15 s). Provado pelo mantenedor no tablet (Discord e Steam reais, 13/11/2026): a call leva à aba Discord e o jogo da Steam leva à aba Jogo. O resto do cenário 17 de `app/docs/teste-manual.md` (volta ao Início após 5 min, anti-ruído, opção de desligar e quadros do arrasto) foi provado pelo mantenedor no tablet em 15/11/2026.
+- [x] **Alertas de limite:** GPU quente, disco cheio, RAM no fim (o alerta do limite do Claude fica suspenso junto com a fonte). Limites configuráveis e regra anti-ruído
   (o nobreak já chegou a dar 95 quedas em ~2 dias).
-- [ ] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
-  acesa mostrando isso. **Modo noite por horário**, relógio discreto ou tela apagada. Decisão em aberto (ver abaixo).
-- [ ] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Exige o MAC do PC (o agente grava enquanto está ligado), e o PC no cabo ou
-  com a placa configurada para acordar. Ação nova no protocolo: campo opcional, então MINOR, mas combinar com o mantenedor.
-- [ ] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
-- [ ] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
-  ações são acréscimos opcionais ao `discord` do v1, então MINOR, mas é mudança de contrato: combinar com o mantenedor antes.
-  - [ ] **Qualidade da conexão:** assinar `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostrar "Conectado · 38 ms" no cabeçalho do canal.
-    Campo novo e opcional (`null` quando não há leitura).
-  - [ ] **Modo de voz:** o `GET_VOICE_SETTINGS` já traz `mode.type` (`PUSH_TO_TALK` ou `VOICE_ACTIVITY`) e o plugin ignora. Mostrar a etiqueta e uma ação para
-    alternar o modo (pelo mesmo `SET_VOICE_SETTINGS`).
-  - [ ] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`. Ação com **confirmação na própria tela** (regra do app).
-  - [ ] **Escopos:** a doc não diz quais escopos cada comando de voz exige. Provar com o Discord real; se pedir escopo novo, atualizar o tutorial
-    (`docs/fontes/discord.md` e o texto da janela) e lembrar que o refresh token guardado só tem os escopos antigos (o pop-up de autorização aparece de novo).
-- [ ] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
-  com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do modo de voz.
-- [ ] **Aviso de download ou cópia terminando no PC.**
-- [ ] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
+  Feito na `0.3.0-beta.1`: padrões GPU 85 °C, RAM 90 % e disco 90 % (cada um pode ser desligado na configuração do tablet), liga depois
+  de 10 s acima do limite e só desliga 5 pontos abaixo, aparece no cartão do relógio (a queda de energia continua mandando). Provado pelo mantenedor no tablet, em 13/11/2026
+  (roteiro: cenário 15 de `app/docs/teste-manual.md`).
+- [x] **Tela de PC desligado:** o estado "PC desligado ou inalcançável" é o normal da noite (o PC desliga por volta das 22h); hoje a tela fica
+  acesa mostrando isso. Decidido: **configurável** na tela de configuração do tablet entre **modo noite por horário**, **relógio discreto sempre** e
+  **tela apagada**.
+  Código e testes prontos (ramo `feat/app-pc-desligado`): vale depois de **1 min** sem achar o PC (o failover USB e Wi-Fi não conta); modo noite (padrão 22h às 07h; fora do
+  horário o painel segue como antes), relógio sempre ou tela apagada (preta no brilho mínimo, com a tela ainda ligada); segurar na tela abre a configuração. O cenário 16 de
+  `app/docs/teste-manual.md` (o preto e o brilho mínimo no T68, o horário virando a meia-noite e o consumo a noite toda) foi provado pelo mantenedor no tablet em 15/11/2026.
+- [x] **Wake-on-LAN:** botão "Ligar PC" na tela de PC desligado. Decidido (13/11/2026): PC no **cabo**; o mantenedor já liga o PC por Wake-on-LAN (BIOS e Windows prontos).
+  `system.net.mac` só da placa de cabo (`null` no Wi-Fi; contrato MINOR e opcional, aprovado); o tablet guarda o último MAC e, com o PC desligado, mostra o botão redondo **Ligar PC**
+  (desenho "Layout 5"), que manda o pacote mágico (UDP, broadcast, portas 9 e 7). Cada pedido e o desfecho vão para `wol.log` na pasta do app (MAC mascarado, sem IP) e para o `logcat`
+  (tag `AtalaiaWol`). A janela do agente mostra o MAC e o preparo (BIOS, Windows). Sem ação nova no agente. Entrou na `0.3.0-beta.7`.
+  Provado pelo mantenedor no tablet (PC no cabo, 13/11/2026, cenário 23 de `app/docs/teste-manual.md`): desligou o PC, tocou em Ligar PC e o PC ligou; o registro mostrou o pedido com 102 bytes nas portas 9 e 7
+  e "PC voltou em 77 s" (do toque até o tablet ver o agente de novo, boot incluído).
+  Falta conferir (secundário): a tela apagada acordando com um toque por 15 s, a legenda "Sem resposta" depois de 3 min e a de falha com o Wi-Fi do tablet desligado, e a legibilidade do botão no brilho mínimo.
+  Fora da 0.3.0 (ideias sem versão): "Última sessão · jogo · tempo" na tela de PC desligado, botão na faixa "PC desligado ou inalcançável" (0.3.1, se fizer falta) e no Deck/configuração (0.5.0).
+- [x] **Tela Atração:** relógio, estado do PC e horas jogadas hoje, para quando ninguém está interagindo.
+  Código e testes prontos (ramo `feat/app-atracao`): com o PC conectado e 10 min sem toque, o painel dá lugar a um relógio com a data, o que o PC faz ("PC ligado" ou "jogando" e o nome do jogo) e "Jogado hoje".
+  Qualquer toque sai. Não entra por cima de queda de energia, alerta de limite ou call de voz; jogando, entra. Ligada por padrão, com opção de desligar na configuração. "Jogado hoje" é o tempo que o
+  tablet viu `steam.game` ativo, só em memória: reiniciar o app zera, o tempo sem conexão não entra e jogo fora da Steam não conta. Provado pelo mantenedor no tablet em 15/11/2026 (cenário 21 de `app/docs/teste-manual.md`).
+- [x] **Discord: sinais e controles novos.** Só usam comandos do RPC local que o plugin já fala (`docs.discord.com/developers/topics/rpc`); campos e
+  ações são acréscimos opcionais ao `discord` do v1 (MINOR). Contrato aprovado pelo mantenedor em 13/11/2026. O modo de voz foi cancelado da 0.3.0 (veja "Ideias sem versão").
+  - [x] **Qualidade da conexão:** assina `VOICE_CONNECTION_STATUS` (`state`, `average_ping`) e mostra "Conectado · 38 ms" no cabeçalho do canal; campo `channel.connection`,
+    opcional (`null` sem leitura). Entrou na `0.3.0-beta.6`. Provado pelo mantenedor no tablet com o Discord real (13/11/2026, cenário 22 de `app/docs/teste-manual.md`).
+  - [x] **Sair da call:** `SELECT_VOICE_CHANNEL` com `channel_id: null`, ação `leave_call`, com **confirmação na própria tela**. Entrou na `0.3.0-beta.6`. Provado pelo mantenedor no tablet
+    com o Discord real (13/11/2026, cenário 22).
+  - [x] **Escopos:** teste com o Discord real em 13/11/2026 (agente `--console`, descartável): o ping, o ensurdecer e o `SELECT_VOICE_CHANNEL` com canal nulo funcionam com os escopos de
+    hoje (`rpc`, `rpc.voice.read`, `identify`). Não há escopo novo, então a autorização não aparece de novo. O evento chega ao assinar e depois a cada ~5 s; no ensurdecer o `mute` não muda.
+- [x] **Discord: tela mais clara.** Sem mudança de protocolo, só o app: contagem no cabeçalho do canal ("5 na call"), quem fala em destaque (no topo da lista ou
+  com mais peso), marcar o próprio usuário na lista. Tudo precisa caber na altura útil de 505 dp junto do ping e do botão de sair.
+  Código e testes prontos (ramo `feat/app-discord-tela`): layout novo com a faixa de controles à esquerda (botões redondos de microfone e fones no alto, volumes em pé embaixo) e a lista da call à
+  direita, com a altura toda; o número de pessoas no cabeçalho do canal (ícone e número); estados por **ícone** (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo)
+  no lugar dos textos "falando", "mudo" e "surdo"; ensurdecer mostra o microfone desligado também (como no Discord). Ícones do Tabler (MIT), só seis copiados, sem biblioteca. Sem a marca "você":
+  decidido tirar, porque só funcionava quando o nome do membro era igual ao `user`. Provado pelo mantenedor no tablet, em 13/11/2026 (`0.3.0-beta.4`, cenário 18 de
+  `app/docs/teste-manual.md`): a tela ficou como desenhada.
+- [x] **Aviso de download ou cópia terminando no PC.**
+  Download: código e testes prontos (ramo `feat/app-aviso-download`). O app deduz de `system.net.rxKbps`: tráfego a partir de 30 Mbps (configurável de 10 a 100, ou desligado) por 2 min seguidos é um
+  download; quando cai abaixo de 2 Mbps por 30 s, o cartão do relógio mostra "Download terminou" (borda menta) por 10 min ou até um toque. Reconectar zera a contagem. Sem mudança de contrato.
+  Provado pelo mantenedor no tablet em 15/11/2026 (cenário 19 de `app/docs/teste-manual.md`). **Cópia de arquivos: fora da 0.3.0** (pede leitura de disco nova), vai para a 0.4.0 junto com "Tráfego de rede".
+- [x] **Configurações no tablet com PIN** (o desenho original previa; a base saiu sem PIN).
+  Código e testes prontos (ramo `feat/app-pin`): PIN opcional (desligado por padrão) de 4 a 6 dígitos, definido ou removido no cartão "PIN da configuração"; pedido em toda entrada na configuração
+  (toque longo no relógio, faixa de erro de conexão e toque longo na tela de PC desligado), menos na primeira configuração. Guarda só sal e hash PBKDF2, nunca o PIN; cinco erros seguidos trancam
+  por 30 s. Esqueceu o PIN: reinstalar o app (janela do agente, "Desinstalar e instalar"). Provado pelo mantenedor no tablet em 15/11/2026 (cenário 20 de `app/docs/teste-manual.md`), inclusive o teclado nos 505 dp.
 - [ ] **Pareamento por código com validade** e lista de tablets com "Revogar" (hoje o protocolo tem um token único). Pode exigir protocolo
   novo, então só entra se o mantenedor aprovar a mudança de contrato.
+
+### Ordem de trabalho (proposta, quem decide é o mantenedor)
+
+Um sub-ramo por linha, entrando em `beta/0.3.0` por squash. Dá para começar pelas linhas 1 a 3, que são só do app e não mexem no contrato.
+
+| # | Sub-ramo | Itens | Contrato | Depende de |
+|---|---|---|---|---|
+| 1 | `feat/app-alertas-limite` | Alertas de limite | não (`gpu.tempC`, `system.ram`, `system.disks` já chegam) | nada |
+| 2 | `feat/app-contexto` | Troca de tela por contexto; Discord: tela mais clara | não | nada. Decidido: o gatilho "jogo abriu" é só `steam.game` (coletado a cada 30 s); `activeWindow` não entra. Em dois sub-ramos: `feat/app-contexto` (troca de tela) e `feat/app-discord-tela` (tela mais clara) |
+| 3 | `feat/app-pc-desligado` | Tela de PC desligado, **configurável** entre modo noite por horário, relógio sempre e tela apagada | não | nada (decisão 1 tomada). Hoje o app só escreve o texto de `ConnectionState.Unreachable` (`Texts.kt`); a escolha fica na tela de configuração do tablet |
+| 4 | `feat/app-atracao` | Tela Atração | não | 3 (reaproveita o relógio). "Horas jogadas hoje": o v1 só traz `hours2w` e `library.hours`, então o app teria de somar o tempo com `steam.game` ativo enquanto conectado, zerando à meia-noite (só conta o que ele viu). A confirmar |
+| 5 | `feat/discord-sinais` | Discord: qualidade da conexão, sair da call, escopos | sim, campos e ações opcionais em `discord` | aprovação do contrato; **primeiro um teste com o Discord real** para saber os escopos |
+| 6 | `feat/wake-on-lan` | Wake-on-LAN | sim, publicar o MAC (campo opcional, aprovado) | decisões 2 e 7 tomadas. O pacote mágico sai **do tablet** (UDP na rede local; o agente está desligado junto com o PC), então talvez nem seja uma ação nova, só o MAC; a confirmar. Só funciona pelo Wi-Fi, não pelo USB |
+| 7 | `feat/app-pin` | Configurações no tablet com PIN | não | nada |
+| 8 | `feat/aviso-transferencia` | Aviso de download ou cópia terminando no PC | a definir (ver "Em risco") | nada para o download; a cópia pode exigir campo novo |
+| 9 | `feat/pareamento` | Pareamento com validade e lista de tablets | sim, mensagens novas | aprovação do contrato; é o item maior e mais arriscado, deixar por último |
+
+### Mudanças de contrato desta versão (aprovar antes de codar)
+
+Tudo campo ou ação opcional (MINOR, compatível com o v1), mas cada uma entra no `docs/protocolo-v1.md` no mesmo PR da mudança:
+
+- `discord`: qualidade da conexão (estado e ping, `null` sem leitura). Aprovado pelo mantenedor (13/11/2026).
+- Ações do `discord`: sair da call (com confirmação na tela do tablet). Aprovado pelo mantenedor (13/11/2026). O modo de voz foi cancelado.
+- Endereço físico (MAC) da placa de cabo do PC publicado pelo agente em `system.net.mac`, para o Wake-on-LAN. Aprovado pelo mantenedor (13/11/2026).
+- Pareamento e revogação de tablet: mensagens novas no protocolo, o que o v1 hoje lista como "fora do v1".
+
+### Em risco
+
+- **Aviso de download ou cópia terminando no PC (decidido: fica na 0.3.0):** não existe fonte própria para isso (nem no agente, nem no protocolo).
+  Proposta para caber no ciclo: começar pelo **download**, que o app deduz de `system.net.rxKbps` (tráfego alto e contínuo que cai e fica baixo por
+  um tempo; função pura testada, com anti-ruído como nos alertas de limite), sem mudar o contrato. A **cópia** de arquivos precisa de leitura de
+  disco, que o `system` não tem: seria campo novo e opcional (MINOR), combinar antes. A confirmar com o mantenedor se a cópia entra nesta versão.
+- **Pareamento:** é o único item que pode sozinho adiar a versão. Proposta: decidir no começo do ciclo se entra; se não entrar, vai para a 0.4.0 e a #15
+  continua só com a opção A (que já resolve o dia a dia).
+
+- [ ] **#23:** as notas da release estável saem com os grupos repetidos (um bloco "Novidades", "Correções" e "Outros" por beta). Causa: o
+  `cliff-notas.toml` não definia `tag_pattern`, então o git-cliff tratava cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
+  que nunca casa, comentado no arquivo, e uma guarda no job `notas` do `release.yml` que falha se um título `###` aparecer duas vezes.
+  Código pronto (ramo `fix/notas-grupos`); conferido com o git-cliff 2.14.2 em `v0.2.0..HEAD` (antes repetia "Novidades" e "Outros", depois nenhum grupo repete).
+  Falta ver nas notas da `v0.3.0` publicada (vira `[x]` quando sair sem grupo repetido). A 0.2.0 ainda saiu com o defeito.
+
+### Pronto quando
+
+- Cada item só vira `[x]` com prova no tablet de verdade; o que depende de hardware (Wake-on-LAN com o PC desligado, Discord real) fica `[ ]` com o que falta provar.
+- Roteiros novos em `app/docs/teste-manual.md` e `docs/teste-manual-agente.md` para o que for provado à mão.
+- `dotnet test` e `./gradlew :core:test` verdes; `docs/protocolo-v1.md` e os tutoriais (`docs/fontes/discord.md`) atualizados se algo do contrato ou dos escopos mudou.
 
 ## 0.3.1: correções
 
 Só correção compatível, sem mexer no protocolo nem na configuração.
 
-- [ ] **#23:** as notas da release estável saem com os grupos repetidos (um bloco "Novidades", "Correções" e "Outros" por beta). Causa: o
-  `cliff-notas.toml` não define `tag_pattern`, então o git-cliff trata cada tag de beta da faixa como uma release. Correção: um `tag_pattern`
-  que nunca casa, comentado no arquivo, e um teste (ou passo do ensaio `dry_run` do `release.yml`) que falha se um grupo aparecer duas vezes.
-  A 0.2.0 ainda saiu com o defeito.
+- [x] **#66 (corrigida no ciclo da 0.3.0, ramo `fix/agente-update-usb`; saiu na `0.3.0-beta.5`):** durante "Atualizar por USB" a janela do agente mostrava "O app do Atalaia não está instalado no tablet", embora ele esteja.
+  Causa confirmada: `TabletGet` (`UpdateCommands.cs`) não consultava a versão com o job rodando e devolvia `null`, que a página lia como "não instalado". Agora devolve a última versão conhecida e a página
+  mostra "Atualizando o app no tablet…". Teste que segura o job rodando (falha sem a correção). Provado pelo mantenedor numa atualização real por USB em 15/11/2026.
 
 ## 0.4.0: mais fontes de dados
 
@@ -234,6 +313,18 @@ Para outras pessoas criarem fontes sem mexer no núcleo.
 - [ ] **Estrutura do repositório:** pastas `plugins/` e `examples/`; guia para escrever plugin; documentação **em português e inglês**.
 - [ ] **Jogos:** FFXIV (próximas mecânicas, cooldowns, DPS; via Dalamud ou OverlayPlugin) e LoL (tempo, placar, KDA, CS, ouro, objetivos).
   Jogos extras a definir.
+- [ ] **Jogos: Fortnite (log do jogo).** Fonte desligada por padrão. Só **lê arquivo**, nunca a memória do processo nem injeção (é o que o Easy Anti-Cheat
+  existe para barrar). Lê `%LOCALAPPDATA%\FortniteGame\Saved\Logs\FortniteGame.log`, aberto com compartilhamento de leitura, em UTF-8 (as horas do log
+  estão em UTC). Sondagem de 15/11/2026, com o jogo aberto (5 partidas): dá para tirar o modo (`MatchmakingLog`: região, tamanho do time, construção,
+  ranqueado), os vivos e o modo em texto pronto (`LogEOSSDK`, campo `RichText`), a fase (`LogBattleRoyaleGamePhaseLogic`: Aircraft, SafeZones, EndGame),
+  a etapa da tempestade, o pulo do ônibus, os jogadores eliminados (`LogPlayerKills`, só o apelido de quem caiu) e a vitória
+  (`GetLocalPlayerHasWinningPlacement`, coroa). **Não dá** para saber quem fez o abate, nem o seu número de abates, nem a colocação exata (isso só no replay
+  de `Demos\`, e o parser não foi testado); partida que acaba sem `EndGame` fica "sem resultado".
+  Cuidados: o log traz **token de sessão da Epic, IDs de conta e apelidos de outros jogadores**, então o plugin extrai só campos prontos e **nunca** repassa
+  linha crua; o formato é interno da Unreal e muda com a versão do jogo (parser tolerante, que ignora o que não conhece); com o jogo fechado, o dado
+  aparece como velho. Fonte nova é mudança de contrato (`docs/protocolo-v1.md`): combinar com o mantenedor antes. Tela: 5 estados (em partida, lobby,
+  vitória, eliminado, dado velho) dentro da aba Jogo, em esboço no artefato de design. Falta provar: lobby e fila (sem sinal claro no log), etapas da
+  tempestade além de `StormHolding` e o parser de replay.
 - [ ] Extras: promoções da wishlist da Steam; timers, pomodoro e contagens regressivas.
 - [ ] A barra de abas já não comporta uma 7ª aba com ícone em cima: virar rolável ou ter um "Mais".
 
@@ -260,6 +351,10 @@ A `1.0.0` é declarada pelo mantenedor quando:
   extensão do Meet; avaliar depois da `0.5.0`.
 - Google Tasks, aniversários, Gmail, fotos como protetor de tela, Tailscale, amigos da Steam em jogo, AniList, Jellyfin, Letterboxd,
   resets e timers do FFXIV, modo foco.
+- Tela de PC desligado: "Última sessão · jogo · tempo" (do desenho "Layout 5"; exigiria o tablet guardar a última sessão) e o botão Ligar PC também na faixa
+  "PC desligado ou inalcançável" do painel normal (0.3.1, se fizer falta), no Deck e na configuração do tablet (0.5.0).
+- Discord: modo de voz (aperte para falar ou detecção de voz; o `GET_VOICE_SETTINGS` já traz `mode.type`) com etiqueta e ação para alternar. Cancelado da 0.3.0 pelo
+  mantenedor (13/11/2026); issue ou PR bem-vindos.
 - Discord, avaliado e deixado de fora do RPC: `NOTIFICATION_CREATE` (escopo `rpc.notifications.read`; entrega o texto das mensagens, o que o projeto não envia)
   e eventos de mensagem (`MESSAGE_*`, `messages.read` não funciona com `rpc_token` e só vale para canais assinados).
 - Anúncio por mDNS (ou IP fixo no roteador).
@@ -269,14 +364,15 @@ A `1.0.0` é declarada pelo mantenedor quando:
 
 ## Decisões em aberto
 
-1. **O que o tablet mostra quando o PC está desligado** (modo noite, tela apagada, relógio): define a `0.3.0`.
-2. **PC no cabo ou no Wi-Fi:** define se o Wake-on-LAN é viável.
+1. ~~**O que o tablet mostra quando o PC está desligado**~~ Decidido: **configurável** entre modo noite por horário, relógio sempre e tela apagada.
+2. ~~**PC no cabo ou no Wi-Fi:** define se o Wake-on-LAN é viável.~~ Decidido: cabo.
 3. **Qual modelo de plugin entra primeiro** (assembly .NET ou processo separado).
 4. **Ponte do Meet:** Native Messaging ou endpoint local autenticado.
 5. ~~**Lista de endereços que a janela pode abrir** (tutoriais da `0.2.0`)~~ Decidido: mapa fixo no C# (`SourceHelp`), sem mudar o `LinkPolicy`.
 6. ~~**Porta do agente (#13)**~~ Decidido: faixa de 10 portas, o app a percorre sozinho na rede local (`docs/protocolo-v1.md`).
-7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord`): aprovar antes de qualquer código.
-8. **Discord por pessoa (`0.4.0`):** publicar o id do Discord do membro ou um identificador opaco, e se o avatar fica só em memória ou também em disco.
+7. **Mudança de protocolo** (Wake-on-LAN, pareamento com revogação, campos e ações novas do `discord` e o MAC do `system`, estes já aprovados): aprovar antes de qualquer código.
+8. **Aviso de download ou cópia (`0.3.0`):** o aviso fica na versão (decidido). Em aberto: se a **cópia** entra (exige campo novo de leitura de disco) ou só o download; e se o pareamento entra na `0.3.0` (decidir depois, no ciclo).
+9. **Discord por pessoa (`0.4.0`):** publicar o id do Discord do membro ou um identificador opaco, e se o avatar fica só em memória ou também em disco.
 
 ## Diferenças em relação ao documento de funcionalidades
 

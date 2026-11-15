@@ -8,6 +8,12 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import org.atalaia.core.connection.Endpoint
+import org.atalaia.core.panel.OffMode
+import org.atalaia.core.panel.OffSettings
+import org.atalaia.core.settings.Pin
+import org.atalaia.core.state.LimitSpec
+import org.atalaia.core.state.LimitSpecs
+import org.atalaia.core.state.Limits
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -78,6 +84,63 @@ class SettingsStore(context: Context) {
     var endpoints: List<Endpoint>
         get() = Endpoint.parseList(prefs.getString("endpoints", "") ?: "") ?: emptyList()
         set(value) { prefs.edit().putString("endpoints", value.joinToString(",") { it.toConfigString() }).apply() }
+
+    /** Limites dos alertas; `-1` guardado = desligado, ausente = padrão. */
+    var limits: Limits
+        get() = Limits(limit("limitGpu", LimitSpecs.GPU_TEMP), limit("limitRam", LimitSpecs.RAM), limit("limitDisk", LimitSpecs.DISK), limit("limitDownload", LimitSpecs.DOWNLOAD_MBPS))
+        set(v) {
+            prefs.edit().putInt("limitGpu", v.gpuTempC ?: -1).putInt("limitRam", v.ramPercent ?: -1).putInt("limitDisk", v.diskPercent ?: -1).putInt("limitDownload", v.downloadMbps ?: -1).apply()
+        }
+
+    private fun limit(key: String, spec: LimitSpec): Int? =
+        prefs.getInt(key, spec.default).let { if (it < 0) null else it }
+
+    /** O que mostrar com o PC desligado; ausente ou valor desconhecido = padrão. */
+    var offScreen: OffSettings
+        get() {
+            val d = OffSettings()
+            return OffSettings(
+                mode = OffMode.entries.firstOrNull { it.name == prefs.getString("offMode", null) } ?: d.mode,
+                nightStartHour = prefs.getInt("offStart", d.nightStartHour).coerceIn(0, 23),
+                nightEndHour = prefs.getInt("offEnd", d.nightEndHour).coerceIn(0, 23),
+            )
+        }
+        set(v) { prefs.edit().putString("offMode", v.mode.name).putInt("offStart", v.nightStartHour).putInt("offEnd", v.nightEndHour).apply() }
+
+    /** Tela de espera (relógio, estado do PC e jogado hoje) depois de 10 min sem toque; ligada por padrão. */
+    var attract: Boolean
+        get() = prefs.getBoolean("attract", true)
+        set(v) { prefs.edit().putBoolean("attract", v).apply() }
+
+    /**
+     * Último MAC de cabo que o agente publicou (`system.net.mac`), para o "Ligar PC" com o PC desligado. Um valor nulo do agente
+     * (PC no Wi-Fi) nunca apaga este: quem grava só grava MAC válido.
+     */
+    var lastMac: String?
+        get() = prefs.getString("lastMac", null)
+        set(v) { prefs.edit().putString("lastMac", v).apply() }
+
+    /** Trocar de aba sozinho (jogo, call, volta ao Início); ligado por padrão. */
+    var autoSwitch: Boolean
+        get() = prefs.getBoolean("autoSwitch", true)
+        set(v) { prefs.edit().putBoolean("autoSwitch", v).apply() }
+
+    /** PIN opcional da configuração: só sal e hash ficam guardados (nunca o PIN). */
+    val hasPin: Boolean get() = prefs.contains("pinHash")
+
+    fun setPin(pin: String) {
+        val salt = Pin.newSalt()
+        prefs.edit().putString("pinSalt", Base64.encodeToString(salt, Base64.NO_WRAP))
+            .putString("pinHash", Base64.encodeToString(Pin.hash(pin, salt), Base64.NO_WRAP)).apply()
+    }
+
+    fun clearPin() { prefs.edit().remove("pinSalt").remove("pinHash").apply() }
+
+    fun checkPin(pin: String): Boolean {
+        val salt = prefs.getString("pinSalt", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        val hash = prefs.getString("pinHash", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        return Pin.verify(pin, salt, hash)
+    }
 
     val token: String? get() = vault.load()
 

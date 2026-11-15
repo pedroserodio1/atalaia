@@ -193,7 +193,7 @@ Chaves principais (padrões em `appsettings.json`):
 | `Network:PreferredAdapter` | Placa de rede mostrada como "endereço do PC" quando há mais de uma (só muda o que a tela e o QR mostram) |
 | `Updates:Repository` | Repositório do GitHub (`dono/nome`) de onde a janela abre os links e, na atualização automática, as releases (`pedroserodio1/atalaia`) |
 | `Plugins:<id>:enabled` / `intervalMs` | Liga/desliga e intervalo de coleta de cada plugin |
-| `Plugins:system:netInterface` | Nome da placa de rede; vazio = a primeira ativa com gateway IPv4 |
+| `Plugins:system:netInterface` | Nome da placa de rede; vazio = a primeira ativa com gateway IPv4. Se for de cabo, o `system` publica o MAC dela (`net.mac`) para o Wake-on-LAN do tablet |
 | `Plugins:gpu:nvidiaSmiPath` | Caminho do `nvidia-smi` (padrão: o do PATH) |
 | `Plugins:activeWindow:sendTitle` | `false` envia o título vazio |
 | `Plugins:ups:dbPath` | Banco da Intelbras; vazio = `%APPDATA%\Intelbras\ups_desktop\intelbras_nobreak_management_service.db` |

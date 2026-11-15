@@ -9,12 +9,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -83,17 +86,57 @@ fun PanelSlider(value: Int?, max: Int, enabled: Boolean, onCommit: (Int) -> Unit
 }
 
 /**
+ * [PanelSlider] em pé: o topo é o máximo. Mesma regra (envia ao soltar, um toque também envia), com área de toque de 48 dp de largura
+ * sobre um traço fino. O valor é lido na mesma escala que o polegar é desenhado (descontando o raio dele nas pontas).
+ */
+@Composable
+fun PanelVerticalSlider(value: Int?, max: Int, enabled: Boolean, onCommit: (Int) -> Unit, modifier: Modifier = Modifier, color: Color = Palette.Mint) {
+    var drag by remember { mutableStateOf<Int?>(null) }
+    val commit by rememberUpdatedState(onCommit)
+    val shown = drag ?: value ?: 0
+    val thumbDp = 10.dp
+    fun valueAtY(y: Float, height: Int, thumb: Float) = (((height - thumb - y) / (height - 2 * thumb)).coerceIn(0f, 1f) * max).roundToInt()
+    Box(
+        modifier.width(48.dp)
+            .pointerInput(enabled, max) { if (enabled) detectTapGestures { o -> commit(valueAtY(o.y, size.height, thumbDp.toPx())) } }
+            .pointerInput(enabled, max) {
+                if (enabled) detectVerticalDragGestures(
+                    onDragStart = { o -> drag = valueAtY(o.y, size.height, thumbDp.toPx()) },
+                    onDragEnd = { drag?.let { commit(it) }; drag = null },
+                    onDragCancel = { drag = null },
+                    onVerticalDrag = { change, _ -> change.consume(); drag = valueAtY(change.position.y, size.height, thumbDp.toPx()) },
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.fillMaxHeight().width(24.dp)) {
+            val track = 8.dp.toPx()
+            val r = track / 2
+            val x = (size.width - track) / 2
+            val thumb = thumbDp.toPx()
+            val usable = size.height - 2 * thumb
+            val y = size.height - thumb - usable * (shown.coerceIn(0, max).toFloat() / max)
+            drawRoundRect(Palette.Border, Offset(x, 0f), Size(track, size.height), CornerRadius(r, r))
+            val fill = if (enabled) color else Palette.TextMuted
+            drawRoundRect(fill, Offset(x, y), Size(track, size.height - y), CornerRadius(r, r))
+            drawCircle(if (enabled) Palette.Text else Palette.TextMuted, thumb, Offset(size.width / 2, y))
+        }
+    }
+}
+
+/**
  * [PanelSlider] com o valor segurado depois de soltar (por [HOLD_MS], até o agente confirmar): a tela não volta ao valor
  * antigo enquanto o `update` não chega, e se não chegar, volta ao do agente.
  */
 @Composable
-fun HeldSlider(agentValue: Int?, max: Int, enabled: Boolean, clock: Clock, onSend: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun HeldSlider(agentValue: Int?, max: Int, enabled: Boolean, clock: Clock, onSend: (Int) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false) {
     var held by remember { mutableStateOf<Held?>(null) }
     val shown = heldDisplay(agentValue, held, clock.monotonicMs())
-    PanelSlider(shown, max, enabled, { v ->
+    val commit = { v: Int ->
         held = Held(v, clock.monotonicMs() + HOLD_MS)
         onSend(v)
-    }, modifier)
+    }
+    if (vertical) PanelVerticalSlider(shown, max, enabled, commit, modifier) else PanelSlider(shown, max, enabled, commit, modifier)
 }
 
 /** Barra de posição da mídia: um toque vai para aquele ponto (área de 36 dp de altura). */
@@ -120,6 +163,19 @@ fun StateButton(label: String, bad: Boolean, enabled: Boolean, modifier: Modifie
         modifier.height(48.dp).background(bg, shape).border(1.dp, line, shape).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { BodyText(label, if (!enabled) Palette.TextMuted else if (bad) Palette.Coral else Palette.Text, 14) }
+}
+
+/** Botão redondo de 48 dp só com ícone (o estado vai na forma do ícone e na cor): [bad] pinta de coral o estado ruim (mudo, surdo). */
+@Composable
+fun IconToggle(icon: IconKind, bad: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val bg = if (bad) Palette.OnCoral else Palette.Mint
+    val line = if (bad) Palette.Coral else Palette.Mint
+    val fg = if (bad) Palette.Coral else Palette.OnMint
+    Box(
+        Modifier.size(48.dp).background(if (enabled) bg else Palette.Border, CircleShape).border(1.dp, if (enabled) line else Palette.Border, CircleShape)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { PanelIcon(icon, if (enabled) fg else Palette.TextMuted, 24.dp) }
 }
 
 /** Capa da mídia (baixada e decodificada pelo [CoverRepository]); quadrado vazio enquanto não chega ou sem capa. */

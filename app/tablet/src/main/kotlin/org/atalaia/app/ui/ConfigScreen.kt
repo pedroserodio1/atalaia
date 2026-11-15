@@ -46,7 +46,11 @@ import org.atalaia.app.ui.theme.PlexMono
 import org.atalaia.core.connection.ChannelKind
 import org.atalaia.core.connection.Endpoint
 import org.atalaia.core.settings.ConfigDraft
+import org.atalaia.core.panel.OffMode
+import org.atalaia.core.panel.OffSettings
 import org.atalaia.core.settings.Edit
+import org.atalaia.core.settings.Pin
+import org.atalaia.core.state.LimitSpecs
 
 /**
  * Configuração: lista de endereços do agente em ordem de prioridade (o primeiro é o preferido) e o token. O token nunca
@@ -58,6 +62,13 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     var endpoints by remember { mutableStateOf(app.settings.endpoints.ifEmpty { listOf(Endpoint("127.0.0.1")) }) }
     var newHost by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
+    var limits by remember { mutableStateOf(app.settings.limits) }
+    var off by remember { mutableStateOf(app.settings.offScreen) }
+    var autoSwitch by remember { mutableStateOf(app.settings.autoSwitch) }
+    var attract by remember { mutableStateOf(app.settings.attract) }
+    var pinText by remember { mutableStateOf("") }
+    var removePin by remember { mutableStateOf(false) }
+    val hadPin = remember { app.settings.hasPin }
     var showToken by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -73,8 +84,15 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
     fun save() {
         val problem = ConfigDraft.canSave(endpoints, token, hadToken)
         if (problem != null) { error = problem; return }
+        if (pinText.isNotEmpty() && !Pin.isValid(pinText)) { error = Texts.PIN_INVALID; return }
         val clean = ConfigDraft.cleanToken(token)
         if (!app.configure(endpoints, clean.ifEmpty { null })) { error = Texts.CONFIG_TOKEN_NOT_SAVED; return }
+        app.settings.limits = limits
+        app.store.limits = limits
+        app.settings.offScreen = off
+        app.settings.autoSwitch = autoSwitch
+        app.settings.attract = attract
+        if (removePin) app.settings.clearPin() else if (pinText.isNotEmpty()) app.settings.setPin(pinText)
         onClose()
     }
 
@@ -83,7 +101,8 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
         Modifier.fillMaxSize().background(Palette.Graphite).imePadding().verticalScroll(rememberScrollState()).padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PanelCard(Modifier.weight(1.25f)) {
+        Column(Modifier.weight(1.25f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        PanelCard(Modifier.fillMaxWidth()) {
             MonoText(Texts.CONFIG_ENDPOINTS)
             MonoText(Texts.CONFIG_ENDPOINTS_HINT, sp = 12)
             Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
@@ -104,6 +123,37 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                 Field(newHost, { newHost = it }, Texts.CONFIG_HOST_PLACEHOLDER, Modifier.weight(1f), KeyboardType.Uri, ImeAction.Done, onDone = ::addHost)
                 ActionButton(Texts.CONFIG_ADD, primary = false, modifier = Modifier.width(110.dp), onClick = ::addHost)
             }
+        }
+        PanelCard(Modifier.fillMaxWidth()) {
+            MonoText(Texts.LIMITS_TITLE)
+            MonoText(Texts.LIMITS_HINT, sp = 12)
+            val gpu = LimitSpecs.GPU_TEMP
+            val ram = LimitSpecs.RAM
+            val disk = LimitSpecs.DISK
+            LimitRow(Texts.LIMIT_GPU, Texts.limitValue(limits.gpuTempC, " °C"), limits.gpuTempC != null, limits.gpuTempC != gpu.max,
+                { limits = limits.copy(gpuTempC = gpu.step(limits.gpuTempC, -1)) }, { limits = limits.copy(gpuTempC = gpu.step(limits.gpuTempC, +1)) })
+            LimitRow(Texts.LIMIT_RAM, Texts.limitValue(limits.ramPercent, "%"), limits.ramPercent != null, limits.ramPercent != ram.max,
+                { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, -1)) }, { limits = limits.copy(ramPercent = ram.step(limits.ramPercent, +1)) })
+            LimitRow(Texts.LIMIT_DISK, Texts.limitValue(limits.diskPercent, "%"), limits.diskPercent != null, limits.diskPercent != disk.max,
+                { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, -1)) }, { limits = limits.copy(diskPercent = disk.step(limits.diskPercent, +1)) })
+            val dl = LimitSpecs.DOWNLOAD_MBPS
+            LimitRow(Texts.LIMIT_DOWNLOAD, Texts.limitValue(limits.downloadMbps, " Mbps"), limits.downloadMbps != null, limits.downloadMbps != dl.max,
+                { limits = limits.copy(downloadMbps = dl.step(limits.downloadMbps, -1)) }, { limits = limits.copy(downloadMbps = dl.step(limits.downloadMbps, +1)) })
+        }
+        PanelCard(Modifier.fillMaxWidth()) {
+            MonoText(Texts.OFF_TITLE)
+            MonoText(Texts.OFF_HINT, sp = 12)
+            LimitRow(Texts.OFF_MODE, Texts.offMode(off.mode), true, true,
+                { off = off.copy(mode = off.mode.step(-1)) }, { off = off.copy(mode = off.mode.step(+1)) })
+            if (off.mode == OffMode.NIGHT) {
+                LimitRow(Texts.OFF_NIGHT_START, Texts.hour(off.nightStartHour), true, true,
+                    { off = off.copy(nightStartHour = OffSettings.stepHour(off.nightStartHour, -1)) },
+                    { off = off.copy(nightStartHour = OffSettings.stepHour(off.nightStartHour, +1)) })
+                LimitRow(Texts.OFF_NIGHT_END, Texts.hour(off.nightEndHour), true, true,
+                    { off = off.copy(nightEndHour = OffSettings.stepHour(off.nightEndHour, -1)) },
+                    { off = off.copy(nightEndHour = OffSettings.stepHour(off.nightEndHour, +1)) })
+            }
+        }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             PanelCard(Modifier.fillMaxWidth()) {
@@ -129,11 +179,40 @@ fun ConfigScreen(app: PanelApp, onClose: () -> Unit) {
                     )
                 }
             }
+            PanelCard(Modifier.fillMaxWidth()) {
+                MonoText(Texts.AUTO_SWITCH_TITLE)
+                MonoText(Texts.AUTO_SWITCH_HINT, sp = 12)
+                LimitRow(Texts.AUTO_SWITCH_LABEL, Texts.onOff(autoSwitch), autoSwitch, !autoSwitch, { autoSwitch = false }, { autoSwitch = true })
+                LimitRow(Texts.ATTRACT_LABEL, Texts.onOff(attract), attract, !attract, { attract = false }, { attract = true })
+            }
+            PanelCard(Modifier.fillMaxWidth()) {
+                MonoText(Texts.PIN_TITLE)
+                MonoText(if (hadPin) Texts.PIN_SET_HINT else Texts.PIN_HINT, sp = 12)
+                Box(Modifier.height(8.dp))
+                Field(
+                    pinText, { pinText = it.filter { c -> c in '0'..'9' }.take(Pin.MAX); removePin = false; error = null }, Texts.PIN_PLACEHOLDER,
+                    Modifier.fillMaxWidth(), KeyboardType.NumberPassword, ImeAction.Done, PasswordVisualTransformation(), onDone = {},
+                )
+                if (hadPin) {
+                    ActionButton(if (removePin) Texts.PIN_KEEP else Texts.PIN_REMOVE, false, Modifier.fillMaxWidth().padding(top = 8.dp)) { removePin = !removePin; if (removePin) pinText = "" }
+                }
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (app.settings.endpoints.isNotEmpty() && hadToken) ActionButton(Texts.CONFIG_CANCEL, false, Modifier.weight(1f), onClose)
                 ActionButton(Texts.CONFIG_SAVE, true, Modifier.weight(1f), ::save)
             }
         }
+    }
+}
+
+/** Uma linha de limite: rótulo, valor atual e os botões − e +. */
+@Composable
+private fun LimitRow(label: String, value: String, canMinus: Boolean, canPlus: Boolean, onMinus: () -> Unit, onPlus: () -> Unit) {
+    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f)) { BodyText(label, sp = 15) }
+        MonoText(value, Palette.Mint, 14)
+        SmallButton("−", canMinus, onMinus)
+        SmallButton("+", canPlus, onPlus)
     }
 }
 

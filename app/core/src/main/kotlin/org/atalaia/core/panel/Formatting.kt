@@ -3,6 +3,7 @@
 
 package org.atalaia.core.panel
 
+import org.atalaia.core.protocol.DiscordConnection
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -24,6 +25,18 @@ object Pt {
 
     /** `kbps` em kilobits por segundo (protocolo): `60 kb/s`, `3,3 Mb/s`. */
     fun rate(kbps: Long): String = if (kbps >= 1000) decimal(kbps / 1000.0) + " Mb/s" else "$kbps kb/s"
+
+    /** Tempo jogado: `45 min`, `1 h 20 min`, `2 h`. Menos de 1 min vira `0 min`. */
+    fun playTime(ms: Long): String {
+        val total = (ms / 60_000).coerceAtLeast(0)
+        val h = total / 60
+        val m = total % 60
+        return when {
+            h == 0L -> "$m min"
+            m == 0L -> "$h h"
+            else -> "$h h $m min"
+        }
+    }
 
     /** `3:25`, `1:02:03`. */
     fun duration(seconds: Double): String {
@@ -60,6 +73,14 @@ object Pt {
 
     /** Horas jogadas: `12,5 h`. */
     fun hours(h: Double?): String = if (h == null) "—" else decimal(h) + " h"
+
+    /** Conexão de voz do Discord para o cabeçalho do canal; `null` (sem leitura ou estado desconhecido) não mostra nada. */
+    fun voiceConnection(c: DiscordConnection?): String? = when (c?.state) {
+        "connected" -> if (c.pingMs != null) "Conectado · ${c.pingMs} ms" else "Conectado"
+        "connecting" -> "Conectando…"
+        "no_route" -> "Sem rota"
+        else -> null
+    }
 
     /** Percentual de `used` em `total`, 0 a 100; `null` se faltar dado. */
     fun percent(used: Long?, total: Long?): Int? =

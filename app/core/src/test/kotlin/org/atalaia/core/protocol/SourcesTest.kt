@@ -43,6 +43,13 @@ class SourcesTest {
     }
 
     @Test
+    fun system_com_mac_de_cabo_nulo_ausente_e_campo_extra() {
+        assertEquals("AA:BB:CC:DD:EE:FF", decode<SystemData>("system", """{"net":{"rxKbps":1,"txKbps":2,"mac":"AA:BB:CC:DD:EE:FF","novo":true}}""").net.mac)
+        assertNull(decode<SystemData>("system", """{"net":{"rxKbps":1,"txKbps":2,"mac":null}}""").net.mac)   // PC no Wi-Fi
+        assertNull(decode<SystemData>("system", """{"net":{"rxKbps":1,"txKbps":2}}""").net.mac)            // agente anterior à 0.3.0-beta.7
+    }
+
+    @Test
     fun gpu() {
         val d = decode<GpuData>("gpu", """{"name":"RTX","tempC":61,"utilPercent":78,"vramUsedMb":5200,"vramTotalMb":8192,"powerW":123.4}""")
         assertEquals("RTX", d.name)
@@ -202,6 +209,42 @@ class SourcesTest {
         assertEquals(150, d.outputVolume)   // a saída vai até 200
         assertEquals("Geral", d.channel!!.name)
         assertEquals(listOf("Diego"), d.channel.members.filter { it.speaking }.map { it.name })
+    }
+
+    @Test
+    fun discord_com_conexao() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"user":"U","channel":{"name":"Geral","guild":"S","connection":{"state":"connected","pingMs":38},"members":[]}}""",
+        )
+        assertEquals("connected", d.channel!!.connection!!.state)
+        assertEquals(38, d.channel.connection.pingMs)
+    }
+
+    @Test
+    fun discord_conexao_nula_ou_sem_ping() {
+        val nula = decode<DiscordData>("discord", """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","connection":null,"members":[]}}""")
+        assertNull(nula.channel!!.connection)
+        val semPing = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","connection":{"state":"connecting","pingMs":null},"members":[]}}""",
+        )
+        assertNull(semPing.channel!!.connection!!.pingMs)
+    }
+
+    @Test
+    fun discord_sem_campo_conexao_agente_da_beta_5() {
+        val d = decode<DiscordData>("discord", """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","members":[]}}""")
+        assertNull(d.channel!!.connection)
+    }
+
+    @Test
+    fun discord_conexao_com_campo_extra_e_ignorada_sem_erro() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"user":"U","channel":{"name":"G","guild":"S","connection":{"state":"connected","pingMs":9,"futuro":1},"members":[]}}""",
+        )
+        assertEquals(9, d.channel!!.connection!!.pingMs)
     }
 
     @Test

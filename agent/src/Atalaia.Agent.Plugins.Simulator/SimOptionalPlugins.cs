@@ -127,9 +127,13 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
     private int _speaker;
     private bool _mute, _deaf;
     private int _input = 100, _output = 100;
+    private DateTime? _leftAt;   // saiu da call; o canal volta sozinho em ~10 s para dar para testar o botão
 
     public override IReadOnlyList<ActionDescriptor> Actions { get; } =
-        [new("toggle_mute"), new("toggle_deaf"), new("set_input_volume", "args.value 0..100"), new("set_output_volume", "args.value 0..200")];
+        [new("toggle_mute"), new("toggle_deaf"), new("set_input_volume", "args.value 0..100"), new("set_output_volume", "args.value 0..200"),
+         new("leave_call")];
+
+    private bool InCall => _leftAt is not { } t || DateTime.UtcNow - t > TimeSpan.FromSeconds(10);
 
     public override Task<ActionResult> ExecuteAsync(string action, JsonElement args, CancellationToken ct)
     {
@@ -145,6 +149,7 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
             case "set_output_volume":
                 if (Volume(200) < 0) return Task.FromResult(new ActionResult(false, "invalid_args"));
                 _output = Volume(200); break;
+            case "leave_call": if (InCall) _leftAt = DateTime.UtcNow; break;   // fora da call: ok sem fazer nada
             default: return Task.FromResult(new ActionResult(false, "unknown_action"));
         }
         return Task.FromResult(new ActionResult(true));
@@ -153,6 +158,13 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
     public override Task<JsonElement?> CollectAsync(CancellationToken ct)
     {
         if (Random.Shared.NextDouble() < 0.4) _speaker = Random.Shared.Next(-1, Names.Length);
+        var channel = !InCall ? null : (object)new
+        {
+            name = "Geral",
+            guild = "Servidor de teste",
+            connection = new { state = "connected", pingMs = 38 },
+            members = Names.Select((n, i) => new { name = n, muted = i == 3, deafened = false, speaking = i == _speaker }).ToList(),
+        };
         return Result(new
         {
             connected = true,
@@ -161,12 +173,7 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
             deaf = _deaf,
             inputVolume = _input,
             outputVolume = _output,
-            channel = new
-            {
-                name = "Geral",
-                guild = "Servidor de teste",
-                members = Names.Select((n, i) => new { name = n, muted = i == 3, deafened = false, speaking = i == _speaker }).ToList(),
-            },
+            channel,
         });
     }
 }

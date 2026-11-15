@@ -15,6 +15,7 @@ import org.atalaia.core.connection.AgentConnection
 import org.atalaia.core.connection.Clock
 import org.atalaia.core.connection.ConnectionState
 import org.atalaia.core.protocol.Decoded
+import org.atalaia.core.protocol.GpuData
 import org.atalaia.core.protocol.Incoming
 import org.atalaia.core.protocol.Severity
 import org.atalaia.core.protocol.Sources
@@ -29,6 +30,11 @@ class AppStateStore(private val clock: Clock = Clock.System) {
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state
 
+    /** Limites dos alertas (configuração do tablet). Valem a partir da próxima leitura de `system` ou `gpu`. */
+    @Volatile var limits: Limits = Limits()
+    private val limitTracker = LimitTracker()
+    private val downloadWatcher = DownloadWatcher()
+
     /** Começa a coletar da conexão. Chame antes de `AgentConnection.start`: o fluxo de mensagens não guarda histórico. */
     fun attach(scope: CoroutineScope, connection: AgentConnection): Job =
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -37,14 +43,23 @@ class AppStateStore(private val clock: Clock = Clock.System) {
         }
 
     fun onConnection(connection: ConnectionState) {
-        _state.update { it.copy(connection = connection) }
+        val now = clock.monotonicMs()
+        _state.update {
+            val searching = connection is ConnectionState.Unreachable || connection is ConnectionState.Connecting
+            it.copy(connection = connection, disconnectedSinceMono = if (searching) it.disconnectedSinceMono ?: now else null)
+        }
     }
+
+    /** Dispensa o aviso de download terminado (toque no relógio). */
+    fun dismissDownload() { _state.update { it.copy(downloadDoneMono = null) } }
 
     fun onMessage(m: Incoming) {
         val now = clock.monotonicMs()
         when (m) {
             is Incoming.Hello -> _state.update { s ->
+                downloadWatcher.reset()   // conexão nova: o que estava contando de antes não vale
                 s.copy(
+                    downloadDoneMono = null,
                     agent = AgentInfo(m.agent, m.version, m.host, m.protocol),
                     plugins = m.plugins.associateByTo(LinkedHashMap()) { it.id },
                     anchor = if (m.ts > 0) ClockAnchor(m.ts, now) else null,
@@ -62,6 +77,10 @@ class AppStateStore(private val clock: Clock = Clock.System) {
         val decoded = Sources.decode(source, raw)
         if (decoded is Decoded.Invalid) return   // formato inesperado: mantém o dado anterior
         val data = (decoded as? Decoded.Ok)?.data
+        // Fora do `update` (que pode repetir a lambda): o tempo acima do limite é contado pela chegada do dado, no relógio do tablet.
+        val isLimitSource = data is SystemData || data is GpuData
+        if (isLimitSource) limitTracker.observe(data, limits, now)
+        val downloadEnded = data is SystemData && downloadWatcher.observe(data.net.rxKbps, limits.downloadMbps?.let { it * 1_000L }, now)
 
         _state.update { s ->
             val old = s.sources[source]
@@ -85,7 +104,11 @@ class AppStateStore(private val clock: Clock = Clock.System) {
             val cpu = (data as? SystemData)?.cpu?.percent
             val history = if (cpu != null) (s.cpuHistory + cpu).takeLast(CPU_HISTORY) else s.cpuHistory
 
-            s.copy(sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history)
+            s.copy(
+                sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history,
+                limitAlerts = if (isLimitSource) limitTracker.active() else s.limitAlerts,
+                downloadDoneMono = if (downloadEnded) now else s.downloadDoneMono,
+            )
         }
     }
 

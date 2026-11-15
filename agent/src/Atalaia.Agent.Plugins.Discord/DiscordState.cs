@@ -18,6 +18,8 @@ public sealed class DiscordState
     private int _input, _output;
     private string? _channelId;
     private string _channelName = "", _guild = "";
+    private string? _connState;   // connected|connecting|no_route; nulo = sem leitura
+    private int? _pingMs;
     private readonly Dictionary<string, Member> _members = [];
     private readonly HashSet<string> _speaking = [];
 
@@ -81,6 +83,13 @@ public sealed class DiscordState
             switch (evt)
             {
                 case "VOICE_SETTINGS_UPDATE": ApplyVoiceSettings(data); break;
+                case "VOICE_CONNECTION_STATUS":
+                    if (_channelId is null) break;
+                    _connState = MapConnectionState(Str(data, "state"));
+                    _pingMs = _connState == "connected" && data.TryGetProperty("average_ping", out var p)
+                        && p.ValueKind == JsonValueKind.Number && p.TryGetDouble(out var ms) && double.IsFinite(ms)
+                        ? (int)Math.Round(ms) : null;   // o hostname do evento nunca é guardado
+                    break;
                 case "SPEAKING_START": _speaking.Add(Str(data, "user_id")); break;
                 case "SPEAKING_STOP": _speaking.Remove(Str(data, "user_id")); break;
                 case "VOICE_STATE_CREATE" or "VOICE_STATE_UPDATE": Upsert(data); break;
@@ -107,6 +116,7 @@ public sealed class DiscordState
                 {
                     name = _channelName,
                     guild = _guild,
+                    connection = _connState is null ? null : new { state = _connState, pingMs = _pingMs },
                     members = _members.Select(m => new
                     {
                         name = m.Value.Name, muted = m.Value.Muted, deafened = m.Value.Deafened,
@@ -117,9 +127,24 @@ public sealed class DiscordState
         }
     }
 
+    /// <summary>
+    /// Estado do <c>VOICE_CONNECTION_STATUS</c> do Discord para o do protocolo; desconhecido = <c>null</c>.
+    /// Dentro de um canal, desconectar é religar, por isso vira <c>connecting</c>.
+    /// </summary>
+    public static string? MapConnectionState(string discordState) => discordState switch
+    {
+        "VOICE_CONNECTED" or "CONNECTED" => "connected",
+        "AWAITING_ENDPOINT" or "AUTHENTICATING" or "CONNECTING" or "ICE_CHECKING" or "VOICE_CONNECTING"
+            or "DISCONNECTED" or "VOICE_DISCONNECTED" => "connecting",
+        "NO_ROUTE" => "no_route",
+        _ => null,
+    };
+
+    // O evento volta a cada ~5 s (spike de 13/11/2026), então zerar a cada troca de canal custa no máximo 5 s sem ping.
     private void ClearChannel()
     {
         _channelId = null; _channelName = _guild = "";
+        _connState = null; _pingMs = null;
         _members.Clear(); _speaking.Clear();
     }
 

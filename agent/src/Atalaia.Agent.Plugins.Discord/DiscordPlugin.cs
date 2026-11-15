@@ -38,6 +38,7 @@ public sealed class DiscordPlugin : IPlugin
     [
         new("toggle_mute", "liga/desliga o microfone"), new("toggle_deaf", "liga/desliga o áudio (ensurdecer)"),
         new("set_input_volume", "args.value 0..100"), new("set_output_volume", "args.value 0..200"),
+        new("leave_call", "sai do canal de voz"),
     ];
 
     private static string TokenFile => Path.Combine(
@@ -67,9 +68,13 @@ public sealed class DiscordPlugin : IPlugin
     public Task<JsonElement?> CollectAsync(CancellationToken ct) =>
         _fatal is { } f ? throw new InvalidOperationException(f) : Task.FromResult<JsonElement?>(_state.ToJson());
 
-    /// <summary>Ações de voz pelo <c>SET_VOICE_SETTINGS</c> do RPC (escopo <c>rpc</c>).</summary>
+    /// <summary>
+    /// Ações de voz pelo <c>SET_VOICE_SETTINGS</c> do RPC e <c>leave_call</c> pelo <c>SELECT_VOICE_CHANNEL</c> com canal nulo
+    /// (ambos funcionam com os escopos <c>rpc</c> e <c>rpc.voice.read</c>).
+    /// </summary>
     public async Task<ActionResult> ExecuteAsync(string action, JsonElement args, CancellationToken ct)
     {
+        string cmd = "SET_VOICE_SETTINGS";
         object settings;
         switch (action)
         {
@@ -83,22 +88,27 @@ public sealed class DiscordPlugin : IPlugin
                 if (!TryParseVolume(args, 200, out var output)) return new ActionResult(false, "invalid_args");
                 settings = new { output = new { volume = output } };
                 break;
+            case "leave_call":
+                cmd = "SELECT_VOICE_CHANNEL";
+                settings = new { channel_id = (string?)null };
+                break;
             default: return new ActionResult(false, "unknown_action");
         }
 
         var pipe = _live;
         if (pipe is null) return new ActionResult(false, "not_connected");
+        if (action == "leave_call" && _state.ChannelId is null) return new ActionResult(true);   // fora da call: nada a fazer
 
         var nonce = Guid.NewGuid().ToString();
         var reply = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pending[nonce] = reply;
         try
         {
-            var payload = JsonSerializer.Serialize(new { cmd = "SET_VOICE_SETTINGS", args = settings, nonce });
+            var payload = JsonSerializer.Serialize(new { cmd, args = settings, nonce });
             await WriteAsync(pipe, DiscordIpc.OpFrame, payload, ct);
             var root = await reply.Task.WaitAsync(TimeSpan.FromSeconds(4), ct);
             if (IsError(root)) return new ActionResult(false, "discord_recusou");
-            if (root.TryGetProperty("data", out var data)) _state.ApplyVoiceSettings(data);   // já reflete na coleta imediata
+            if (cmd == "SET_VOICE_SETTINGS" && root.TryGetProperty("data", out var data)) _state.ApplyVoiceSettings(data);   // já reflete na coleta imediata
             return new ActionResult(true);
         }
         catch (TimeoutException) { return new ActionResult(false, "timeout"); }
@@ -183,6 +193,8 @@ public sealed class DiscordPlugin : IPlugin
         _state.SetConnected(user);
         await CommandAsync(pipe, "SUBSCRIBE", new { }, "VOICE_SETTINGS_UPDATE", ct);
         await CommandAsync(pipe, "SUBSCRIBE", new { }, "VOICE_CHANNEL_SELECT", ct);
+        // Ping da call. Um ERROR aqui (escopo, versão do Discord) só tira o ping; o resto continua.
+        await CommandAsync(pipe, "SUBSCRIBE", new { }, "VOICE_CONNECTION_STATUS", ct);
         await RefreshChannelAsync(pipe, guilds, ct);
         _live = pipe;   // a partir daqui as ações podem escrever
 

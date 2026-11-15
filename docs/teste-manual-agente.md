@@ -62,7 +62,7 @@ Jogos e ações e Atualizações. Para abrir: menu da bandeja > **Abrir Atalaia*
 | # | Passo | Esperado |
 |---|---|---|
 | 1 | **Conexão** | Código de acesso (o mesmo da bandeja), tablets conectados agora (USB ou Wi-Fi, atualiza sozinho), e embaixo as mesmas telas de Rede e Firewall e de USB e adb do onboarding, com o estado real |
-| 2 | **"Em breve"** na Conexão | "Gerar novo", "Cancelar", "Revogar", mDNS e Wake-on-LAN aparecem **desabilitados** e marcados "em breve": nada deles responde ao clique |
+| 2 | **"Em breve"** na Conexão | "Gerar novo", "Cancelar", "Revogar", mDNS aparecem **desabilitados** e marcados "em breve": nada deles responde ao clique |
 | 3 | **Iniciar com o Windows** | Liga e desliga como no passo 6 do onboarding (valor `Atalaia` na chave Run) |
 | 4 | **Fontes de dados** | A mesma lista do onboarding; ligar e desligar uma fonte religa o agente sem mudar o código de acesso. Clima, Steam e Discord têm o botão **Configurar** (veja a seção abaixo) |
 | 5 | **Jogos e ações** | Só texto explicando o que vem: cenas por jogo e ações extras, tudo "em breve" e desabilitado |
@@ -124,6 +124,14 @@ coordenada de verdade em issue, PR ou log.**
 
 **O que é coberto só por teste automático:** a validação campo a campo, a precedência (ambiente acima do cofre acima do `settings.json`), o desfazer em falha de religar e
 em valor sobreposto e o cofre com uma cifra falsa no lugar da DPAPI (a ida e volta da DPAPI de verdade também é testada, no Windows de quem roda).
+
+## Wake-on-LAN (0.3.0)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | PC no cabo, janela > Conexão > Sistema | Linha "Endereço MAC (Wake-on-LAN)" com o MAC da placa de cabo e o texto de preparo (BIOS, Gerenciador de Dispositivos, Inicialização rápida) |
+| 2 | Desligar o cabo e usar só o Wi-Fi do PC (se houver) | A linha diz que no Wi-Fi ligar pelo tablet não funciona; o `system` do tablet traz `mac: null` |
+| 3 | Log do agente (`%LOCALAPPDATA%\AtalaiaAgent\logs\`) | Nenhuma linha com o MAC |
 
 ## Tutoriais e Testar conexão (0.2.0)
 

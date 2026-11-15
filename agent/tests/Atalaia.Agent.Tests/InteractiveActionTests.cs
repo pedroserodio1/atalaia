@@ -78,6 +78,20 @@ public class InteractiveActionTests
     }
 
     [Fact]
+    public async Task Discord_simulado_mostra_o_ping_e_sai_da_call()
+    {
+        await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
+        var d = await WaitAsync(s, "discord", _ => true);
+        var conn = d.GetProperty("channel").GetProperty("connection");
+        Assert.Equal("connected", conn.GetProperty("state").GetString());
+        Assert.Equal(38, conn.GetProperty("pingMs").GetInt32());
+
+        Assert.True((await Run(s, "discord", "leave_call")).Ok);
+        await WaitAsync(s, "discord", x => x.GetProperty("channel").ValueKind == JsonValueKind.Null);
+        Assert.True((await Run(s, "discord", "leave_call")).Ok);   // fora da call: ok sem fazer nada
+    }
+
+    [Fact]
     public async Task Clear_all_zera_as_notificacoes_e_refresh_so_existe_onde_foi_declarado()
     {
         await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
@@ -101,7 +115,7 @@ public class InteractiveActionTests
             .First(p => p.GetProperty("id").GetString() == id).GetProperty("actions").EnumerateArray()
             .Select(a => a.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["play_pause", "play", "pause", "next", "previous", "seek"], Actions("media"));
-        Assert.Equal(["toggle_mute", "toggle_deaf", "set_input_volume", "set_output_volume"], Actions("discord"));
+        Assert.Equal(["toggle_mute", "toggle_deaf", "set_input_volume", "set_output_volume", "leave_call"], Actions("discord"));
         Assert.Contains("clear_all", Actions("notifications"));
     }
 

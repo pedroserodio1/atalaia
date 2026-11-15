@@ -245,6 +245,32 @@ public class UpdateCommandsTests : StepTestBase, IDisposable
     }
 
     [Fact]
+    public async Task Durante_a_instalacao_o_tablet_mantem_a_versao_conhecida_e_nao_vira_nao_instalado()
+    {
+        Build("0.1.1", new FakeRelease("v0.1.1"));
+        H.TabletVersion = "0.1.1-beta.1";
+        Assert.Equal("0.1.1-beta.1", (await Data("updates.tablet")).GetProperty("installedVersion").GetString());   // a página já viu a versão
+
+        using var started = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        _u.Github.OnDownload = name =>
+        {
+            if (!name.StartsWith("Atalaia-Tablet-", StringComparison.Ordinal)) return;
+            started.Set();
+            release.Wait(TimeSpan.FromSeconds(10));   // segura o job "rodando"
+        };
+        await Data("updates.apkUpdate");
+        Assert.True(started.Wait(TimeSpan.FromSeconds(5)));
+
+        var meio = await Data("updates.tablet");
+        Assert.Equal("running", meio.GetProperty("job").GetProperty("state").GetString());
+        Assert.Equal("0.1.1-beta.1", meio.GetProperty("installedVersion").GetString());   // era null: a janela dizia "app não instalado"
+
+        release.Set();
+        await WaitTabletJob();
+    }
+
+    [Fact]
     public async Task Apk_que_nao_bate_com_a_soma_nunca_chega_ao_tablet()
     {
         Build("0.1.1", new FakeRelease("v0.1.1"));

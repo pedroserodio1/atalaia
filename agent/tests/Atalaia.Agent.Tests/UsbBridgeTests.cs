@@ -379,19 +379,21 @@ public class UsbBridgeTests
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var r = await runner.RunAsync(["-NoProfile", "-Command", "Start-Sleep 30"], Ct);
         Assert.Equal(-1, r.ExitCode);
-        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(4), $"demorou {sw.Elapsed}");
+        // folga: o powershell frio leva alguns segundos só para abrir num runner lento, e o teste deve pegar o defeito (esperar os 30 s), não a lentidão
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(8), $"demorou {sw.Elapsed}");
     }
 
     [Fact]
     public async Task Filho_que_segura_o_canal_de_saida_nao_atrasa_o_resultado()
     {
-        // como o servidor do adb: o processo termina, mas um filho continua com a saída aberta por mais 6 s
+        // como o servidor do adb: o processo termina, mas um filho continua com a saída aberta por mais 15 s
         var runner = new ProcessAdbRunner(Pwsh, TimeSpan.FromSeconds(20));
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var r = await runner.RunAsync(["-NoProfile", "-Command", "Start-Process -NoNewWindow ping -ArgumentList '-n','7','127.0.0.1'; 'oi'"], Ct);
+        var r = await runner.RunAsync(["-NoProfile", "-Command", "Start-Process -NoNewWindow ping -ArgumentList '-n','16','127.0.0.1'; 'oi'"], Ct);
         Assert.Equal(0, r.ExitCode);
         Assert.Contains("oi", r.Output);
-        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(4), $"esperou o filho: {sw.Elapsed}");
+        // folga: o powershell frio abre devagar num runner lento; esperar o filho custaria ~15 s, então 10 s ainda pega o defeito
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(10), $"esperou o filho: {sw.Elapsed}");
     }
 
     [Fact]

@@ -71,6 +71,15 @@ data class AppState(
     val epoch: Long = 0,
     /** Últimos 60 valores de `system.cpu.percent` (um por segundo no ritmo normal do agente), do mais antigo ao mais novo. */
     val cpuHistory: List<Int> = emptyList(),
+    /** Limites estourados (GPU, RAM, disco), já com o anti-ruído; a tela filtra dado velho com [limitAlerts]. */
+    val limitAlerts: List<LimitAlert> = emptyList(),
+    /**
+     * Desde quando (relógio monotônico do tablet) a conexão está caída por não achar o PC (`Unreachable` ou religando), sem passar
+     * por `Connected`; `null` se há conexão ou se o problema é outro (token, versão, configuração).
+     */
+    val disconnectedSinceMono: Long? = null,
+    /** Quando (relógio monotônico do tablet) um download terminou no PC; `null` sem aviso ou depois de dispensado. Ver [downloadDoneActive]. */
+    val downloadDoneMono: Long? = null,
 ) {
     inline fun <reified T : SourceData> dataOf(source: String): T? = sources[source]?.data as? T
 

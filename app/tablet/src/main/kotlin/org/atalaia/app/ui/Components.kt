@@ -65,7 +65,8 @@ fun freshnessTag(f: Freshness): String? = when (f) {
 @Composable
 fun CardLabel(title: String, freshness: Freshness = Freshness.FRESH, trailing: String? = null, alert: String? = null) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        MonoText(title)
+        // O título cede espaço (corta com "…") para o texto da direita nunca ser espremido por um nome longo.
+        Box(Modifier.weight(1f)) { MonoText(title) }
         val tag = freshnessTag(freshness)
         // alert = resultado de uma ação que não deu certo (some sozinho); depois vem o aviso de dado velho
         if (alert != null) MonoText(alert, Palette.Coral) else if (tag != null) MonoText(tag, Palette.Coral) else if (trailing != null) MonoText(trailing)

@@ -5,6 +5,9 @@ package org.atalaia.app.ui
 
 import org.atalaia.core.connection.ActionOutcome
 import org.atalaia.core.connection.ConnectionState
+import org.atalaia.core.panel.OffMode
+import org.atalaia.core.state.LimitAlert
+import org.atalaia.core.state.LimitKind
 
 /** Todos os textos da tela num lugar só (português do Brasil). */
 object Texts {
@@ -53,15 +56,12 @@ object Texts {
     const val DISCORD_CLOSED = "Discord fechado"
     const val VOICE_CHANNEL = "Canal de voz"
     const val NOT_IN_CALL = "Fora de um canal de voz"
-    const val MIC_ON = "Mic ligado"
-    const val MIC_MUTED = "Mic mudo"
-    const val DEAF_OFF = "Áudio ligado"
-    const val DEAF_ON = "Áudio desligado"
+    const val DISCORD_LEAVE = "Sair da call"
+    const val DISCORD_LEAVE_ASK = "Sair da call?"
+    const val DISCORD_LEAVE_YES = "Sair"
     const val MIC_VOLUME = "Microfone"
     const val OUT_VOLUME = "Saída"
-    const val SPEAKING = "falando"
-    const val MUTED_TAG = "mudo"
-    const val DEAF_TAG = "surdo"
+
 
     const val STEAM = "Steam"
     const val NOT_PLAYING = "Não está jogando"
@@ -104,6 +104,75 @@ object Texts {
     const val CONFIG_TAP = "Toque aqui."
 
     const val POWER_ALERT_TITLE = "Sem energia da rede"
+
+    const val ATTRACT_LABEL = "Relógio após 10 min parado"
+    const val ATTRACT_PC_ON = "PC ligado"
+
+    fun attractPlayed(time: String): String = "Jogado hoje · $time"
+
+    const val AUTO_SWITCH_TITLE = "Troca de tela"
+    const val AUTO_SWITCH_HINT = "Vai sozinho para a aba Jogo ou Discord e volta ao Início depois de 5 min sem toque."
+    const val AUTO_SWITCH_LABEL = "Trocar de aba sozinho"
+
+    fun onOff(on: Boolean): String = if (on) "Ligado" else "Desligado"
+
+    const val OFF_TITLE = "PC desligado"
+    const val OFF_HINT = "O que mostrar quando o PC fica desligado ou inalcançável por mais de 1 minuto."
+    const val OFF_MODE = "Mostrar"
+    const val OFF_NIGHT_START = "Modo noite começa"
+    const val OFF_NIGHT_END = "Modo noite termina"
+    const val OFF_SCREEN_LABEL = "PC desligado"
+    const val OFF_HOLD_TO_CONFIG = "Segure para configurar"
+    const val OFF_STANDBY = "PC desligado · tablet em espera"
+    const val WAKE_PC = "Ligar PC"
+    const val WAKE_TAP = "toque para enviar Wake-on-LAN"
+    const val WAKE_SENT = "Pedido enviado; o PC leva até 1 min"
+    const val WAKE_NO_ANSWER = "Sem resposta. Veja o registro"
+    const val WAKE_FAILED = "Não consegui enviar o pedido. Veja o registro"
+
+    fun offMode(m: OffMode): String = when (m) {
+        OffMode.NIGHT -> "Modo noite"
+        OffMode.CLOCK -> "Relógio"
+        OffMode.BLANK -> "Tela apagada"
+    }
+
+    fun hour(h: Int): String = "%02dh".format(h)
+
+    const val PIN_TITLE = "PIN da configuração"
+    const val PIN_HINT = "Opcional: 4 a 6 dígitos pedidos ao abrir esta tela."
+    const val PIN_SET_HINT = "Já há um PIN. Digite outro para trocar."
+    const val PIN_PLACEHOLDER = "novo PIN"
+    const val PIN_REMOVE = "Remover o PIN"
+    const val PIN_KEEP = "Manter o PIN"
+    const val PIN_INVALID = "O PIN tem de ter de 4 a 6 dígitos."
+    const val PIN_ENTER = "Digite o PIN"
+    const val PIN_WRONG = "PIN errado"
+
+    fun pinLocked(seconds: Long): String = "Muitas tentativas. Tente de novo em $seconds s."
+
+    const val DOWNLOAD_DONE = "Download terminou"
+    const val LIMIT_DOWNLOAD = "Aviso de download"
+
+    const val LIMITS_TITLE = "Alertas de limite"
+    const val LIMITS_HINT = "Avisa no relógio quando passa do limite por 10 s. Abaixo do mínimo, desliga."
+    const val LIMIT_GPU = "GPU quente"
+    const val LIMIT_RAM = "RAM no fim"
+    const val LIMIT_DISK = "Disco cheio"
+    const val LIMIT_OFF = "Desligado"
+
+    /** Valor de um limite na configuração: "85 °C", "90%" ou "Desligado". */
+    fun limitValue(value: Int?, unit: String): String = if (value == null) LIMIT_OFF else "$value$unit"
+
+    /** Linha do cartão do relógio: o primeiro alerta e quantos mais há. */
+    fun limitAlertLine(alerts: List<LimitAlert>): String {
+        val a = alerts.first()
+        val text = when (a.kind) {
+            LimitKind.GPU_TEMP -> "$LIMIT_GPU · ${a.value} °C"
+            LimitKind.RAM -> "$LIMIT_RAM · ${a.value}%"
+            LimitKind.DISK -> "$LIMIT_DISK ${a.label} · ${a.value}%"
+        }
+        return if (alerts.size > 1) "$text +${alerts.size - 1}" else text
+    }
 
     fun connectionBanner(s: ConnectionState): String? = when (s) {
         is ConnectionState.Connected -> null

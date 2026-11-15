@@ -172,6 +172,162 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
    boot depois do desbloqueio; isso não foi medido.)
 4. Anote a versão do Android do aparelho: do Android 10 em diante o sistema bloqueia e o app não abre sozinho (isso é esperado, não é defeito).
 
+## 15. Alertas de limite (GPU, RAM, disco)
+
+Padrões: GPU 85 °C, RAM 90 %, disco 90 %. O alerta só liga depois de **10 s seguidos** acima do limite e só desliga ao cair **5 pontos abaixo** dele.
+
+1. Abra a configuração (toque longo no relógio). **Esperado:** o cartão "Alertas de limite" mostra os três limites com − e +, alvo de toque confortável,
+   e cabe na tela sem cortar (role se for preciso). − abaixo do mínimo mostra "Desligado"; + volta ao mínimo.
+2. Com o agente real, baixe o limite da **RAM** para o valor mais baixo (70 %) e toque em **Salvar**. **Esperado:** em até ~10 s o cartão do relógio ganha borda
+   coral e a linha de baixo vira "RAM no fim · NN%" (no lugar do jogo), em qualquer aba. O número bate com o Gerenciador de Tarefas.
+3. Suba o limite da RAM acima do uso e salve. **Esperado:** o alerta sai na próxima leitura (poucos segundos) e a linha volta ao jogo ou à janela em foco.
+4. Repita com **disco** (limite no mínimo, se algum disco passa de 70 %) e com a **GPU** (limite no mínimo, com a GPU sob carga, ou jogando). Com dois alertas
+   ao mesmo tempo, **esperado:** o primeiro aparece com "+1" (ordem: GPU, RAM, disco).
+5. Deixe o uso oscilando em torno do limite (por exemplo, RAM em 88 a 92 % com limite 90). **Esperado:** o alerta não fica piscando: liga uma vez e só sai
+   quando o uso cai uns 5 pontos abaixo.
+6. Desligue um limite ("Desligado") e salve. **Esperado:** esse alerta nunca aparece. Feche e abra o app: **os limites escolhidos continuam**.
+7. Com um alerta ligado, simule a queda de energia (cenário 10, ou o nobreak `--simulate`). **Esperado:** o cartão fica **coral cheio** com o aviso de energia
+   (tem prioridade); ao voltar a energia, o alerta de limite reaparece se ainda valer.
+8. Com um alerta ligado, feche o agente. **Esperado:** o alerta some quando o dado fica velho (o painel mostra "velho" ou "PC desligado"), sem ficar fingindo.
+
+## 16. Tela de PC desligado (modo noite, relógio, tela apagada)
+
+O PC só conta como desligado depois de **1 minuto** sem achar o agente. Padrão: modo noite, das 22h às 07h.
+
+1. Abra a configuração (toque longo no relógio). **Esperado:** o cartão "PC desligado" mostra "Mostrar" com − e +, que passam por Modo noite, Relógio e Tela apagada. Em
+   Modo noite aparecem também "começa" e "termina" (de hora em hora, dando a volta de 23h para 00h). Salve.
+2. **Relógio:** escolha "Relógio", salve e feche o agente. **Esperado:** nada muda por ~1 min (o painel segue com "PC desligado ou inalcançável"); depois a tela fica
+   preta com a hora grande em cinza escuro, "PC desligado" e a dica de segurar, no brilho mínimo. Suba o agente: **esperado:** o painel volta sozinho, com o brilho de antes.
+3. **Tela apagada:** escolha "Tela apagada" e repita. **Esperado:** tela preta sem nada, no brilho mínimo. Anote se o T68 realmente fica escuro (LCD com luz de fundo acesa não fica
+   preto de verdade) e se o brilho mínimo vale em tela cheia.
+4. **Modo noite:** ponha o início uma hora antes e o fim uma hora depois do horário atual, feche o agente e espere 1 min. **Esperado:** relógio escuro. Depois mude o horário
+   para não incluir a hora atual. **Esperado:** o painel normal com a faixa de erro, como antes.
+5. **Meia-noite:** com o padrão 22h às 07h, confira de noite (e de manhã, depois das 07h) que o modo noite entra e sai na hora certa.
+6. Segure o dedo em qualquer ponto da tela escura. **Esperado:** abre a configuração (o brilho volta ao normal enquanto ela está aberta).
+7. Troca de canal (cenário 5) e queda curta do Wi-Fi com o USB ligado. **Esperado:** a tela escura **não** aparece (a queda é menor que 1 min).
+8. Com o agente com código errado (cenário 9) **esperado:** o painel com a faixa "Código inválido", nunca a tela escura.
+9. Deixe a noite toda no modo escolhido e anote a bateria e a temperatura do tablet. Reabra o app e confira que a escolha continua salva.
+
+## 17. Troca de tela por contexto (jogo, call, volta ao Início)
+
+Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nunca a algo que já estava assim ao conectar.
+
+1. Configuração (toque longo no relógio): o cartão "Troca de tela" mostra "Ligado"; − desliga, + liga. Salve, feche e abra o app: a escolha continua.
+2. Com `--simulate` (o `SimSteam` abre e fecha um jogo de vez em quando; a call do simulador está sempre ativa):
+   - ao conectar, o app **fica na aba em que estava** (a linha de base não puxa a tela);
+   - quando o jogo "abre", vai sozinho para a aba **Jogo**, sem toque;
+   - toque em qualquer lugar e, em menos de 15 s, o jogo reabrir: **não troca**;
+   - numa aba que não seja Jogo nem Discord, 5 min sem tocar: volta ao **Início**;
+   - na aba Jogo com jogo ativo, 5 min parado: **não** volta.
+3. Anti-ruído: com o jogo do simulador ativo, feche e suba o agente de novo: **não troca**. Troque de USB para Wi-Fi (cenário 5) com jogo ativo: **não troca**.
+4. Opção desligada: nada troca e nada volta sozinho, nem depois de 5 min.
+5. Só com o real (Steam e Discord de verdade):
+   - abra um jogo da Steam e anote o atraso até a aba Jogo (esperado: até ~30 s, é o intervalo da Steam);
+   - entre numa call no Discord (sem jogo aberto): a aba Discord abre em ~3 s;
+   - entre numa call **jogando**: fica na aba Jogo;
+   - troque de canal de voz: **não pisca** nem puxa de novo;
+   - feche o jogo estando na aba Jogo: fica ali até completar 5 min sem toque, depois vai ao Início.
+6. Com a configuração aberta, ou com a tela de PC desligado (cenário 16), nada troca; ao sair delas, também não.
+7. Repita a medição de quadros do arrasto (cenário 12): o toque na raiz não pode piorar o slider do mixer.
+
+## 18. Discord: tela com faixa de controles e ícones
+
+1. Com `--simulate`: à esquerda, dois botões redondos no alto (microfone e fones) e, embaixo, dois volumes **em pé** (microfone e saída, cada um com o ícone em cima e a porcentagem embaixo). À direita, a lista
+   da call com o nome do canal e o ícone de pessoas com o número no cabeçalho. Quem fala tem o anel menta, o nome em menta e o ícone de som; a ordem da lista **não muda** quando a fala passa de um para outro.
+2. Botões: toque no microfone e confira que o ícone vira "cortado" em coral e o Discord realmente muta; faça o mesmo nos fones. **Com os fones desligados, o botão do microfone também aparece cortado** (ensurdecer
+   cala o microfone no Discord). Religar os fones: anote se o microfone volta sozinho ou continua mudo no Discord, e se o botão mostra o mesmo que o Discord (esse comportamento não foi provado).
+3. Volumes em pé: arraste com o dedo e solte; o valor só é enviado ao soltar, o número mostra o valor durante o arrasto e a tela não volta ao valor antigo enquanto o agente não confirma. Um toque no traço também
+   envia. Confira se o dedo acerta o traço (a área de toque tem 48 dp de largura). O microfone vai até 100% e a saída até 200%.
+4. Membros: mudo mostra o microfone cortado; surdo mostra o microfone **e** os fones cortados; sem texto "mudo" ou "surdo". Fale numa call real e confira o som no seu avatar.
+5. Com o Discord real: entre sozinho, depois com 5 ou mais pessoas. **Esperado:** o número acompanha, a lista rola sem cortar e cabe uns 6 membros sem rolar nos 505 dp reais do tablet (confira com a faixa
+   de conexão à mostra também, não por `screenHeightDp`).
+6. Nome de canal ou de servidor bem longo: o título corta com "…" e o número continua visível.
+7. Feche o agente com a call aberta: o aviso de dado velho (ou de ação recusada) toma o lugar do número no cabeçalho. Com o Discord fechado, aparece só "Discord fechado" em tela cheia.
+
+## 19. Aviso de download terminando no PC
+
+O app deduz o download de `system.net.rxKbps`: **30 Mbps ou mais por 2 min seguidos** é um download; quando o tráfego cai abaixo de **2 Mbps por 30 s**, avisa. O limite de 30 Mbps muda na configuração
+(cartão "Alertas de limite", linha "Aviso de download", de 10 a 100 Mbps; abaixo do mínimo, desliga).
+
+1. Baixe um jogo grande pela Steam (ou outro arquivo grande) numa conexão que passe de 30 Mbps. **Esperado:** nada aparece durante o download. Uns 30 s a 1 min depois do fim, o cartão do relógio
+   troca a linha de baixo por **"Download terminou"** com a borda menta (a linha do jogo/janela volta quando o aviso sai).
+2. O aviso some sozinho em 10 min, ou com um **toque** no cartão do relógio.
+3. Pause o download por uns 10 s no meio e retome. **Esperado:** nenhum aviso (o vale é curto demais).
+4. Deixe um vídeo 1080p rodando 5 min. **Esperado:** nenhum aviso (o tráfego fica abaixo do limite). Teste também com um vídeo 4K ou streaming pesado: se passar de 30 Mbps, suba o limite.
+5. Com o aviso na tela, simule uma queda de energia (cenário 10) ou um alerta de limite (cenário 15). **Esperado:** esses alertas têm prioridade e o aviso de download espera.
+6. Feche e suba o agente no meio de um download. **Esperado:** nenhum aviso falso ao reconectar (a contagem recomeça).
+7. Desligue o aviso na configuração ("Desligado"). **Esperado:** nunca aparece.
+8. Anote: o número que o app vê (aba Sistema) bate com a velocidade do download? (A conta depende de o PC medir `rxKbps` de forma estável, o que não foi provado no Wi-Fi.)
+
+## 20. PIN da configuração
+
+PIN opcional, desligado por padrão: 4 a 6 dígitos pedidos ao abrir a configuração (menos na primeira configuração, sem endereço ou sem código).
+
+1. Abra a configuração (toque longo no relógio). No cartão "PIN da configuração", digite um PIN de 4 a 6 dígitos e toque em **Salvar**. Tente um PIN com 3 dígitos: **esperado:** recusa com a mensagem.
+2. Volte ao painel e toque longo no relógio. **Esperado:** aparece o teclado numérico (teclas grandes, cabe sem cortar nos 505 dp), com bolinhas para os dígitos e "Cancelar". Digite o PIN e toque em **OK**:
+   a configuração abre. **Cancelar** volta ao painel.
+3. Erre o PIN uma vez: **esperado:** "PIN errado" e as bolinhas esvaziam. Erre **5 vezes seguidas**: **esperado:** "Muitas tentativas. Tente de novo em N s." com contagem, teclas apagadas por 30 s.
+   Saia e toque de novo durante a espera: a espera **continua** (não zera por fechar a tela). Passados os 30 s, o PIN certo abre.
+4. Com o agente fechado e a tela de PC desligado (cenário 16), segure o dedo na tela escura: **esperado:** pede o PIN (e o brilho volta ao normal enquanto o teclado está na tela). A faixa de erro de
+   conexão ("Código inválido...") também pede o PIN ao ser tocada.
+5. Troque o PIN (digite outro e salve) e confirme que só o novo vale. Toque em **Remover o PIN** e salve: **esperado:** a configuração volta a abrir direto.
+6. Reinstalar o app (primeira configuração, sem endereço ou sem código): **esperado:** não pede PIN. Esqueceu o PIN: o caminho é reinstalar pela janela do agente ("Desinstalar e instalar"), o que apaga a configuração do app.
+
+## 21. Tela Atração (relógio, estado do PC e jogado hoje)
+
+Com o PC **conectado** e **10 min sem tocar no tablet**, o painel dá lugar a uma tela de espera. Ligada por padrão; desliga na configuração (cartão "Troca de tela", linha "Relógio após 10 min parado").
+
+1. Deixe o painel parado por 10 min, sem tocar. **Esperado:** a tela vira o relógio grande com a data, "PC ligado" e, se houve jogo, "Jogado hoje · N min". Sem animação, no brilho normal.
+2. Toque em qualquer ponto. **Esperado:** o painel volta na hora (e não reabre a espera antes de mais 10 min sem toque).
+3. Jogue uns 20 min pela Steam (com o tablet parado). **Esperado:** na espera aparece "● jogando" com o nome do jogo e "Jogado hoje" crescendo (confira o total contra o relógio).
+4. Pausa longa sem conexão (feche o agente por uns minutos e suba de novo): **esperado:** o tempo sem conexão **não** entra no "Jogado hoje". Reiniciar o app zera a conta (isso é esperado, não é defeito).
+5. A virada da meia-noite zera o "Jogado hoje" (deixe o tablet ligado de um dia para o outro com a espera ativa).
+6. A espera **não** aparece por cima de: queda de energia (cenário 10), alerta de limite (cenário 15) ou call de voz no Discord. Com um desses ativos e 10 min parado, o painel fica.
+7. Sem conexão com o PC, a espera não entra (vale a tela de PC desligado, cenário 16).
+8. Desligue "Relógio após 10 min parado" na configuração e salve. **Esperado:** a espera nunca aparece.
+9. Anote a bateria e a temperatura do tablet depois de uma noite com a espera ativa (a tela fica acesa com o relógio).
+
+## 22. Discord: ping da call e sair da call
+
+1. Com `--simulate`: o cabeçalho do canal mostra "Conectado · 38 ms" ao lado do número de pessoas. O botão "Sair da call" (48 dp) aparece embaixo da lista.
+   Toque: a barra vira "Sair da call?" com Sair e Cancelar; sem tocar, volta sozinha em 5 s. Cancelar volta; Sair tira o canal ("Fora de um canal de voz") e ele volta em ~10 s.
+2. Com o Discord real numa call: o ping aparece (em até ~5 s) e muda de vez em quando. Troque de canal: o ping some e volta em até ~5 s.
+3. "Sair da call" com o Discord real: a call cai no PC e a tela mostra "Fora de um canal de voz". Fora da call o botão não aparece.
+4. Ensurdeça pelo tablet e religue os fones: o microfone volta sozinho no Discord e o botão do tablet mostra o mesmo (o spike mostrou `mute` sem mudar; confira na tela).
+5. Altura: com a conexão no cabeçalho e 5 ou mais pessoas na call, nada corta nos 505 dp (a lista rola, os volumes ficam inteiros, o botão inteiro).
+6. Agente antigo (beta.5) com o app novo: sem ping e sem botão, nada quebra.
+
+## 23. Wake-on-LAN (botão "Ligar PC")
+
+Pré-requisitos: PC no cabo, com o Wake-on-LAN já funcionando por outro meio; tablet no **Wi-Fi da mesma rede** (pelo USB não funciona).
+O botão segue o desenho "Layout 5" (círculo menta no centro, relógio no alto).
+
+1. Com o PC ligado e conectado pelo Wi-Fi, espere uns segundos (o tablet guarda o MAC). Com `--simulate` o MAC é o falso `AA:BB:CC:DD:EE:FF`
+   e não liga nada: use o agente real.
+2. Desligue o PC pelo Windows (desligar, não suspender). No modo relógio (cenário 16) a tela de PC desligado mostra o relógio no alto e o botão
+   redondo **Ligar PC** no centro, com "toque para enviar Wake-on-LAN". Confira se o botão fica legível no brilho mínimo.
+3. Toque no botão. **Esperado:** o botão apaga por 10 s e a legenda vira "Pedido enviado; o PC leva até 1 min". O PC liga? Quando ele conecta, a tela some e volta o painel.
+4. Modo tela apagada: um toque acorda a tela (brilho normal) mostrando o botão por 15 s e depois volta a apagar; o toque longo ainda abre a configuração (e o PIN).
+5. Modo noite dentro do horário: igual ao modo relógio. Fora do horário: o painel normal aparece **sem** botão (isso é esperado).
+6. Tablet nunca conectado a um agente que mandou MAC (app recém-configurado): o botão não aparece.
+7. Sem o PC ligar, espere 3 min: **esperado:** o botão volta ao repouso e a legenda mostra "Sem resposta. Veja o registro".
+8. Desligue o Wi-Fi do tablet e toque em Ligar PC: **esperado:** "Não consegui enviar o pedido. Veja o registro" e o botão volta ao repouso.
+9. Leia o registro e confira as linhas esperadas:
+   - `pedido mac=**:**:**:DD:EE:FF porta 9: 102 bytes; porta 7: 102 bytes` (os 3 primeiros bytes mascarados, nada de IP ou nome de rede);
+   - depois, `desfecho: PC voltou em N s` ou `desfecho: sem resposta em 3 min`.
+   "Erro" na linha do pedido = o pacote não saiu do tablet (Wi-Fi desligado, rede sem broadcast). "Sem resposta" com 102 bytes nas duas portas
+   = o pacote saiu e o PC não ligou (roteador bloqueando broadcast, Inicialização rápida, BIOS).
+
+Como ler o registro (tablet no USB; o app de release não permite `run-as`, por isso o arquivo fica na pasta externa do app):
+
+```bash
+adb pull /sdcard/Android/data/org.atalaia.app/files/wol.log wol.log
+adb logcat -d -s AtalaiaWol
+```
+
+Limitação: o registro só existe a partir da 0.3.0-beta.7, só no tablet, guarda as últimas ~100 linhas, e **reinstalar o app apaga** (a pasta do app sai junto).
+Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -188,3 +344,12 @@ partida a frio abaixo de ~1 s. Anote qualquer crescimento contínuo de memória:
 | 10 Queda de energia | | |
 | 11 Dados reais | | |
 | 12 Desempenho | | |
+| 15 Alertas de limite | | |
+| 16 Tela de PC desligado | | |
+| 17 Troca de tela por contexto | | |
+| 18 Discord: tela mais clara | | |
+| 19 Aviso de download | | |
+| 20 PIN da configuração | | |
+| 21 Tela Atração | | |
+| 22 Discord: ping e sair da call | | |
+| 23 Wake-on-LAN | | |
