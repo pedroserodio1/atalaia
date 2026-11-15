@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 
-enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS, PHONE_OFF, POWER }
+enum class IconKind { HOME, CPU, PLAY, PAUSE, NEXT, PREVIOUS, TRASH, MUSIC, HEADSET, GAMEPAD, MIC, MIC_OFF, HEADPHONES, HEADPHONES_OFF, VOLUME, USERS, PHONE_OFF, POWER, SLIDERS, CHEVRON_LEFT }
 
 /** Ícones simples desenhados em uma grade de 24 × 24, sem biblioteca de ícones (menos memória no tablet). */
 @Composable
@@ -134,6 +134,13 @@ private fun DrawScope.draw(kind: IconKind, c: Color) {
             drawCircle(c, 1f, Offset(18f, 13f))
         }
         IconKind.MIC, IconKind.MIC_OFF, IconKind.HEADPHONES, IconKind.HEADPHONES_OFF, IconKind.VOLUME, IconKind.USERS, IconKind.PHONE_OFF, IconKind.POWER -> tabler(kind, c)
+        IconKind.CHEVRON_LEFT -> line(c, 14f, 6f, 8f, 12f, 14f, 18f)
+        IconKind.SLIDERS -> {
+            for (x in listOf(5f, 12f, 19f)) line(c, x, 4f, x, 20f)
+            drawCircle(c, 2.2f, Offset(5f, 9f), style = Stroke(2f))
+            drawCircle(c, 2.2f, Offset(12f, 15f), style = Stroke(2f))
+            drawCircle(c, 2.2f, Offset(19f, 8f), style = Stroke(2f))
+        }
         IconKind.TRASH -> {
             line(c, 4f, 7f, 20f, 7f)
             line(c, 6f, 7f, 7f, 20f, 17f, 20f, 18f, 7f)

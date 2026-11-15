@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -57,54 +58,57 @@ private fun intArgs(vararg pairs: Pair<String, Any>) = buildJsonObject {
 
 // ---------------------------------------------------------------- Mídia
 
+/** Tela "Tocando agora" da Mídia: a música com capa, controles e barra de posição. */
 @Composable
-fun MediaScreen(
-    state: AppState, now: Long, feedback: String?, covers: CoverRepository, clock: Clock, send: ActionSender, modifier: Modifier,
-) {
+fun NowPlayingScreen(state: AppState, now: Long, feedback: String?, covers: CoverRepository, send: ActionSender, modifier: Modifier) {
     val m = mediaLine(state, now)
-    val audio = state.dataOf<AudioData>("audio")
     val connected = state.connection is ConnectionState.Connected
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PanelCard(Modifier.fillMaxWidth()) {
-            CardLabel(Texts.NOW_PLAYING, m?.freshness ?: Freshness.NO_DATA, alert = feedback)
-            if (m == null || m.idle) {
-                Box(Modifier.fillMaxWidth().height(96.dp), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOTHING_PLAYING, Palette.TextMuted, 18) }
-            } else {
-                Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    CoverImage(m.coverHash, connected, covers, 96.dp)
-                    Column(Modifier.weight(1f).height(96.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        Column {
-                            BodyText(m.title, sp = 20)
-                            MonoText(m.artist, sp = 14)
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            RoundButton(IconKind.PREVIOUS, m.canPrevious, false) { send.send("media", "previous") }
-                            RoundButton(if (m.playing) IconKind.PAUSE else IconKind.PLAY, m.canPlayPause, true) { send.send("media", "play_pause") }
-                            RoundButton(IconKind.NEXT, m.canNext, false) { send.send("media", "next") }
-                        }
+    PanelCard(modifier.fillMaxWidth()) {
+        CardLabel(Texts.NOW_PLAYING, m?.freshness ?: Freshness.NO_DATA, alert = feedback)
+        if (m == null || m.idle) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOTHING_PLAYING, Palette.TextMuted, 18) }
+        } else {
+            Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                CoverImage(m.coverHash, connected, covers, 150.dp)
+                Column(Modifier.weight(1f).height(150.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        BodyText(m.title, sp = 24)
+                        MonoText(m.artist, sp = 15)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        RoundButton(IconKind.PREVIOUS, m.canPrevious, false) { send.send("media", "previous") }
+                        RoundButton(if (m.playing) IconKind.PAUSE else IconKind.PLAY, m.canPlayPause, true) { send.send("media", "play_pause") }
+                        RoundButton(IconKind.NEXT, m.canNext, false) { send.send("media", "next") }
                     }
                 }
-                SeekBar(m.positionSec, m.durationSec, m.canSeek) { send("media", "seek", intArgs("positionSec" to it.toInt())) }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    MonoText(Pt.duration(m.positionSec), sp = 11)
-                    if (m.durationSec > 0) MonoText(Pt.duration(m.durationSec), sp = 11)
-                }
+            }
+            Spacer(Modifier.height(10.dp))
+            SeekBar(m.positionSec, m.durationSec, m.canSeek) { send("media", "seek", intArgs("positionSec" to it.toInt())) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                MonoText(Pt.duration(m.positionSec), sp = 11)
+                if (m.durationSec > 0) MonoText(Pt.duration(m.durationSec), sp = 11)
             }
         }
-        PanelCard(Modifier.fillMaxWidth().weight(1f)) {
-            CardLabel(Texts.MIXER, state.freshness("audio", now))
-            if (audio == null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { MonoText(freshnessTag(state.freshness("audio", now)) ?: "") }
-            } else {
-                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    MixerRow(
-                        name = audio.output.ifBlank { Texts.MASTER }, volume = audio.volume, muted = audio.muted, active = true, clock = clock,
-                        canVolume = state.hasAction("audio", "set_volume"), canMute = state.hasAction("audio", "toggle_mute"),
-                        onVolume = { send("audio", "set_volume", intArgs("value" to it)) },
-                        onMute = { send.send("audio", "toggle_mute") },
-                    )
-                    audio.sessions.forEach { s -> SessionRow(s, state, clock, send) }
-                }
+    }
+}
+
+/** Tela "Mixer" da Mídia: volume geral e por aplicativo. */
+@Composable
+fun MixerScreen(state: AppState, now: Long, clock: Clock, send: ActionSender, modifier: Modifier) {
+    val audio = state.dataOf<AudioData>("audio")
+    PanelCard(modifier.fillMaxWidth()) {
+        CardLabel(Texts.MIXER, state.freshness("audio", now))
+        if (audio == null) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { MonoText(freshnessTag(state.freshness("audio", now)) ?: "") }
+        } else {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                MixerRow(
+                    name = audio.output.ifBlank { Texts.MASTER }, volume = audio.volume, muted = audio.muted, active = true, clock = clock,
+                    canVolume = state.hasAction("audio", "set_volume"), canMute = state.hasAction("audio", "toggle_mute"),
+                    onVolume = { send("audio", "set_volume", intArgs("value" to it)) },
+                    onMute = { send.send("audio", "toggle_mute") },
+                )
+                audio.sessions.forEach { s -> SessionRow(s, state, clock, send) }
             }
         }
     }
