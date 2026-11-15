@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026, ainda sem beta); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -30,7 +30,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor, fechada (`v0.3.0`) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
-| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
+| **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL e Fortnite |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
@@ -266,6 +266,15 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
 
 Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada por padrão e com tutorial de configuração (item da 0.2.0).
 
+- [ ] **Navegação em submenus (vem antes das fontes novas, que dependem dela para ter onde aparecer).** A barra de abas de hoje (5 abas de 88 dp
+  em ~556 dp) não comporta as fontes da 0.4.0. Tocar numa aba da raiz abre a tela principal daquele contexto e a **barra de cima troca** pelos
+  botões dele (`‹ voltar | Principal | …`), sem segunda faixa: a altura útil (~505 dp) não perde nada, o custo é um toque a mais. A árvore não tem
+  limite fixo de profundidade (submenu dentro de submenu, se uma fonte pedir), então o destino é um **caminho** (`Jogo/FPS`), não um `ordinal`.
+  Raiz prevista: Início, Sistema, Mídia, Jogo e **Comunicação** (o Discord sai de aba própria e entra aí; o Meet, #14, entra na 0.5.0).
+  Pontos de implementação: `PanelTab` (enum plano) vira destino em caminho, descrito em dado e com a lógica no `:core` (teste na JVM);
+  o `ContextRouter` passa a devolver o caminho completo (jogo abriu → `Jogo/Principal`, call → `Comunicação/Principal`), e a volta ao Início por
+  inatividade zera o submenu. Só interface, não muda o protocolo. A conferir no tablet: alvo de toque ≥ 48 dp na barra trocada e que "voltar"
+  fique no mesmo lugar em todo nível.
 - [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando (antecedência a definir, ex.: 15 e 5
   min). O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
