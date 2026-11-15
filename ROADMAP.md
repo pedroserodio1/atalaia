@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
   configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026, ainda sem beta); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -30,7 +30,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor, fechada (`v0.3.0`) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
-| **0.4.0** | Mais fontes de dados | minor | Agenda (iCal), Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
+| **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), AniList, Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL e Fortnite |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
@@ -266,10 +266,37 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
 
 Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada por padrão e com tutorial de configuração (item da 0.2.0).
 
+- [ ] **Navegação em submenus (vem antes das fontes novas, que dependem dela para ter onde aparecer).** A barra de abas de hoje (5 abas de 88 dp
+  em ~556 dp) não comporta as fontes da 0.4.0. Tocar numa aba da raiz abre a tela principal daquele contexto e a **barra de cima troca** pelos
+  botões dele (`‹ voltar | Principal | …`), sem segunda faixa: a altura útil (~505 dp) não perde nada, o custo é um toque a mais. A árvore não tem
+  limite fixo de profundidade (submenu dentro de submenu, se uma fonte pedir), então o destino é um **caminho** (`Jogo/FPS`), não um `ordinal`.
+  Raiz: Início, Sistema, Mídia, Jogo e **Comunicação** (o Discord sai de aba própria e entra aí; o Meet, #14, entra na 0.5.0). Árvore decidida em 15/11/2026, com a raiz em 5 itens para sobrar vaga ao Deck (0.5.0):
+  Início (Agenda, Notificações), Sistema (CPU, Rede, Servidores, Nobreak), Mídia (Tocando agora, Mixer, Anime), Jogo (FPS) e Comunicação (Pessoas). **Hoje** só a Mídia tem filhos (a tela Mídia foi separada em
+  Tocando agora e Mixer); cada fonte nova entra como filho da árvore, junto com a tela dela. Segurar um botão com filhos abre um **arco** por cima da tela (um nível, sem empurrar nada): arrasta e solta no destino.
+  Código e testes prontos (ramo `feat/app-submenus`: `Nav.kt` e `ArcMenu.kt` no `:core`, `NavUi.kt` no tablet; 288 testes passando, APK de debug compila); **falta provar no tablet** (cenário 24 de `app/docs/teste-manual.md`).
+  Pontos de implementação: `PanelTab` (enum plano) vira destino em caminho, descrito em dado e com a lógica no `:core` (teste na JVM);
+  o `ContextRouter` passa a devolver o caminho completo (jogo abriu → `Jogo/Principal`, call → `Comunicação/Principal`), e a volta ao Início por
+  inatividade zera o submenu. Só interface, não muda o protocolo. A conferir no tablet: alvo de toque ≥ 48 dp na barra trocada e que "voltar"
+  fique no mesmo lugar em todo nível.
 - [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando (antecedência a definir, ex.: 15 e 5
   min). O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
+- [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
+  nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).
+  - **API:** `POST https://graphql.anilist.co` (GraphQL), uma consulta por coleta juntando tudo. Provado: estatísticas do perfil (totais de anime e mangá, episódios e
+    capítulos, minutos, gêneros, estúdios), lista "assistindo agora" com `progress` e `nextAiringEpisode`, últimas atividades (precisa do `userId` numérico, que vem do `User`)
+    e contagem de seguidores e seguindo. Exige login e **fica fora**: `Viewer`, notificações não lidas (vêm `null` sem token), mensagens e qualquer mutação.
+  - **Limite:** a API respondeu 30 req/min em 15/11/2026 (a documentação diz 90, "modo degradado"). Coleta a cada 10 min (`intervalMs` 600000) sobra.
+  - **Armadilhas já vistas:** `MediaListCollection` repete os títulos nas listas personalizadas (filtrar `isCustomList`); quem não dá nota vem com `meanScore` 0 (não mostrar nota);
+    `releaseYears` só ordena por contagem, id, progresso ou nota (ordenar por ano no cliente).
+  - **Dado proposto** (campo sem leitura = `null`; nomes originais do AniList, a tradução fica no app): `user`, `animeCount`, `mangaCount`, `episodesWatched`, `minutesWatched`,
+    `chaptersRead`, `genres[{name,count}]` (5 a 6), `studios[{name,count,minutes}]`, `watching[{title,progress,episodes,nextEpisode,airingAt}]`, `recent[{title,type,action,progress,at}]`
+    (3 a 10), `followers`, `following`, `updatedAt`. Das atividades só título, ação e progresso (sem texto livre). Imagens (avatar e capa) ficam fora do v1.
+  - **Agente:** plugin `anilist` (fluxo `/novo-plugin-agente`): conversão pura e estática, par simulado, testes e linha no `agent/README.md`. **App:** modelo em `Sources.kt`, cartões, textos em `Texts.kt`
+    (fluxo `/fonte-no-app`). Onde aparece: um cartão "Anime" na aba Início (mais barato) ou uma tela própria; com a navegação em submenus (item acima) a tela pode entrar sem disputar a barra. A decidir.
+  - **Contrato:** **muda** `docs/protocolo-v1.md` (fonte opcional nova; acréscimo compatível, o app antigo ignora a fonte), então precisa ser combinado com o mantenedor antes do código. Sem ação de efeito no PC.
+  - **Falta provar:** formato real de `nextAiringEpisode` (o usuário de teste não tinha anime no ar), perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
 - [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
   é decisão do mantenedor.
 - [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).

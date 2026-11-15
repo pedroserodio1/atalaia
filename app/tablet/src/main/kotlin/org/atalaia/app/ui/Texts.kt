@@ -14,8 +14,11 @@ object Texts {
     const val TAB_HOME = "Início"
     const val TAB_SYSTEM = "Sistema"
     const val TAB_MEDIA = "Mídia"
-    const val TAB_DISCORD = "Discord"
+    const val TAB_COMM = "Comunicação"
     const val TAB_GAME = "Jogo"
+    const val NAV_MAIN = "Principal"
+    const val NAV_NOW_PLAYING = "Tocando agora"
+    const val NAV_BACK = "Voltar"
 
     const val TAG_STALE = "velho"
     const val TAG_DISABLED = "desligado"
@@ -111,8 +114,8 @@ object Texts {
     fun attractPlayed(time: String): String = "Jogado hoje · $time"
 
     const val AUTO_SWITCH_TITLE = "Troca de tela"
-    const val AUTO_SWITCH_HINT = "Vai sozinho para a aba Jogo ou Discord e volta ao Início depois de 5 min sem toque."
-    const val AUTO_SWITCH_LABEL = "Trocar de aba sozinho"
+    const val AUTO_SWITCH_HINT = "Vai sozinho para a tela Jogo ou Comunicação e volta ao Início depois de 5 min sem toque."
+    const val AUTO_SWITCH_LABEL = "Trocar de tela sozinho"
 
     fun onOff(on: Boolean): String = if (on) "Ligado" else "Desligado"
 

@@ -85,7 +85,7 @@ class AttractTest {
         val st = store()
         val router = ContextRouter()
         assertEquals(0, router.sinceTouch(now))                  // antes da primeira leitura
-        router.update(st.state.value, now, PanelTab.HOME, enabled = true, visible = true)
+        router.update(st.state.value, now, Nav.HOME, enabled = true, visible = true)
         advanceTimeBy(60_000)
         assertEquals(60_000, router.sinceTouch(now))
         router.touch(now)

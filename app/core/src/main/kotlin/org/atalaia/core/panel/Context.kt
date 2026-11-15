@@ -8,19 +8,16 @@ import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
 
 /*
- * Troca de aba por contexto, sem Android: jogo abriu leva à aba Jogo, call no Discord leva à aba Discord, e depois de um tempo
+ * Troca de tela por contexto, sem Android: jogo abriu leva à tela Jogo, call no Discord leva à tela Comunicação, e depois de um tempo
  * sem toque o painel volta ao Início. Só reage a um *começo* (um degrau), nunca a um estado que já existia.
  */
-
-/** As abas do painel, na ordem da barra (o índice é o `ordinal`). */
-enum class PanelTab { HOME, SYSTEM, MEDIA, DISCORD, GAME }
 
 /** Há call de voz agora: Discord aberto, com dado recente e dentro de um canal. */
 fun inCall(s: AppState, now: Long): Boolean =
     s.freshness("discord", now) == Freshness.FRESH && s.dataOf<DiscordData>("discord")?.let { it.connected && it.channel != null } == true
 
 /**
- * Decide para qual aba ir. É um objeto com memória (uma instância por tela, via `remember`); [update] roda a cada leitura do estado.
+ * Decide para qual tela ir. É um objeto com memória (uma instância por tela, via `remember`); [update] roda a cada leitura do estado.
  *
  * Anti-ruído:
  * - Dado da conexão anterior (que o `AppStateStore` mantém até chegar o snapshot novo) é ignorado, e a primeira leitura de cada
@@ -28,7 +25,7 @@ fun inCall(s: AppState, now: Long): Boolean =
  * - O jogo conta como aberto na hora, mas só como fechado depois de [gameOffMs] sem ele (a Steam falha e volta, #12); a call
  *   precisa durar [callOnMs] para contar e [callOffMs] sem ela para sair (troca de canal pisca `channel` nulo).
  * - Toque nos últimos [touchQuietMs]: o degrau é descartado (quem está mexendo não é puxado).
- * - Volta ao Início depois de [idleMs] sem toque nem troca automática, menos se a aba atual é a do contexto que continua ativo.
+ * - Volta ao Início depois de [idleMs] sem toque nem troca automática, menos se a tela atual é a do contexto que continua ativo.
  */
 class ContextRouter(
     callOnMs: Long = 3_000,
@@ -67,10 +64,10 @@ class ContextRouter(
     fun sinceTouch(now: Long): Long = if (started < 0) 0 else now - maxOf(lastTouch, started)
 
     /**
-     * A aba para onde ir, ou `null` para ficar. [enabled] é a opção do usuário; com [visible] falso (configuração ou tela de PC
+     * A tela para onde ir (um caminho de [Nav]), ou `null` para ficar. Já estar dentro do contexto (qualquer tela sob `game`, por exemplo) conta como estar nele. [enabled] é a opção do usuário; com [visible] falso (configuração ou tela de PC
      * desligado) o roteador só acompanha o estado, sem trocar, e os degraus que passarem nesse tempo são descartados.
      */
-    fun update(s: AppState, now: Long, current: PanelTab, enabled: Boolean, visible: Boolean): PanelTab? {
+    fun update(s: AppState, now: Long, current: Dest, enabled: Boolean, visible: Boolean): Dest? {
         if (started < 0) started = now
         val gameRaw = s.sources["steam"]?.takeIf { it.epoch == s.epoch }?.let { gameLine(s, now) is GameLine.Playing }
         val callRaw = s.sources["discord"]?.takeIf { it.epoch == s.epoch }?.let { inCall(s, now) }
@@ -79,19 +76,20 @@ class ContextRouter(
         if (!enabled || !visible) return null
 
         val touched = lastTouch >= 0 && now - lastTouch < touchQuietMs
-        // Jogando, entrar numa call não tira da aba Jogo (jogo e call juntos: Jogo); sem jogo, a call leva ao Discord.
-        val target = if (gameStarted) PanelTab.GAME else if (callStarted && !game.on) PanelTab.DISCORD else null
+        // Jogando, entrar numa call não tira da tela Jogo (jogo e call juntos: Jogo); sem jogo, a call leva à Comunicação.
+        val target = if (gameStarted) Nav.GAME else if (callStarted && !game.on) Nav.COMM else null
         if (target != null) {
             if (touched) return null   // descartado: não fica pendente para depois
             lastSwitch = now
-            return if (target != current) target else null
+            return if (current.firstOrNull() != target.first()) target else null
         }
 
         val idleFrom = maxOf(lastTouch, lastSwitch, started)
-        val stays = (current == PanelTab.GAME && game.on) || (current == PanelTab.DISCORD && call.on)
-        if (now - idleFrom >= idleMs && current != PanelTab.HOME && !stays) {
+        val root = current.firstOrNull()
+        val stays = (root == Nav.GAME.first() && game.on) || (root == Nav.COMM.first() && call.on)
+        if (now - idleFrom >= idleMs && current != Nav.HOME && !stays) {
             lastSwitch = now
-            return PanelTab.HOME
+            return Nav.HOME
         }
         return null
     }
