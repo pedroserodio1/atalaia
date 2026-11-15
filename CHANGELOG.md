@@ -3,6 +3,51 @@
 Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.3.0] - 2026-11-15
+
+### Novidades
+
+- **app:** Alertas de limite de GPU, RAM e disco (#57)
+- **app:** Tela de PC desligado configurável (modo noite, relógio ou tela apagada) (#60)
+- **app:** Troca de tela por contexto (jogo, call e volta ao Início) (#62)
+- **app:** Aba Discord com faixa de controles, volumes em pé e estados por ícone (#64)
+- **app:** Aviso de download terminando no PC (#69)
+- **app:** PIN opcional para abrir a configuração do tablet (#70)
+- **app:** Tela Atração com relógio, estado do PC e jogado hoje (#71)
+- **discord:** Ping da call e sair da call pelo tablet (#74)
+- Wake-on-LAN pelo tablet com o MAC da placa de cabo (#77)
+
+### Correções
+
+- **agent:** A janela não diz mais que o app não está instalado durante a atualização por USB (#66) (#68)
+- **ci:** Notas da release estável sem grupos repetidos (#23) (#76)
+
+### Outros
+
+- Roadmap ganha a 0.3.1 com a correção das notas da release (#23)
+- Roadmap ganha as melhorias do Discord (0.3.0, 0.4.0 e 0.5.0)
+- Abre o ciclo 0.3.0
+- Roadmap da 0.3.0 (ordem de trabalho, contrato e riscos) e 0.2.0 fechada
+- Roadmap da 0.3.0 com as decisões (tela de PC desligado configurável e aviso de transferência na versão)
+- Permite commitar sem pedir quando a mudança concluída faz sentido como commit (#58)
+- Roadmap com a 0.3.0-beta.1 em publicação
+- Roadmap com a 0.3.0-beta.1 publicada
+- Roadmap marca os alertas de limite como provados no tablet
+- 0.3.0-beta.1 (alertas de limite) (#59)
+- 0.3.0, tela de PC desligado e roadmap (#61)
+- Roadmap com a 0.3.0-beta.2 publicada e a beta.3 em publicação
+- Roadmap com a 0.3.0-beta.3 publicada e o que da troca de tela já foi provado
+- 0.3.0-beta.3 (troca de tela por contexto) (#63)
+- Roadmap com a 0.3.0-beta.4 em publicação
+- Roadmap com a #66 (mensagem de app não instalado durante a atualização por USB) na 0.3.1
+- Roadmap marca a tela mais clara do Discord como provada no tablet
+- **agent:** Folga para a abertura do powershell nos testes do runner real (#67)
+- 0.3.0-beta.4 (aba Discord nova) (#65)
+- Roadmap com a 0.3.0-beta.5 em publicação
+- 0.3.0-beta.5 (aviso de download, PIN, tela Atração e #66) (#72)
+- Roadmap com a beta.7 publicada, Wake-on-LAN e Discord provados no tablet (#79)
+- Roadmap com a fonte do Fortnite (log do jogo) no item Jogos da 0.6.0 (#80)
+
 ## [0.2.0] - 2026-11-13
 
 ### Novidades
