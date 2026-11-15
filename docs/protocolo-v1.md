@@ -265,6 +265,24 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
   nunca no log.
 - Exige `clientId` e `clientSecret` na configuração (variável de ambiente ou `.env`).
 
+### `calendar` (agenda por link iCal)
+
+```json
+{ "calendars": [ { "name": "Trabalho", "ok": true } ],
+  "events": [ { "title": "Reunião de equipe", "start": "2026-11-16T09:00:00-03:00", "end": "2026-11-16T10:00:00-03:00", "allDay": false, "calendar": 0 } ],
+  "updatedAt": "2026-11-15T12:00:00-03:00" }
+```
+
+- Acréscimo da 0.4.0. Lê o arquivo iCal (`.ics`) de cada link secreto (até 5 agendas, só `https`) e publica os eventos do **mês atual e do seguinte**,
+  em ordem de início, no máximo 300. Evento que se repete vira uma entrada por ocorrência; `STATUS:CANCELLED` não aparece.
+- `calendars` é a lista na ordem da configuração; `calendar` em cada evento é o **índice** dela. O `name` é o que o usuário escreveu na configuração, nunca o que
+  vem dentro do arquivo (no Google, o da agenda principal costuma ser o e-mail da conta). `ok: false` é uma agenda que não respondeu nesta rodada (as outras seguem).
+  Se nenhuma responde, a fonte fica com `status: "error"`.
+- Só título (cortado em 80 caracteres), início, fim e `allDay`; local, descrição e participantes **não** são publicados. `allDay` começa à meia-noite local
+  e o `end` é o início do dia seguinte. As datas vêm com o offset da hora local do PC. Intervalo padrão: 5 min.
+- Exige `urls` na configuração: `Nome https://link`, separadas por `;` ou por linha (nome opcional; sem ele, "Agenda 1", "Agenda 2"...). O link é o segredo e fica no cofre.
+  Nunca vai para o log.
+
 ## Ações por fonte
 
 **[decidido, acréscimo ao contrato original]** Além de `audio` (`set_volume`, `toggle_mute`), estas ações
@@ -282,7 +300,7 @@ dispara coleta imediata). `args` é `{}` quando não há argumento.
 | `discord` | `set_output_volume` | `{ "value": 0..200 }` | Volume de saída |
 | `discord` | `leave_call` | — | Sai do canal de voz (`SELECT_VOICE_CHANNEL` com `channel_id: null`). Fora de um canal devolve `ok` sem fazer nada. O tablet pede confirmação na tela |
 | `notifications` | `clear_all` | — | Descarta **todas** as notificações do Windows (não há como desfazer) |
-| `weather`, `steam`, `claude`, `ups`, `notifications` | `refresh` | — | Coleta de novo agora (no `steam`, recarrega também nível, biblioteca, recentes e amigos) |
+| `weather`, `steam`, `claude`, `ups`, `notifications`, `calendar` | `refresh` | — | Coleta de novo agora (no `steam`, recarrega também nível, biblioteca, recentes e amigos) |
 
 Erros além dos já definidos: `unknown_session` (`audio`: aplicativo do mixer que não existe mais), `no_session` (`media` sem sessão de mídia), `not_supported` (o app de mídia não
 aceita esse controle agora), `not_connected` (`discord` fechado ou ainda sem conexão), `discord_recusou`

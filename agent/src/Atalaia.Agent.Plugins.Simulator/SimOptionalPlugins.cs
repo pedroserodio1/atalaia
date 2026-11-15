@@ -177,3 +177,35 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
         });
     }
 }
+
+/// <summary>Agenda de exemplo: eventos fixos nos dois meses e um que começa daqui a ~16 min, para o aviso de evento aparecer.</summary>
+public sealed class SimCalendar() : SimBase("calendar", "Agenda", 5000)
+{
+    public override IReadOnlyList<ActionDescriptor> Actions { get; } = [RefreshAction];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        var now = DateTimeOffset.Now;
+        var first = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
+        var events = new List<(DateTimeOffset Start, DateTimeOffset End, string Title, bool AllDay, int Cal)>();
+        for (var d = 0; d < 62; d++)
+        {
+            var day = first.AddDays(d);
+            if (day >= first.AddMonths(2)) break;
+            if (d % 2 == 0) events.Add((day.AddHours(10), day.AddHours(11), "Reunião de exemplo", false, 0));
+            if (d % 3 == 0) events.Add((day.AddHours(15), day.AddHours(16).AddMinutes(30), "Estudo", false, 1));
+            if (d % 7 == 0) events.Add((day, day.AddDays(1), "Aniversário de exemplo", true, 1));
+        }
+        var soon = new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, now.Offset).AddMinutes(16);
+        events.Add((soon, soon.AddMinutes(30), "Evento em breve", false, 1));
+        return Result(new
+        {
+            calendars = new[] { new { name = "Trabalho", ok = true }, new { name = "Pessoal", ok = true } },
+            events = events.OrderBy(e => e.Start).Select(e => new
+            {
+                title = e.Title, start = Json.Iso(e.Start), end = Json.Iso(e.End), allDay = e.AllDay, calendar = e.Cal,
+            }).ToList(),
+            updatedAt = Json.Iso(now),
+        });
+    }
+}

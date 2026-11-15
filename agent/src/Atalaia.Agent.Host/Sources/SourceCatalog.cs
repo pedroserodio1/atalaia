@@ -21,7 +21,7 @@ internal sealed record SourceProbe(
     string UserHome);                        // %USERPROFILE%
 
 /// <summary>
-/// As dez fontes que o agente publica, na ordem do registro, com a descrição para o usuário e o que falta configurar. A lista é a do
+/// As onze fontes que o agente publica, na ordem do registro, com a descrição para o usuário e o que falta configurar. A lista é a do
 /// <c>PluginRegistry</c> (um teste confere que são as mesmas): fonte nova no agente entra aqui também.
 /// </summary>
 internal static class SourceCatalog
@@ -38,6 +38,7 @@ internal static class SourceCatalog
         new("notifications", "Notificações", "avisos do Windows: só o nome do app e a contagem"),
         new("steam", "Steam", "jogo atual, biblioteca e amigos"),
         new("discord", "Discord", "chamada de voz"),
+        new("calendar", "Agenda", "eventos de agendas por link iCal secreto (só título e horário)"),
     ];
 
     /// <summary>O que falta para a fonte funcionar, em português (vazio = pronta). Nunca devolve o valor de uma chave, só diz que falta.</summary>
@@ -61,6 +62,9 @@ internal static class SourceCatalog
             case "discord":
                 return Blank(p.Option("clientId")) is not null && Blank(p.Option("clientSecret")) is not null
                     ? [] : ["Faltam o clientId e o clientSecret do aplicativo do Discord: use o botão Configurar (o segredo fica criptografado neste PC) ou defina as variáveis de ambiente ATALAIA_Plugins__discord__clientId e ATALAIA_Plugins__discord__clientSecret."];
+            case "calendar":
+                return Blank(p.Option("urls")) is not null
+                    ? [] : ["Falta o link iCal secreto de pelo menos uma agenda: use o botão Configurar (o link fica criptografado neste PC) ou defina a variável de ambiente ATALAIA_Plugins__calendar__urls."];
             default:
                 return [];
         }

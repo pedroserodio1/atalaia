@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atalaia.Agent.Plugins.Steam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atalaia.Agent.Plugins.Discord", "src\Atalaia.Agent.Plugins.Discord\Atalaia.Agent.Plugins.Discord.csproj", "{A8142127-FC46-4AE8-B828-D325ECF938D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atalaia.Agent.Plugins.Calendar", "src\Atalaia.Agent.Plugins.Calendar\Atalaia.Agent.Plugins.Calendar.csproj", "{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -227,6 +229,18 @@ Global
 		{A8142127-FC46-4AE8-B828-D325ECF938D3}.Release|x64.Build.0 = Release|Any CPU
 		{A8142127-FC46-4AE8-B828-D325ECF938D3}.Release|x86.ActiveCfg = Release|Any CPU
 		{A8142127-FC46-4AE8-B828-D325ECF938D3}.Release|x86.Build.0 = Release|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Debug|x64.Build.0 = Debug|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Debug|x86.Build.0 = Debug|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Release|x64.ActiveCfg = Release|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Release|x64.Build.0 = Release|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Release|x86.ActiveCfg = Release|Any CPU
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -247,5 +261,6 @@ Global
 		{EE79C1DF-9F0A-49B0-8252-30A4168EA7C4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{ACFE535D-6861-4ACD-92B9-829B52308925} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{A8142127-FC46-4AE8-B828-D325ECF938D3} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{7DACFE3A-2AB7-4925-8EF5-37EA4C50EBCF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

@@ -58,7 +58,7 @@ public class SimulatorTests
         using var c = await TestClient.ConnectAsync(s.WsUri);
         var hello = await c.HelloAsync();
         var ids = hello.Data.GetProperty("plugins").EnumerateArray().Select(p => p.GetProperty("id").GetString()).ToList();
-        Assert.Equal(["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord"], ids);
+        Assert.Equal(["system", "gpu", "media", "audio", "activeWindow", "ups", "weather", "notifications", "steam", "discord", "calendar"], ids);
         foreach (var id in ids) await WaitSnapshotAsync(s, id!, _ => true);
     }
 
