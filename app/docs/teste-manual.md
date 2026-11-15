@@ -214,19 +214,19 @@ Ligada por padrão. Só reage a um **começo** (jogo abriu, entrou na call), nun
 
 1. Configuração (toque longo no relógio): o cartão "Troca de tela" mostra "Ligado"; − desliga, + liga. Salve, feche e abra o app: a escolha continua.
 2. Com `--simulate` (o `SimSteam` abre e fecha um jogo de vez em quando; a call do simulador está sempre ativa):
-   - ao conectar, o app **fica na aba em que estava** (a linha de base não puxa a tela);
-   - quando o jogo "abre", vai sozinho para a aba **Jogo**, sem toque;
+   - ao conectar, o app **fica na tela em que estava** (a linha de base não puxa a tela);
+   - quando o jogo "abre", vai sozinho para a tela **Jogo**, sem toque;
    - toque em qualquer lugar e, em menos de 15 s, o jogo reabrir: **não troca**;
-   - numa aba que não seja Jogo nem Discord, 5 min sem tocar: volta ao **Início**;
-   - na aba Jogo com jogo ativo, 5 min parado: **não** volta.
+   - numa tela que não seja Jogo nem Comunicação, 5 min sem tocar: volta ao **Início**;
+   - na tela Jogo com jogo ativo, 5 min parado: **não** volta.
 3. Anti-ruído: com o jogo do simulador ativo, feche e suba o agente de novo: **não troca**. Troque de USB para Wi-Fi (cenário 5) com jogo ativo: **não troca**.
 4. Opção desligada: nada troca e nada volta sozinho, nem depois de 5 min.
 5. Só com o real (Steam e Discord de verdade):
-   - abra um jogo da Steam e anote o atraso até a aba Jogo (esperado: até ~30 s, é o intervalo da Steam);
-   - entre numa call no Discord (sem jogo aberto): a aba Discord abre em ~3 s;
-   - entre numa call **jogando**: fica na aba Jogo;
+   - abra um jogo da Steam e anote o atraso até a tela Jogo (esperado: até ~30 s, é o intervalo da Steam);
+   - entre numa call no Discord (sem jogo aberto): a tela Comunicação abre em ~3 s;
+   - entre numa call **jogando**: fica na tela Jogo;
    - troque de canal de voz: **não pisca** nem puxa de novo;
-   - feche o jogo estando na aba Jogo: fica ali até completar 5 min sem toque, depois vai ao Início.
+   - feche o jogo estando na tela Jogo: fica ali até completar 5 min sem toque, depois vai ao Início.
 6. Com a configuração aberta, ou com a tela de PC desligado (cenário 16), nada troca; ao sair delas, também não.
 7. Repita a medição de quadros do arrasto (cenário 12): o toque na raiz não pode piorar o slider do mixer.
 
@@ -328,6 +328,22 @@ adb logcat -d -s AtalaiaWol
 Limitação: o registro só existe a partir da 0.3.0-beta.7, só no tablet, guarda as últimas ~100 linhas, e **reinstalar o app apaga** (a pasta do app sai junto).
 Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
 
+## 24. Submenus e arco (barra que troca, segurar e arrastar)
+
+Hoje só a Mídia tem submenu (Tocando agora e Mixer). Início, Sistema, Jogo e Comunicação abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
+
+1. Barra da raiz: Início, Sistema, Mídia, Jogo, Comunicação. "Discord" deixou de ser aba: a tela dele é a Comunicação.
+2. Toque em Mídia: abre "Tocando agora" e a barra vira `‹ | Tocando agora | Mixer`, com "Tocando agora" destacado. Toque em Mixer: abre o mixer, que agora ocupa a tela toda.
+   Toque em `‹`: a barra volta à raiz e a tela continua a do Mixer, com Mídia destacada.
+3. Segure Mídia (~0,4 s) sem mexer o dedo: o arco abre **por cima** da tela (véu escuro, a barra à vista, nada se move) com "Tocando agora" e "Mixer". Arraste até Mixer (fica menta) e solte:
+   abre o Mixer direto e a barra mostra o submenu de Mídia. Segure e solte longe dos botões, ou ainda no ponto de origem: fecha sem mudar nada.
+4. Segure Início, Sistema, Jogo ou Comunicação: não abre arco (não têm filhos); soltar depois do tempo vale como toque.
+5. Mexer o dedo antes do tempo do toque longo: não abre o arco e não conta como toque.
+6. Os botões do arco e os nomes cabem na tela e não se sobrepõem (o nome fica do lado de fora do arco); conferir também com Mídia, que é a aba do meio.
+7. Troca por contexto (cenário 17) com o submenu aberto: estando em Mídia, Mixer e o jogo abrir, vai para Jogo; 5 min sem toque volta ao Início e a barra volta à raiz.
+8. Sair e voltar ao app (ou recriar a atividade): continua na mesma tela e na mesma barra.
+9. Desempenho: sem animação; repetir a medição de quadros do arrasto (cenário 12) com o arco aberto.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -353,3 +369,4 @@ Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
 | 21 Tela Atração | | |
 | 22 Discord: ping e sair da call | | |
 | 23 Wake-on-LAN | | |
+| 24 Submenus e arco | | |

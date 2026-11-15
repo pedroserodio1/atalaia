@@ -20,7 +20,7 @@ class ContextTest {
     private class Rig(val ts: TestScope) {
         val store = AppStateStore(with(ts) { virtualClock() })
         val router = ContextRouter()
-        var tab = PanelTab.HOME
+        var tab: Dest = Nav.HOME
         var enabled = true
         var visible = true
         var game = false
@@ -45,7 +45,7 @@ class ContextTest {
         }
 
         /** Manda os dois dados e consulta o roteador; guarda a aba nova se ele mandou trocar. Devolve o que ele mandou. */
-        fun look(sendData: Boolean = true): PanelTab? {
+        fun look(sendData: Boolean = true): Dest? {
             if (sendData) {
                 send("steam", """{"name":"J","state":"online","game":${if (game) """{"name":"FFXIV","appId":"1"}""" else "null"}}""")
                 send("discord", """{"connected":true,"user":"eu","channel":${if (call) """{"name":"Geral","guild":"S","members":[]}""" else "null"}}""")
@@ -56,8 +56,8 @@ class ContextTest {
         }
 
         /** Passa [seconds] s, olhando a cada segundo. Devolve a primeira troca ocorrida (ou `null`). */
-        suspend fun run(seconds: Int, sendData: Boolean = true): PanelTab? {
-            var first: PanelTab? = null
+        suspend fun run(seconds: Int, sendData: Boolean = true): Dest? {
+            var first: Dest? = null
             repeat(seconds) {
                 ts.advanceTimeBy(1_000)
                 look(sendData)?.let { if (first == null) first = it }
@@ -77,8 +77,8 @@ class ContextTest {
     fun jogo_abriu_vai_para_jogo() = runTest {
         val r = rig(); r.connect()
         r.game = true
-        assertEquals(PanelTab.GAME, r.run(2))
-        assertEquals(PanelTab.GAME, r.tab)
+        assertEquals(Nav.GAME, r.run(2))
+        assertEquals(Nav.GAME, r.tab)
     }
 
     @Test
@@ -86,19 +86,19 @@ class ContextTest {
         val r = rig(); r.game = true
         r.hello()
         assertNull(r.run(30))   // a primeira leitura da conexão é a base, não um degrau
-        assertEquals(PanelTab.HOME, r.tab)
+        assertEquals(Nav.HOME, r.tab)
     }
 
     @Test
     fun reconectar_com_jogo_em_andamento_nao_troca() = runTest {
         val r = rig(); r.connect()
         r.game = true; r.run(2)               // foi para Jogo
-        r.tab = PanelTab.HOME                  // o usuário voltou ao Início
+        r.tab = Nav.HOME                  // o usuário voltou ao Início
         r.hello()                              // reconexão: `sources` ainda tem o dado da conexão antiga
         r.look(sendData = false)
         assertNull(r.run(5, sendData = false)) // nada novo ainda: dado de época antiga é ignorado
         assertNull(r.run(20))                  // chegou o dado novo, com jogo ainda aberto: só linha de base
-        assertEquals(PanelTab.HOME, r.tab)
+        assertEquals(Nav.HOME, r.tab)
     }
 
     @Test
@@ -106,20 +106,20 @@ class ContextTest {
         val r = rig(); r.connect()
         r.game = true; r.stale = true
         assertNull(r.run(5))
-        assertEquals(PanelTab.HOME, r.tab)
+        assertEquals(Nav.HOME, r.tab)
     }
 
     @Test
     fun jogo_sumindo_por_menos_de_60_s_nao_redispara() = runTest {
         val r = rig(); r.connect()
         r.game = true; r.run(2)
-        r.tab = PanelTab.HOME
+        r.tab = Nav.HOME
         r.game = false; r.run(30)              // a Steam falhou por 30 s
         r.game = true
         assertNull(r.run(5))                   // voltou: não conta como jogo novo
         r.game = false; r.run(61)              // some de vez
         r.game = true
-        assertEquals(PanelTab.GAME, r.run(2))  // agora sim, um jogo novo
+        assertEquals(Nav.GAME, r.run(2))  // agora sim, um jogo novo
     }
 
     // ---------------------------------------------------------------- call
@@ -129,7 +129,7 @@ class ContextTest {
         val r = rig(); r.connect()
         r.call = true
         assertNull(r.run(2))
-        assertEquals(PanelTab.DISCORD, r.run(2))
+        assertEquals(Nav.COMM, r.run(2))
     }
 
     @Test
@@ -138,14 +138,14 @@ class ContextTest {
         r.call = true; r.run(2)
         r.call = false
         assertNull(r.run(10))
-        assertEquals(PanelTab.HOME, r.tab)
+        assertEquals(Nav.HOME, r.tab)
     }
 
     @Test
     fun call_piscando_nulo_na_troca_de_canal_nao_redispara() = runTest {
         val r = rig(); r.connect()
         r.call = true; r.run(4)
-        r.tab = PanelTab.HOME
+        r.tab = Nav.HOME
         r.call = false; r.run(3)               // trocando de canal
         r.call = true
         assertNull(r.run(10))
@@ -163,8 +163,8 @@ class ContextTest {
     fun jogo_e_call_juntos_vai_para_jogo() = runTest {
         val r = rig(); r.connect()
         r.game = true; r.call = true
-        assertEquals(PanelTab.GAME, r.run(5))
-        assertEquals(PanelTab.GAME, r.tab)
+        assertEquals(Nav.GAME, r.run(5))
+        assertEquals(Nav.GAME, r.tab)
     }
 
     // ---------------------------------------------------------------- toque, opção e visibilidade
@@ -176,7 +176,7 @@ class ContextTest {
         r.game = true
         assertNull(r.run(5))                   // mexendo na tela: não puxa
         assertNull(r.run(20))                  // e o degrau não fica pendente para depois dos 15 s
-        assertEquals(PanelTab.HOME, r.tab)
+        assertEquals(Nav.HOME, r.tab)
     }
 
     @Test
@@ -185,9 +185,9 @@ class ContextTest {
         r.enabled = false
         r.game = true
         assertNull(r.run(5))
-        r.tab = PanelTab.SYSTEM
+        r.tab = Nav.SYSTEM
         assertNull(r.run(10 * 60))             // nem a volta ao Início
-        assertEquals(PanelTab.SYSTEM, r.tab)
+        assertEquals(Nav.SYSTEM, r.tab)
     }
 
     @Test
@@ -198,7 +198,7 @@ class ContextTest {
         assertNull(r.run(5))
         r.visible = true
         assertNull(r.run(5))                    // o degrau passou enquanto estava invisível: descartado
-        assertEquals(PanelTab.HOME, r.tab)
+        assertEquals(Nav.HOME, r.tab)
     }
 
     // ---------------------------------------------------------------- volta ao Início
@@ -206,10 +206,10 @@ class ContextTest {
     @Test
     fun volta_ao_inicio_apos_5_min_sem_toque() = runTest {
         val r = rig(); r.connect()
-        r.tab = PanelTab.SYSTEM
+        r.tab = Nav.SYSTEM
         r.router.touch(r.now)
         assertNull(r.run(299))
-        assertEquals(PanelTab.HOME, r.run(2))
+        assertEquals(Nav.HOME, r.run(2))
     }
 
     @Test
@@ -217,7 +217,7 @@ class ContextTest {
         val r = rig(); r.connect()
         r.run(10 * 60)                          // 10 min sem ninguém: nada a fazer na aba Início
         r.game = true
-        assertEquals(PanelTab.GAME, r.run(2))   // trocou sozinho
+        assertEquals(Nav.GAME, r.run(2))   // trocou sozinho
         r.game = false
         assertNull(r.run(120))                  // o jogo acabou, mas a troca foi há pouco: não volta já
     }
@@ -227,10 +227,19 @@ class ContextTest {
         val r = rig(); r.connect()
         r.game = true; r.run(2)
         assertNull(r.run(10 * 60))              // jogo ainda rolando na aba Jogo
-        assertEquals(PanelTab.GAME, r.tab)
-        r.game = false; r.call = true; r.tab = PanelTab.DISCORD; r.router.touch(r.now)   // o usuário tocou na aba Discord
-        r.run(70)                               // o jogo sai; a call entra, e estamos na aba Discord
+        assertEquals(Nav.GAME, r.tab)
+        r.game = false; r.call = true; r.tab = Nav.COMM; r.router.touch(r.now)   // o usuário tocou na aba Discord
+        r.run(70)                               // o jogo sai; a call entra, e estamos na tela Comunicação
         assertNull(r.run(10 * 60))
-        assertEquals(PanelTab.DISCORD, r.tab)
+        assertEquals(Nav.COMM, r.tab)
+    }
+
+    @Test
+    fun jogo_abriu_com_o_usuario_ja_dentro_do_contexto_nao_puxa() = runTest {
+        val r = rig(); r.connect()
+        r.tab = listOf("game", "fps")          // já está numa tela do contexto Jogo (um submenu)
+        r.game = true
+        assertNull(r.run(2))
+        assertEquals(listOf("game", "fps"), r.tab)
     }
 }

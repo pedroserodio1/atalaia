@@ -270,7 +270,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   em ~556 dp) não comporta as fontes da 0.4.0. Tocar numa aba da raiz abre a tela principal daquele contexto e a **barra de cima troca** pelos
   botões dele (`‹ voltar | Principal | …`), sem segunda faixa: a altura útil (~505 dp) não perde nada, o custo é um toque a mais. A árvore não tem
   limite fixo de profundidade (submenu dentro de submenu, se uma fonte pedir), então o destino é um **caminho** (`Jogo/FPS`), não um `ordinal`.
-  Raiz prevista: Início, Sistema, Mídia, Jogo e **Comunicação** (o Discord sai de aba própria e entra aí; o Meet, #14, entra na 0.5.0).
+  Raiz: Início, Sistema, Mídia, Jogo e **Comunicação** (o Discord sai de aba própria e entra aí; o Meet, #14, entra na 0.5.0). Árvore decidida em 15/11/2026, com a raiz em 5 itens para sobrar vaga ao Deck (0.5.0):
+  Início (Agenda, Notificações), Sistema (CPU, Rede, Servidores, Nobreak), Mídia (Tocando agora, Mixer, Anime), Jogo (FPS) e Comunicação (Pessoas). **Hoje** só a Mídia tem filhos (a tela Mídia foi separada em
+  Tocando agora e Mixer); cada fonte nova entra como filho da árvore, junto com a tela dela. Segurar um botão com filhos abre um **arco** por cima da tela (um nível, sem empurrar nada): arrasta e solta no destino.
+  Código e testes prontos (ramo `feat/app-submenus`: `Nav.kt` e `ArcMenu.kt` no `:core`, `NavUi.kt` no tablet; 288 testes passando, APK de debug compila); **falta provar no tablet** (cenário 24 de `app/docs/teste-manual.md`).
   Pontos de implementação: `PanelTab` (enum plano) vira destino em caminho, descrito em dado e com a lógica no `:core` (teste na JVM);
   o `ContextRouter` passa a devolver o caminho completo (jogo abriu → `Jogo/Principal`, call → `Comunicação/Principal`), e a volta ao Início por
   inatividade zera o submenu. Só interface, não muda o protocolo. A conferir no tablet: alvo de toque ≥ 48 dp na barra trocada e que "voltar"
