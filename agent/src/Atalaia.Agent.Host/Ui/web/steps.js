@@ -363,6 +363,7 @@ let editingSource = null;   // id da fonte com o formulário aberto: enquanto ho
  * em branco significa manter. O erro de validação (em português, vindo do agente) aparece aqui mesmo, sem fechar o formulário.
  */
 function configForm(v, s) {
+  if (s.id === 'calendar') return calendarForm(v, s);
   const inputs = {};
   const error = h('div', { class: 'hint warn', role: 'alert' });
   const fields = s.fields.map((f) => {
@@ -406,6 +407,52 @@ function configForm(v, s) {
   return h('div', { class: 'cfg' }, fields, error,
     h('div', { class: 'hint' }, 'Só sai deste PC o que a própria fonte precisa. Segredos ficam criptografados com a sua conta do Windows, fora do arquivo de configuração.'),
     h('div', { class: 'btnrow' }, save, test, cancel, remove), testOut);
+}
+
+/**
+ * A Agenda é uma lista: uma linha por agenda, com o nome e o link iCal, e botões para remover e adicionar (até 5). O link é segredo e não volta do agente:
+ * numa agenda já guardada o campo do link fica vazio ("link guardado") e deixá-lo assim mantém o link; colar outro troca. A cor de cada uma no tablet segue a ordem.
+ */
+function calendarForm(v, s) {
+  const MAX = 5;
+  const field = s.fields[0];
+  const error = h('div', { class: 'hint warn', role: 'alert' });
+  const cancel = h('button', { type: 'button', class: 'btn small' }, 'Cancelar');
+  cancel.addEventListener('click', () => { editingSource = null; v.paint(); });
+  if (field.fromEnv) {
+    return h('div', { class: 'cfg' },
+      h('div', { class: 'hint' }, `Definidas pela variável de ambiente ${field.envName}: ela manda sobre esta lista. ` + ((s.calendars || []).length ? 'Agendas: ' + s.calendars.map((c) => c.name).join(', ') + '.' : '')),
+      h('div', { class: 'btnrow' }, cancel));
+  }
+  let rows = (s.calendars || []).map((c, i) => ({ name: c.name, url: '', keep: i }));
+  if (rows.length === 0) rows = [{ name: '', url: '', keep: null }];
+  const list = h('div', { class: 'alist' });
+  const add = h('button', { type: 'button', class: 'btn small' }, '+ Adicionar agenda');
+  const save = h('button', { type: 'button', class: 'btn small primary' }, 'Salvar');
+  const sync = () => list.querySelectorAll('.arow').forEach((el, i) => { rows[i].name = el.querySelector('.aname').value; rows[i].url = el.querySelector('.aurl').value; });
+  const paint = () => {
+    list.replaceChildren(...rows.map((r, i) => h('div', { class: 'arow' },
+      h('input', { type: 'text', class: 'input aname', maxlength: '24', autocomplete: 'off', spellcheck: 'false', 'aria-label': `Nome da agenda ${i + 1}`, placeholder: `Agenda ${i + 1}`, value: r.name }),
+      h('input', {
+        type: 'password', class: 'input aurl', maxlength: '512', autocomplete: 'off', spellcheck: 'false', 'aria-label': `Link iCal da agenda ${i + 1}`, value: r.url,
+        placeholder: r.keep !== null ? 'link guardado · cole outro para trocar' : 'https://… (endereço secreto no formato iCal)',
+      }),
+      h('button', { type: 'button', class: 'btn small', 'aria-label': `Remover a agenda ${i + 1}`, onclick: () => { sync(); rows.splice(i, 1); paint(); } }, 'Remover'))));
+    add.disabled = rows.length >= MAX;
+  };
+  add.addEventListener('click', () => { sync(); if (rows.length < MAX) rows.push({ name: '', url: '', keep: null }); paint(); });
+  paint();
+
+  const lock = (on) => { for (const b of [save, cancel, add]) b.disabled = on; };
+  save.addEventListener('click', async () => {
+    sync(); error.textContent = ''; lock(true); save.textContent = 'Salvando…';
+    const items = rows.map((r) => (r.url.trim() ? { name: r.name, url: r.url } : r.keep !== null ? { name: r.name, keep: r.keep } : { name: r.name }));
+    try { const data = await call('sources.setCalendars', { items }); editingSource = null; v.set(data); }
+    catch (err) { error.textContent = err.message; lock(false); save.textContent = 'Salvar'; paint(); }
+  });
+  return h('div', { class: 'cfg' }, list, error,
+    h('div', { class: 'hint' }, 'O link é o segredo: fica criptografado neste PC e nunca é mostrado. Tirar todas as agendas e salvar apaga a configuração. A cor de cada agenda no tablet segue a ordem desta lista.'),
+    h('div', { class: 'btnrow' }, save, add, cancel));
 }
 
 function sourcesStep() {
