@@ -141,22 +141,32 @@ class NavTest {
         assertNull(Nav.nodeAt(listOf("media", "nada")))
         assertNull(Nav.nodeAt(emptyList()))
         val s = NavState().tap(Nav.MEDIA)
-        assertEquals(listOf(Nav.MEDIA, Nav.MIXER), s.entries())
-        // Início, Sistema, Jogo e Comunicação ainda não têm filhos: tocar neles não troca a barra.
-        for (leaf in listOf(Nav.HOME, Nav.SYSTEM, Nav.GAME, Nav.COMM)) assertFalse(NavState().tap(leaf).canBack)
+        assertEquals(listOf(Nav.MEDIA, Nav.MIXER, Nav.ANIME), s.entries())       // Tocando agora (a principal), Mixer e Anime
+        assertNotNull(Nav.nodeAt(Nav.ANIME))
+        assertEquals(NavState(Nav.ANIME, Nav.MEDIA), NavState().goTo(Nav.ANIME))
+        assertEquals(listOf(Nav.MEDIA, Nav.MIXER, Nav.ANIME), Nav.arcOptions(Nav.MEDIA, emptyList()))
+        // Início, Sistema e Jogo ainda não têm filhos: tocar neles não troca a barra.
+        for (leaf in listOf(Nav.HOME, Nav.SYSTEM, Nav.GAME)) assertFalse(NavState().tap(leaf).canBack)
     }
 
     @Test
-    fun a_agenda_e_uma_aba_da_raiz_com_dia_semana_e_mes() {
-        assertEquals(listOf(Nav.HOME, Nav.SYSTEM, Nav.MEDIA, Nav.GAME, Nav.COMM, Nav.AGENDA), NavState().entries())   // seis abas: é o máximo que cabe na barra
-        val agenda = NavState().tap(Nav.AGENDA)
+    fun a_agenda_e_filha_da_comunicacao_com_dia_semana_e_mes() {
+        // A raiz tem 5 abas: sobra vaga (a barra cabe 6) para o Deck da 0.5.0.
+        assertEquals(listOf(Nav.HOME, Nav.SYSTEM, Nav.MEDIA, Nav.GAME, Nav.COMM), NavState().entries())
+        val comm = NavState().tap(Nav.COMM)
+        assertEquals(Nav.COMM, comm.dest)                                                          // a principal da Comunicação é o Discord
+        assertEquals(listOf(Nav.COMM, Nav.AGENDA), comm.entries())
+        val agenda = comm.tap(Nav.AGENDA)                                                          // submenu dentro de submenu
         assertEquals(Nav.AGENDA, agenda.dest)
         assertEquals(listOf(Nav.AGENDA, Nav.AGENDA_WEEK, Nav.AGENDA_MONTH), agenda.entries())    // Dia (a principal), Semana e Mês
         val mes = agenda.tap(Nav.AGENDA_MONTH)
         assertEquals(Nav.AGENDA_MONTH, mes.dest)
         assertEquals(Nav.AGENDA, mes.bar)
-        assertEquals(emptyList<String>(), mes.back().bar)                                              // voltar sobe um nível, à raiz
-        assertEquals(NavState(Nav.HOME, emptyList()), mes.auto(Nav.HOME))                           // inatividade zera o submenu
+        assertEquals(Nav.COMM, mes.back().bar)                                                     // voltar sobe um nível, à Comunicação
+        assertEquals(emptyList<String>(), mes.back().back().bar)                                   // e outro, à raiz
+        assertEquals(NavState(Nav.HOME, emptyList()), mes.auto(Nav.HOME))                          // inatividade zera o submenu
         assertEquals(NavState(Nav.AGENDA_WEEK, Nav.AGENDA), NavState().goTo(Nav.AGENDA_WEEK))
+        assertEquals(NavState(Nav.AGENDA, Nav.AGENDA), NavState().goTo(Nav.AGENDA))               // o aviso do relógio abre o Dia direto
+        assertEquals(NavState(Nav.COMM, Nav.COMM), NavState().auto(Nav.COMM))                      // uma call abre a Comunicação, com a barra dela
     }
 }

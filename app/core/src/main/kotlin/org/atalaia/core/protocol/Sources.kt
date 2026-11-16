@@ -171,6 +171,50 @@ data class CalendarData(
     val updatedAt: String? = null,
 ) : SourceData
 
+/** Um gênero mais visto e quantos títulos tem. */
+@Serializable data class AniListGenre(val name: String = "", val count: Int? = null)
+
+/** Um estúdio mais visto: quantos títulos e quantos minutos assistidos. */
+@Serializable data class AniListStudio(val name: String = "", val count: Int? = null, val minutes: Int? = null)
+
+/** Um anime em andamento. `episodes` é `null` sem total conhecido; `nextEpisode` e `airingAt` (ISO-8601) só existem para anime ainda no ar. */
+@Serializable
+data class AniListWatching(
+    val title: String = "",
+    val progress: Int? = null,
+    val episodes: Int? = null,
+    val nextEpisode: Int? = null,
+    val airingAt: String? = null,
+)
+
+/** Uma atividade de lista, com os nomes originais do AniList (`watched episode`, `ANIME`...): quem traduz é o app. `progress` é texto (`"5"`, `"3 - 5"`, `""`). */
+@Serializable
+data class AniListActivity(
+    val title: String = "",
+    val type: String = "",
+    val action: String = "",
+    val progress: String = "",
+    val at: String? = null,
+)
+
+/** Anime e mangá do perfil público do AniList. Campo sem leitura é `null`; só título, ação e progresso das atividades. */
+@Serializable
+data class AniListData(
+    val user: String = "",
+    val animeCount: Int? = null,
+    val mangaCount: Int? = null,
+    val episodesWatched: Int? = null,
+    val minutesWatched: Int? = null,
+    val chaptersRead: Int? = null,
+    val genres: List<AniListGenre> = emptyList(),
+    val studios: List<AniListStudio> = emptyList(),
+    val watching: List<AniListWatching> = emptyList(),
+    val recent: List<AniListActivity> = emptyList(),
+    val followers: Int? = null,
+    val following: Int? = null,
+    val updatedAt: String? = null,
+) : SourceData
+
 /** Só o nome do app e a contagem: o agente nunca manda título nem texto das notificações. */
 @Serializable data class NotificationApp(val name: String = "", val count: Int = 0)
 
@@ -243,6 +287,7 @@ object Sources {
                     "notifications" -> json.decodeFromJsonElement(NotificationsData.serializer(), data)
                     "discord" -> json.decodeFromJsonElement(DiscordData.serializer(), data)
                     "calendar" -> json.decodeFromJsonElement(CalendarData.serializer(), data)
+                    "anilist" -> json.decodeFromJsonElement(AniListData.serializer(), data)
                     else -> return Decoded.UnknownSource
                 },
             )

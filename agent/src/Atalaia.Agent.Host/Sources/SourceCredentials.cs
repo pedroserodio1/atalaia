@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace Atalaia.Agent.Host.Sources;
 
-internal enum FieldKind { Latitude, Longitude, SteamId64, Text, IcalUrls }
+internal enum FieldKind { Latitude, Longitude, SteamId64, Text, IcalUrls, AniListUser }
 
 /// <param name="Secret">Segredo: vai para o cofre (DPAPI), nunca para o <c>settings.json</c>, e o valor nunca volta para a tela.</param>
 internal sealed record CredentialField(string Name, string Label, FieldKind Kind, bool Secret)
@@ -49,6 +49,11 @@ internal static class SourceCredentials
         [
             new("urls", "Agendas (nome e link iCal)", FieldKind.IcalUrls, Secret: true),
         ],
+        // O nome de usuário é público (está na URL do perfil, anilist.co/user/NOME) e não dá acesso a nada: vai para o settings.json, sem cofre.
+        ["anilist"] =
+        [
+            new("username", "Usuário do AniList", FieldKind.AniListUser, Secret: false),
+        ],
     };
 
     /// <summary>Os campos da fonte, na ordem da tela; vazio se a janela não configura essa fonte.</summary>
@@ -79,6 +84,9 @@ internal static class SourceCredentials
                     error = null;
                     return true;
                 }
+            case FieldKind.AniListUser:
+                if (!Atalaia.Agent.Plugins.AniList.AniListPlugin.IsValidName(v)) { error = $"{field.Label}: use só letras, números, ponto, hífen e sublinhado (até 40), o nome que aparece em anilist.co/user/NOME."; return false; }
+                break;
             case FieldKind.SteamId64:
                 if (v.Length != 17 || !v.All(char.IsAsciiDigit)) { error = $"{field.Label}: precisa ter exatamente 17 dígitos (só números)."; return false; }
                 break;

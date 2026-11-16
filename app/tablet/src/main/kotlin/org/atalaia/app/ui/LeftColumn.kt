@@ -61,16 +61,17 @@ fun LeftColumn(
     onOpenConfig: () -> Unit,
     onDismissDownload: () -> Unit,
     agendaAlert: AgendaAlert?,
+    onOpenAgenda: () -> Unit,
     modifier: Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ClockCard(state, now, onOpenConfig, onDismissDownload, agendaAlert)
+        ClockCard(state, now, onOpenConfig, onDismissDownload, agendaAlert, onOpenAgenda)
         MediaCard(state, now, feedback, onMedia, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDismissDownload: () -> Unit, agendaAlert: AgendaAlert?) {
+private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDismissDownload: () -> Unit, agendaAlert: AgendaAlert?, onOpenAgenda: () -> Unit) {
     val time by rememberLocalDateTime()
     // Queda de energia: o próprio cartão do relógio vira coral cheio. Fica na coluna que aparece em todas as abas, não ocupa
     // espaço novo e nada se mexe quando liga ou desliga (a faixa de antes tomava 48 dp e empurrava o layout).
@@ -84,9 +85,12 @@ private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDi
     val download = !alert && limits.isEmpty() && !agenda && downloadDoneActive(state, now)
     val fg = if (alert) Palette.OnCoral else Palette.Text
     val muted = if (alert) Palette.OnCoral else Palette.TextMuted
-    // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel).
+    // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel). Toque curto: com o aviso da agenda
+    // na tela, abre a Agenda; senão dispensa o aviso do download.
     PanelCard(
-        Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }, onTap = { onDismissDownload() }) },
+        Modifier.fillMaxWidth().pointerInput(agenda) {
+            detectTapGestures(onLongPress = { onOpenConfig() }, onTap = { if (agenda) onOpenAgenda() else onDismissDownload() })
+        },
         container = if (alert) Palette.Coral else Palette.Panel,
         line = if (alert || limits.isNotEmpty()) Palette.Coral else if (download || agenda) Palette.Mint else Palette.Border,
     ) {

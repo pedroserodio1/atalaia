@@ -207,6 +207,7 @@ fun PanelRoot(app: PanelApp) {
                     onOpenConfig = ::requestConfig,
                     onDismissDownload = app.store::dismissDownload,
                     agendaAlert = agendaAlert,
+                    onOpenAgenda = { nav = nav.goTo(Nav.AGENDA) },
                     modifier = Modifier.width(270.dp).fillMaxHeight(),
                 )
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -222,6 +223,7 @@ fun PanelRoot(app: PanelApp) {
                         Nav.SYSTEM -> SystemScreen(state, now, content)
                         Nav.MEDIA -> NowPlayingScreen(state, now, feedback, app.covers, ::act, content)
                         Nav.MIXER -> MixerScreen(state, now, app.clock, ::act, content)
+                        Nav.ANIME -> AniListScreen(state, now, time, content)
                         Nav.COMM -> DiscordScreen(state, now, feedback, app.clock, ::act, content)
                         Nav.GAME -> GameScreen(state, now, content)
                         Nav.AGENDA, Nav.AGENDA_WEEK, Nav.AGENDA_MONTH -> AgendaScreen(

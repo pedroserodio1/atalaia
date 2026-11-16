@@ -20,20 +20,22 @@ object Nav {
     val SYSTEM: Dest = listOf("system")
     val MEDIA: Dest = listOf("media")
     val MIXER: Dest = listOf("media", "mixer")
+    val ANIME: Dest = listOf("media", "anime")
     val GAME: Dest = listOf("game")
     val COMM: Dest = listOf("comm")
-    val AGENDA: Dest = listOf("agenda")
-    val AGENDA_WEEK: Dest = listOf("agenda", "week")
-    val AGENDA_MONTH: Dest = listOf("agenda", "month")
+    val AGENDA: Dest = listOf("comm", "agenda")
+    val AGENDA_WEEK: Dest = listOf("comm", "agenda", "week")
+    val AGENDA_MONTH: Dest = listOf("comm", "agenda", "month")
 
     /** A árvore de hoje. Cada fonte nova entra aqui como um filho (ou um nó novo), junto com a tela dela. */
     val tree: List<NavNode> = listOf(
         NavNode("home"),
         NavNode("system"),
-        NavNode("media", listOf(NavNode("mixer"))),
+        NavNode("media", listOf(NavNode("mixer"), NavNode("anime"))),
         NavNode("game"),
-        NavNode("comm"),
-        NavNode("agenda", listOf(NavNode("week"), NavNode("month"))),   // a principal é o Dia; a barra da raiz cabe 6 abas de 88 dp em ~556 dp
+        // Comunicação reúne o que chega de pessoas e compromissos: a principal é o Discord ("Pessoas"); a Agenda (principal = Dia) é filha dela.
+        // A raiz fica com 5 abas e sobra vaga ao Deck da 0.5.0 (a barra cabe 6 de 88 dp em ~556 dp).
+        NavNode("comm", listOf(NavNode("agenda", listOf(NavNode("week"), NavNode("month"))))),
     )
 
     /** O nó do caminho, ou `null` se o caminho não existe (ou é vazio). */
