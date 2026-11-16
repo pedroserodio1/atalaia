@@ -72,6 +72,7 @@ private object NavLook {
     /** `asMain`: o botão é a tela principal do nó que a barra mostra (ou a primeira opção do arco). */
     fun label(path: Dest, asMain: Boolean): String = when {
         asMain && path == Nav.MEDIA -> Texts.NAV_NOW_PLAYING
+        asMain && path == Nav.COMM -> Texts.NAV_PEOPLE
         asMain && path == Nav.AGENDA -> Texts.NAV_DAY
         asMain -> Texts.NAV_MAIN
         else -> when (path.lastOrNull()) {

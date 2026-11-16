@@ -10,10 +10,10 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 
 - **Coluna "agora"** (em todas as telas): relógio, canal ativo (USB, Wi-Fi ou sem conexão), jogo ou janela em foco, mídia com
   controles.
-- **Navegação em submenus:** a barra de cima mostra os contextos (Início, Sistema, Mídia, Jogo, Comunicação e Agenda). Tocar num que tem filhos abre a tela principal dele e a barra **troca** por `‹ voltar` e os botões dele
-  (hoje a Mídia, com Tocando agora e Mixer, e a Agenda, com Dia, Semana e Mês; cada fonte nova entra como filho). A profundidade não tem limite fixo: a tela é um caminho de ids (`media/mixer`), definido em `Nav.kt` no `:core`. **Segurar** um botão que tem filhos abre um arco por cima da tela
+- **Navegação em submenus:** a barra de cima mostra os contextos (Início, Sistema, Mídia, Jogo e Comunicação). Tocar num que tem filhos abre a tela principal dele e a barra **troca** por `‹ voltar` e os botões dele
+  (hoje a Mídia, com Tocando agora e Mixer, e a Comunicação, com Pessoas e a Agenda, que tem Dia, Semana e Mês: submenu dentro de submenu; cada fonte nova entra como filho). A profundidade não tem limite fixo: a tela é um caminho de ids (`media/mixer`), definido em `Nav.kt` no `:core`. **Segurar** um botão que tem filhos abre um arco por cima da tela
   (sem empurrar nada); arrastar até um dos botões e soltar vai direto para ele, e soltar fora cancela.
-- **Agenda (aba própria, a sexta da raiz):** eventos de até 5 agendas por link iCal secreto (a fonte `calendar` do agente, desligada por padrão). Três visões, na barra de cima: **Dia** (lista, com os de dia inteiro no alto e o próximo evento em destaque),
+- **Agenda (Comunicação › Agenda):** eventos de até 5 agendas por link iCal secreto (a fonte `calendar` do agente, desligada por padrão). Três visões, na barra de cima: **Dia** (lista, com os de dia inteiro no alto e o próximo evento em destaque),
   **Semana** (sete colunas, de domingo a sábado) e **Mês** (grade com barrinhas por agenda). Tocar num dia da semana ou do mês abre um **modal** por cima, com setas para o dia anterior e o seguinte e "Abrir o dia".
   Cada agenda tem o nome que o usuário deu (nunca o de dentro do arquivo) e uma cor pela ordem; os chips da legenda ligam e desligam cada uma na tela. **Aviso:** nos últimos 15 min antes de um evento o cartão do relógio
   fica menta com "Em N min · título", e o tablet toca um bipe em 15 min e dois em 5 min (liga e desliga na configuração, "Som do aviso de agenda"; só toca com o app aberto e com dado fresco). O aviso olha todas as agendas, mesmo as desligadas na tela.
