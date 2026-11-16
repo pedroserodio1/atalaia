@@ -11,7 +11,7 @@ public static class SimulatorPlugins
 {
     public static IEnumerable<IPlugin> All() =>
         [new SimSystem(), new SimGpu(), new SimMedia(), new SimAudio(), new SimActiveWindow(), new SimUps(),
-         new SimWeather(), new SimNotifications(), new SimSteam(), new SimDiscord(), new SimCalendar(), new SimAniList()];
+         new SimWeather(), new SimNotifications(), new SimSteam(), new SimDiscord(), new SimCalendar(), new SimAniList(), new SimNetwork()];
 }
 
 public abstract class SimBase(string id, string name, int intervalMs = 1000) : IPlugin

@@ -103,6 +103,21 @@ internal sealed record SourceHelp(string Title, IReadOnlyList<string> Steps, IRe
             ],
             "Abrir o AniList"),
 
+        ["network"] = new(
+            "Como funcionam os alvos da Rede",
+            [
+                "A Rede mede o tempo de resposta (ping) até alguns endereços e mostra, no tablet, o tempo atual, a média, o jitter (a variação entre respostas) e a perda de pacotes dos últimos 60 segundos.",
+                "Em Configurar, cada linha é um alvo: um nome (só seu) e o endereço. O endereço é a palavra gateway (o roteador desta máquina) ou um IPv4 com os quatro números, como 1.1.1.1. Nome de site não vale. Até 4 alvos.",
+                "Para saber se o problema é o Wi-Fi ou o provedor, use um alvo no roteador (gateway) e um na internet (por exemplo, 1.1.1.1 ou 8.8.8.8): se só o da internet piora, é o provedor.",
+                "Privacidade: só o nome do alvo vai para o tablet, nunca o endereço. O agente só envia pacotes de ping, sem administrador, e só para os alvos que você escolheu.",
+            ],
+            [
+                "Perda de 100% no roteador: alguns roteadores ignoram ping. Troque o alvo por outro endereço da sua rede ou deixe só os da internet.",
+                "Endereço recusado: ele precisa ser gateway ou quatro números separados por ponto, sem espaços. O nome tem no máximo 24 caracteres.",
+                "Gateway sem resposta: com VPN ou várias placas de rede, o gateway escolhido pode não ser o do roteador. Use o endereço do roteador no lugar de gateway.",
+            ],
+            null),
+
         ["ups"] = new(
             "Quando o nobreak funciona",
             [

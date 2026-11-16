@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace Atalaia.Agent.Host.Sources;
 
-internal enum FieldKind { Latitude, Longitude, SteamId64, Text, IcalUrls, AniListUser }
+internal enum FieldKind { Latitude, Longitude, SteamId64, Text, IcalUrls, AniListUser, NetworkTargets }
 
 /// <param name="Secret">Segredo: vai para o cofre (DPAPI), nunca para o <c>settings.json</c>, e o valor nunca volta para a tela.</param>
 internal sealed record CredentialField(string Name, string Label, FieldKind Kind, bool Secret)
@@ -54,6 +54,11 @@ internal static class SourceCredentials
         [
             new("username", "Usuário do AniList", FieldKind.AniListUser, Secret: false),
         ],
+        // Os alvos do ping (nome e endereço) não são segredo: vão para o settings.json e voltam para a janela, que os mostra numa lista.
+        ["network"] =
+        [
+            new("targets", "Alvos do ping (nome e endereço)", FieldKind.NetworkTargets, Secret: false),
+        ],
     };
 
     /// <summary>Os campos da fonte, na ordem da tela; vazio se a janela não configura essa fonte.</summary>
@@ -81,6 +86,14 @@ internal static class SourceCredentials
                     var links = Atalaia.Agent.Plugins.Calendar.CalendarPlugin.ParseLinks(v, out var linkError);
                     if (linkError is not null) { error = $"{field.Label}: {linkError}"; return false; }
                     normalized = string.Join("; ", links.Select(l => $"{l.Name} {l.Url.OriginalString}"));
+                    error = null;
+                    return true;
+                }
+            case FieldKind.NetworkTargets:
+                {
+                    var targets = Atalaia.Agent.Plugins.Network.NetworkPlugin.ParseTargets(v, out var targetsError);
+                    if (targetsError is not null) { error = $"{field.Label}: {targetsError}"; return false; }
+                    normalized = string.Join("; ", targets.Select(t => $"{t.Name} {t.Address}"));
                     error = null;
                     return true;
                 }

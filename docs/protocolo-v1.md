@@ -304,6 +304,26 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 - Exige `username` na configuração (o que aparece em `anilist.co/user/NOME`). Não é segredo: vai no `settings.json`, sem cofre. Nasce desligada. A consulta vai com um `User-Agent`
   próprio (`Atalaia-Agent`): sem ele a Cloudflare que protege a API recusa com 403.
 
+### `network` (latência, jitter e perda até alguns alvos)
+
+```json
+{ "targets": [
+    { "name": "Roteador", "rttMs": 3, "avgMs": 4, "minMs": 2, "maxMs": 11, "jitterMs": 1, "lossPercent": 0, "samples": [3, 4, null, 2] },
+    { "name": "Internet", "rttMs": null, "avgMs": null, "minMs": null, "maxMs": null, "jitterMs": null, "lossPercent": 100, "samples": [null, null] } ] }
+```
+
+- Acréscimo da 0.4.0. Só leitura: o agente manda um `ping` (ICMP, sem administrador) a cada alvo, em paralelo, com timeout de 1 s, e guarda as últimas **30 amostras**
+  de cada um (~1 min a 2 s por coleta). Intervalo padrão: 2 s. Sem ações.
+- `samples` vai da amostra mais antiga para a mais nova, em milissegundos inteiros; **`null` é um pacote sem resposta** (perda). `rttMs` é a última amostra (`null` se
+  perdeu). `avgMs` e `jitterMs` são inteiros arredondados; o jitter é a média da diferença entre respostas seguidas (as perdas ficam de fora) e é `null` com menos de duas
+  respostas. `lossPercent` é a porcentagem de amostras sem resposta da janela (0 a 100). Sem nenhuma resposta, os tempos são `null` (nunca 0) e a perda é 100: isso é
+  uma medida válida (a internet caiu), **não** põe a fonte em `error`. A janela fica no agente, então o app não acumula nada e não perde o histórico ao reconectar.
+- O JSON muda a cada coleta, então o agente envia a cada 2 s (menos de 1 KB).
+- Só o **nome** do alvo vai pela rede local, nunca o endereço, e nenhum endereço vai para o log.
+- Exige `targets` na configuração: `Nome endereço` separados por `;` ou por linha (até 4; nome opcional). O endereço é `gateway` (o roteador desta máquina: o primeiro gateway
+  IPv4 de uma interface ativa, que não seja loopback nem túnel, refeito a cada 30 s) ou um IPv4 com os quatro números; nome de host não vale (não resolve DNS). Não é segredo
+  (`settings.json`). Nasce desligada, com `Roteador gateway; Internet 1.1.1.1`.
+
 ## Ações por fonte
 
 **[decidido, acréscimo ao contrato original]** Além de `audio` (`set_volume`, `toggle_mute`), estas ações

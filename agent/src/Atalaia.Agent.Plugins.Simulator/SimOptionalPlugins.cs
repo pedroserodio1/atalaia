@@ -240,3 +240,40 @@ public sealed class SimAniList() : SimBase("anilist", "AniList", 10000)
         });
     }
 }
+
+/// <summary>Rede de exemplo: o roteador responde sempre; a internet oscila e perde um pacote de vez em quando (para o app mostrar os dois estados).</summary>
+public sealed class SimNetwork() : SimBase("network", "Rede", 2000)
+{
+    private readonly List<int?> _router = [];
+    private readonly List<int?> _internet = [];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        Add(_router, Random.Shared.NextDouble() < 0.01 ? null : (int)Rand(1, 6));
+        Add(_internet, Random.Shared.NextDouble() < 0.12 ? null : (int)Rand(9, 38));
+        return Result(new { targets = new[] { Target("Roteador", _router), Target("Internet", _internet) } });
+    }
+
+    private static void Add(List<int?> window, int? sample)
+    {
+        window.Add(sample);
+        if (window.Count > 30) window.RemoveAt(0);
+    }
+
+    private static object Target(string name, List<int?> window)
+    {
+        var ok = window.Where(s => s.HasValue).Select(s => s!.Value).ToList();
+        int? Some(Func<int> f) => ok.Count > 0 ? f() : null;
+        return new
+        {
+            name,
+            rttMs = window[^1],
+            avgMs = Some(() => (int)Math.Round(ok.Average())),
+            minMs = Some(() => ok.Min()),
+            maxMs = Some(() => ok.Max()),
+            jitterMs = ok.Count > 1 ? (int?)Math.Round(Enumerable.Range(1, ok.Count - 1).Average(i => Math.Abs(ok[i] - ok[i - 1]))) : null,
+            lossPercent = (int)Math.Round(100.0 * (window.Count - ok.Count) / window.Count),
+            samples = window.ToList(),
+        };
+    }
+}
