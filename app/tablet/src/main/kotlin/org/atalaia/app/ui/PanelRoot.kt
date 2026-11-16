@@ -64,12 +64,14 @@ import org.atalaia.core.panel.gameLine
 import org.atalaia.core.panel.OffView
 import org.atalaia.core.panel.Agenda
 import org.atalaia.core.panel.AgendaReminders
+import org.atalaia.core.panel.Latency
 import org.atalaia.core.panel.Nav
 import org.atalaia.core.panel.NavState
 import org.atalaia.core.settings.Pin
 import org.atalaia.core.panel.offView
 import org.atalaia.core.protocol.CalendarData
 import org.atalaia.core.protocol.UpsData
+import org.atalaia.core.protocol.NetworkData
 import org.atalaia.core.state.Freshness
 import org.atalaia.app.AgendaBeeper
 import java.time.LocalDate
@@ -140,6 +142,8 @@ fun PanelRoot(app: PanelApp) {
     val calendarFresh = state.freshness("calendar", now) == Freshness.FRESH
     val allEvents = remember(calendar) { Agenda.events(calendar) }
     val agendaAlert = if (calendarFresh) Agenda.alert(allEvents, time) else null
+    // Rede fora: só com a fonte Rede ligada e o dado fresco (desligada, velha ou sem dado não avisa). O histórico vem do agente, então reconectar não perde nem repete o aviso.
+    val netOutage = if (state.freshness("network", now) == Freshness.FRESH) Latency.outage(state.dataOf<NetworkData>("network")) else null
     val reminders = remember { AgendaReminders() }
     val beeper = remember { AgendaBeeper() }
     LaunchedEffect(now, calendar) {
@@ -208,6 +212,8 @@ fun PanelRoot(app: PanelApp) {
                     onDismissDownload = app.store::dismissDownload,
                     agendaAlert = agendaAlert,
                     onOpenAgenda = { nav = nav.goTo(Nav.AGENDA) },
+                    netOutage = netOutage,
+                    onOpenNetwork = { nav = nav.goTo(Nav.NET) },
                     modifier = Modifier.width(270.dp).fillMaxHeight(),
                 )
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {

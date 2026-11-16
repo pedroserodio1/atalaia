@@ -212,6 +212,7 @@ data class AniListData(
 @Serializable
 data class NetworkTarget(
     val name: String = "",
+    val gateway: Boolean = false,   // o alvo é o roteador (agente da beta.7 em diante); sem o campo vale false
     val rttMs: Int? = null,
     val avgMs: Int? = null,
     val minMs: Int? = null,

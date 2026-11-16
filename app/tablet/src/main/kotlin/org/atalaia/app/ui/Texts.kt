@@ -30,6 +30,8 @@ object Texts {
 
     const val NET_OFF = "A Rede está desligada. Ligue em Fontes de dados, no PC."
     const val NET_NO_DATA = "Sem dados da Rede"
+    const val NET_OUTAGE_INTERNET = "Internet fora"
+    const val NET_OUTAGE_NONET = "Sem rede"
 
     fun netQuality(q: org.atalaia.core.panel.NetQuality): String = when (q) {
         org.atalaia.core.panel.NetQuality.GOOD -> "ótimo"

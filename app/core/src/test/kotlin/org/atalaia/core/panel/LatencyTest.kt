@@ -3,8 +3,10 @@
 
 package org.atalaia.core.panel
 
+import org.atalaia.core.protocol.NetworkData
 import org.atalaia.core.protocol.NetworkTarget
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class LatencyTest {
@@ -57,6 +59,49 @@ class LatencyTest {
         assertEquals(200, Latency.chartMax(listOf(101)))
         assertEquals(1000, Latency.chartMax(listOf(999)))
         assertEquals(1000, Latency.chartMax(listOf(5000)))                      // nunca passa do timeout do agente
+    }
+
+    private val up = listOf<Int?>(3, 4, 3, 5)
+    private val gone = listOf<Int?>(3, null, null, null)
+
+    private fun router(samples: List<Int?>) = NetworkTarget(name = "Roteador", gateway = true, samples = samples)
+    private fun site(samples: List<Int?>, name: String = "Internet") = NetworkTarget(name = name, gateway = false, samples = samples)
+    private fun outage(vararg t: NetworkTarget) = Latency.outage(NetworkData(t.toList()))
+
+    @Test
+    fun internet_fora_com_o_roteador_vivo() {
+        assertEquals(NetOutage.INTERNET_DOWN, outage(router(up), site(gone)))
+        assertEquals(NetOutage.INTERNET_DOWN, outage(router(up), site(gone), site(gone, "Outro")))
+        assertNull(outage(router(up), site(gone), site(up, "Outro")))       // um alvo de internet responde: não é a internet toda
+    }
+
+    @Test
+    fun sem_rede_quando_nenhum_alvo_responde() {
+        assertEquals(NetOutage.NO_NETWORK, outage(router(gone), site(gone)))
+        assertEquals(NetOutage.NO_NETWORK, outage(site(gone), site(gone, "Outro")))       // agente antigo, sem o campo gateway
+        assertEquals(NetOutage.NO_NETWORK, outage(router(gone)))                           // um alvo só e caído
+    }
+
+    @Test
+    fun perda_solta_ou_curta_nao_dispara() {
+        assertNull(outage(router(up), site(listOf(3, null, 4, null))))                     // perdas intercaladas
+        assertNull(outage(router(up), site(listOf(3, 4, null, null))))                     // só 2 seguidas (~4 s)
+        assertNull(outage(router(up), site(listOf(null, null))))                           // janela curta demais: ainda sem 3 amostras
+        assertNull(outage(router(up), site(emptyList())))
+    }
+
+    @Test
+    fun some_quando_a_internet_volta() {
+        assertEquals(NetOutage.INTERNET_DOWN, outage(router(up), site(listOf(null, null, null))))
+        assertNull(outage(router(up), site(listOf(null, null, null, 11))))                // a última amostra respondeu
+    }
+
+    @Test
+    fun sem_dados_ou_sem_roteador_nao_inventa_aviso() {
+        assertNull(Latency.outage(null))
+        assertNull(Latency.outage(NetworkData(emptyList())))
+        assertNull(outage(site(up), site(up, "Outro")))                                    // tudo bem
+        assertNull(outage(site(gone), site(up, "Outro")))                                  // sem roteador marcado e um alvo vivo: não afirma "internet fora"
     }
 
     @Test

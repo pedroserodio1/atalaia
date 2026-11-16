@@ -28,7 +28,7 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
   por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 5 s e volta quando ele fica pronto.
 - **Segurança:** só aceita endereços de loopback e rede local; o token fica cifrado no Keystore e não é exibido de volta.
   Uma ação que ficou sem resposta por queda de conexão nunca é reenviada sozinha.
-- **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; "velho", "desligado" ou "erro" em vez de número desatualizado.
+- **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; **"Internet fora"** (o roteador responde e todos os alvos de internet da Rede ficaram sem resposta por ~6 s) ou **"Sem rede"** (nenhum alvo responde) no cartão do relógio, em qualquer aba (tocar abre Sistema › Rede), abaixo da queda de energia e acima dos limites (ver `Latency.outage` no `:core`); "velho", "desligado" ou "erro" em vez de número desatualizado.
   **Limites:** GPU quente (85 °C), RAM no fim (90 %) e disco cheio (90 %) acendem a borda do relógio e trocam a linha do jogo por "RAM no fim · 93%" (com "+N" se houver mais de um).
   Só liga depois de 10 s acima do limite e só desliga 5 pontos abaixo dele; os limites (ou "Desligado") se ajustam na configuração.
 - **PC desligado:** depois de 1 min sem achar o PC (a troca USB e Wi-Fi não conta), a tela vira, conforme a configuração, **modo noite** (relógio escuro no horário escolhido, padrão 22h às 07h;

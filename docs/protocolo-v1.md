@@ -311,8 +311,8 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 
 ```json
 { "targets": [
-    { "name": "Roteador", "rttMs": 3, "avgMs": 4, "minMs": 2, "maxMs": 11, "jitterMs": 1, "lossPercent": 0, "samples": [3, 4, null, 2] },
-    { "name": "Internet", "rttMs": null, "avgMs": null, "minMs": null, "maxMs": null, "jitterMs": null, "lossPercent": 100, "samples": [null, null] } ] }
+    { "name": "Roteador", "gateway": true, "rttMs": 3, "avgMs": 4, "minMs": 2, "maxMs": 11, "jitterMs": 1, "lossPercent": 0, "samples": [3, 4, null, 2] },
+    { "name": "Internet", "gateway": false, "rttMs": null, "avgMs": null, "minMs": null, "maxMs": null, "jitterMs": null, "lossPercent": 100, "samples": [null, null] } ] }
 ```
 
 - Acréscimo da 0.4.0. Só leitura: o agente manda um `ping` (ICMP, sem administrador) a cada alvo, em paralelo, com timeout de 1 s, e guarda as últimas **30 amostras**
@@ -321,6 +321,9 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
   perdeu). `avgMs` e `jitterMs` são inteiros arredondados; o jitter é a média da diferença entre respostas seguidas (as perdas ficam de fora) e é `null` com menos de duas
   respostas. `lossPercent` é a porcentagem de amostras sem resposta da janela (0 a 100). Sem nenhuma resposta, os tempos são `null` (nunca 0) e a perda é 100: isso é
   uma medida válida (a internet caiu), **não** põe a fonte em `error`. A janela fica no agente, então o app não acumula nada e não perde o histórico ao reconectar.
+- `gateway` (acréscimo opcional da 0.4.0-beta.7): `true` no alvo cujo endereço configurado é `gateway` (o roteador), `false` nos outros. Não revela o endereço. O tablet usa para separar
+  "Internet fora" (o roteador responde e todos os outros alvos ficaram sem resposta nas últimas 3 amostras) de "Sem rede" (nenhum alvo responde). Cliente antigo ignora o campo; agente antigo
+  sem o campo é lido como `false` (e então só vale "Sem rede").
 - O JSON muda a cada coleta, então o agente envia a cada 2 s (menos de 1 KB).
 - Só o **nome** do alvo vai pela rede local, nunca o endereço, e nenhum endereço vai para o log.
 - Exige `targets` na configuração: `Nome endereço` separados por `;` ou por linha (até 4; nome opcional). O endereço é `gateway` (o roteador desta máquina: o primeiro gateway

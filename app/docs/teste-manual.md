@@ -398,6 +398,18 @@ Precisa do agente da beta.6 (o campo `system.cpu.cores`) ou do `--simulate`, que
 5. Em PC com mais de 32 núcleos lógicos as barras ficam finas mas legíveis (conferir se houver como). Em PC com mais de 64, só entram os núcleos que o Windows lista por número simples (limite conhecido).
 6. Desempenho: sem animação; repetir a medição de quadros do cenário 12 com a tela Sistema aberta.
 
+## 29. Rede fora (aviso no cartão do relógio)
+
+Precisa da fonte **Rede** ligada, com um alvo `gateway` e pelo menos um alvo de internet (o padrão `Roteador gateway; Internet 1.1.1.1`), no agente da beta.7. Com `--simulate`, a internet cai por 12 s a cada ~2 min com o roteador vivo, e o aviso aparece sozinho.
+
+1. **Internet fora:** em Fontes de dados › Rede › Configurar, trocar o alvo da internet por `192.0.2.1` (que nunca responde). Em ~6 s o cartão do relógio, **em qualquer aba**, passa a mostrar "Internet fora" (borda e texto coral). Voltar o alvo para `1.1.1.1`: o aviso some sozinho quando o alvo responde.
+2. **Toque:** com o aviso na tela, um toque curto no cartão abre Sistema › Rede (e o toque longo continua abrindo a configuração). Sem o aviso, o toque volta a dispensar o aviso do download ou a abrir a Agenda, como antes.
+3. **Sem rede:** tirar o cabo do PC (ou desligar o Wi-Fi dele) com o tablet conectado por **USB**: nenhum alvo responde e o relógio mostra "Sem rede". Pelo Wi-Fi o tablet também perde o agente e mostra o banner de conexão, não este aviso.
+4. **Prioridade:** a queda de energia (nobreak na bateria) mostra o aviso da energia e não o de rede; com a rede fora e um limite estourado (GPU, RAM ou disco), mostra o da rede. Agenda e download ficam por baixo.
+5. **Sem falso alarme:** uma perda solta (um pacote) ou duas seguidas não acendem o aviso; fonte desligada, "velha" ou sem dado também não.
+6. **Roteador que ignora ping:** se o alvo `gateway` nunca responde e a internet sim, o aviso não aparece (nenhum "Internet fora" falso); se for o contrário e só o roteador ignora ICMP, anotar o que o relógio mostra.
+7. Reconectar o tablet (fechar e abrir o app) com a internet fora: o aviso volta na hora, porque o histórico vem do agente.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -428,3 +440,4 @@ Precisa do agente da beta.6 (o campo `system.cpu.cores`) ou do `--simulate`, que
 | 26 Anime | | |
 | 27 Rede | | |
 | 28 Núcleos da CPU | | |
+| 29 Rede fora | | |
