@@ -366,13 +366,12 @@ Precisa de um usuário do AniList com perfil público (ou `--simulate`, que traz
 
 1. Toque em **Mídia**, depois em **Anime** (ou segure Mídia e arraste até Anime): abre a tela, com "Anime · NOME" no alto e "N seguidores · N seguindo" à direita.
 2. **Contagens:** animes, episódios, tempo assistido (por exemplo, `38 d 12 h`), mangás e capítulos. Campo sem leitura aparece como `—`, nunca como `0`.
-3. **Assistindo agora:** título, `ep. 5/12` e a barrinha de progresso. Anime que ainda está no ar mostra em menta `próx. ep. 6 em 1 d 6 h`; sem total de episódios não há barra. Conferir com um anime que você está vendo de verdade.
-4. **Últimas atividades:** `Assistiu ep. 5 · há 3 h`, `Completou · há 2 d`... Conferir os verbos (assistiu, leu, completou, largou, pausou, quer assistir) contra o que o site mostra no seu perfil.
-5. **Gêneros** (barras relativas ao maior) e **estúdios** (`12 animes · 2 d 20 h`) mais vistos.
-6. **Estados:** fonte desligada ou sem usuário diz "desligado ou sem usuário"; usuário com grafia errada deixa a fonte em erro com a mensagem "usuário não encontrado" na janela do agente; sem internet o cartão passa a "velho". Perfil **privado** e usuário que nunca marcou nada ainda **não foram provados**: anotar o que aparece.
-7. A tela rola na vertical e título longo corta com `…` sem empurrar a outra coluna (conferir em 862 × 505 dp).
-8. **Privacidade:** no log do agente não pode aparecer o nome de usuário; só títulos, ações e contagens saem do PC.
-9. Limite da API: o agente pede uma vez a cada 10 min. Se a janela mostrar "limite de pedidos atingido", anotar a hora.
+3. **Últimas atividades:** `Assistiu ep. 5 · há 3 h`, `Completou · há 2 d`... Conferir os verbos (assistiu, leu, completou, largou, pausou, quer assistir) contra o que o site mostra no seu perfil.
+4. **Gêneros** (barras relativas ao maior) e **estúdios** (`12 animes · 2 d 20 h`) mais vistos.
+5. **Estados:** fonte desligada ou sem usuário diz "desligado ou sem usuário"; usuário com grafia errada deixa a fonte em erro com a mensagem "usuário não encontrado" na janela do agente; sem internet o cartão passa a "velho". Perfil **privado** e usuário que nunca marcou nada ainda **não foram provados**: anotar o que aparece.
+6. A tela rola na vertical e título longo corta com `…` sem empurrar a outra coluna (conferir em 862 × 505 dp).
+7. **Privacidade:** no log do agente não pode aparecer o nome de usuário; só títulos, ações e contagens saem do PC.
+8. Limite da API: o agente pede uma vez a cada 10 min. Se a janela mostrar "limite de pedidos atingido", anotar a hora.
 
 ## Resultado
 

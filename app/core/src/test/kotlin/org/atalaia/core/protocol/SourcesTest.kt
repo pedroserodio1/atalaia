@@ -209,8 +209,6 @@ class SourcesTest {
             "anilist",
             """{"user":"ExemploOtaku","animeCount":142,"mangaCount":37,"episodesWatched":2310,"minutesWatched":55440,"chaptersRead":1204,
             "genres":[{"name":"Action","count":61}],"studios":[{"name":"Estúdio Exemplo","count":12,"minutes":4100}],
-            "watching":[{"title":"Anime de Exemplo","progress":5,"episodes":12,"nextEpisode":6,"airingAt":"2026-11-17T18:00:00-03:00"},
-              {"title":"Outro","progress":11,"episodes":null,"nextEpisode":null,"airingAt":null}],
             "recent":[{"title":"Anime de Exemplo","type":"ANIME","action":"watched episode","progress":"5","at":"2026-11-16T09:00:00-03:00"},
               {"title":"Mangá","type":"MANGA","action":"completed","progress":"","at":null}],
             "followers":18,"following":25,"updatedAt":"2026-11-16T12:00:00-03:00"}""",
@@ -220,10 +218,6 @@ class SourcesTest {
         assertEquals(55440, d.minutesWatched)
         assertEquals(listOf("Action" to 61), d.genres.map { it.name to it.count })
         assertEquals(4100, d.studios.single().minutes)
-        assertEquals(2, d.watching.size)
-        assertEquals(6, d.watching[0].nextEpisode)
-        assertNull(d.watching[1].episodes)                  // sem total conhecido
-        assertNull(d.watching[1].airingAt)                  // fora do ar
         assertEquals("watched episode", d.recent[0].action)
         assertEquals("", d.recent[1].progress)
         assertNull(d.recent[1].at)
@@ -232,9 +226,10 @@ class SourcesTest {
         val empty = decode<AniListData>("anilist", """{}""")
         assertNull(empty.animeCount)                        // sem leitura: null, nunca 0
         assertEquals("", empty.user)
-        assertTrue(empty.watching.isEmpty() && empty.recent.isEmpty() && empty.genres.isEmpty() && empty.studios.isEmpty())
+        assertTrue(empty.recent.isEmpty() && empty.genres.isEmpty() && empty.studios.isEmpty())
         assertNull(decode<AniListData>("anilist", """{"followers":null,"mangaCount":null,"novo":1}""").followers)
-        assertEquals("", decode<AniListData>("anilist", """{"watching":[{"progress":3}]}""").watching.single().title)   // sem título
+        assertEquals("", decode<AniListData>("anilist", """{"recent":[{"action":"completed"}]}""").recent.single().title)   // sem título
+        assertEquals(0, decode<AniListData>("anilist", """{"watching":[{"title":"antigo"}]}""").recent.size)             // campo que o agente da beta.4 ainda mandava: ignorado
     }
 
     @Test

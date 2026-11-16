@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 
 /*
  * Textos da fonte `anilist`, sem Android. O agente manda os nomes originais do AniList (`watched episode`, `ANIME`...) e as datas em ISO-8601 com
- * offset; a tradução e as contas de "daqui a quanto" e "há quanto" ficam aqui, com teste na JVM. Os instantes são comparados como instantes (não pela
+ * offset; a tradução e a conta de "há quanto" ficam aqui, com teste na JVM. Os instantes são comparados como instantes (não pela
  * hora de parede), então valem mesmo que o fuso do tablet seja outro. [nowSec] é o relógio do tablet, em segundos.
  */
 object AniList {
@@ -24,22 +24,6 @@ object AniList {
         }
     }
 
-    /** Quanto falta para o próximo episódio: `em 40 min`, `em 5 h 30 min`, `em 1 d 6 h`; `no ar` se já passou. `null` sem data. */
-    fun until(airingAt: String?, nowSec: Long): String? {
-        val at = seconds(airingAt) ?: return null
-        val diff = at - nowSec
-        if (diff <= 0) return "no ar"
-        val minutes = (diff + 59) / 60                      // arredonda para cima: faltando 20 s ainda diz "em 1 min"
-        val days = minutes / 1440
-        val hours = minutes % 1440 / 60
-        val min = minutes % 60
-        return when {
-            days > 0 -> "em $days d $hours h"
-            hours > 0 -> if (min == 0L) "em $hours h" else "em $hours h $min min"
-            else -> "em $minutes min"
-        }
-    }
-
     /** Há quanto tempo: `agora`, `há 20 min`, `há 3 h`, `há 2 d`. `null` sem data. Data no futuro (relógios diferentes) vira `agora`. */
     fun ago(at: String?, nowSec: Long): String? {
         val t = seconds(at) ?: return null
@@ -51,10 +35,6 @@ object AniList {
             else -> "há ${diff / 86_400} d"
         }
     }
-
-    /** Porcentagem do que já foi visto, de 0 a 100; `null` se o total é desconhecido (anime em exibição sem número de episódios). */
-    fun percent(progress: Int?, episodes: Int?): Int? =
-        if (progress == null || episodes == null || episodes <= 0) null else (progress.coerceAtLeast(0) * 100L / episodes).toInt().coerceIn(0, 100)
 
     /**
      * A atividade em português, a partir da ação do AniList: `Assistiu ep. 5`, `Leu cap. 3 - 5`, `Completou`. Ação que o app não conhece aparece

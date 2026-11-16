@@ -23,15 +23,14 @@ import org.atalaia.core.protocol.AniListActivity
 import org.atalaia.core.protocol.AniListData
 import org.atalaia.core.protocol.AniListGenre
 import org.atalaia.core.protocol.AniListStudio
-import org.atalaia.core.protocol.AniListWatching
 import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * A tela Anime (Mídia › Anime): o perfil público do AniList. Só mostra; não há ação. Contagens em cima, o que está assistindo e as últimas atividades
- * à esquerda, gêneros e estúdios à direita. Tudo rola na vertical (a altura útil é ~400 dp).
+ * A tela Anime (Mídia › Anime): o perfil público do AniList. Só mostra; não há ação. Contagens em cima, as últimas atividades à esquerda,
+ * gêneros e estúdios à direita. Tudo rola na vertical (a altura útil é ~400 dp).
  */
 @Composable
 fun AniListScreen(state: AppState, now: Long, time: LocalDateTime, modifier: Modifier) {
@@ -55,7 +54,6 @@ fun AniListScreen(state: AppState, now: Long, time: LocalDateTime, modifier: Mod
             Stats(data)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Section(Texts.ANIME_WATCHING, data.watching.isEmpty(), Texts.ANIME_NOTHING_WATCHING) { data.watching.forEach { Watching(it, nowSec) } }
                     Section(Texts.ANIME_RECENT, data.recent.isEmpty(), Texts.ANIME_NOTHING_RECENT) { data.recent.forEach { Recent(it, nowSec) } }
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -91,21 +89,6 @@ private fun Section(title: String, empty: Boolean, emptyText: String, content: @
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         MonoText(title)
         if (empty) BodyText(emptyText, Palette.TextMuted, 14) else content()
-    }
-}
-
-@Composable
-private fun Watching(w: AniListWatching, nowSec: Long) {
-    val until = AniList.until(w.airingAt, nowSec)
-    val percent = AniList.percent(w.progress, w.episodes)
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        BodyText(w.title, Palette.Text, 15)
-        // O próximo episódio, quando há (anime no ar), em menta: é o que a pessoa quer olhar.
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MonoText(Texts.animeProgress(w.progress, w.episodes), Palette.TextMuted, 12)
-            if (until != null) MonoText(Texts.animeNext(w.nextEpisode, until), Palette.Mint, 12)
-        }
-        if (percent != null) ProgressBar(percent, modifier = Modifier.fillMaxWidth().height(5.dp))
     }
 }
 

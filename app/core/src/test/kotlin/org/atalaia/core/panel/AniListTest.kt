@@ -25,22 +25,6 @@ class AniListTest {
     }
 
     @Test
-    fun quanto_falta_para_o_proximo_episodio() {
-        fun at(offsetSec: Long) = java.time.Instant.ofEpochSecond(now + offsetSec).atOffset(java.time.ZoneOffset.UTC).toString()
-        assertEquals("em 1 min", AniList.until(at(20), now))                   // arredonda para cima
-        assertEquals("em 40 min", AniList.until(at(40 * 60), now))
-        assertEquals("em 5 h 30 min", AniList.until(at(5 * 3600 + 30 * 60), now))
-        assertEquals("em 3 h", AniList.until(at(3 * 3600), now))
-        assertEquals("em 1 d 6 h", AniList.until(at(30 * 3600), now))
-        assertEquals("no ar", AniList.until(at(0), now))
-        assertEquals("no ar", AniList.until(at(-3600), now))
-        assertNull(AniList.until(null, now))
-        assertNull(AniList.until("amanhã", now))
-        assertEquals("em 1 h", AniList.until("2026-11-16T13:00:00-03:00", now))
-        assertEquals("em 1 h", AniList.until("2026-11-16T16:00:00+00:00", now))   // 16:00 UTC = 13:00 em UTC-3
-    }
-
-    @Test
     fun ha_quanto_tempo() {
         fun back(sec: Long) = java.time.Instant.ofEpochSecond(now - sec).atOffset(java.time.ZoneOffset.UTC).toString()
         assertEquals("agora", AniList.ago(back(30), now))
@@ -53,17 +37,6 @@ class AniListTest {
         assertEquals("há 12 d", AniList.ago(back(12 * 86_400L + 5), now))
         assertNull(AniList.ago(null, now))
         assertNull(AniList.ago("", now))
-    }
-
-    @Test
-    fun porcentagem_so_com_total_conhecido() {
-        assertEquals(41, AniList.percent(5, 12))
-        assertEquals(100, AniList.percent(12, 12))
-        assertEquals(100, AniList.percent(13, 12))                              // lista fora do total
-        assertEquals(0, AniList.percent(0, 12))
-        assertNull(AniList.percent(5, null))                                    // em exibição, sem total
-        assertNull(AniList.percent(5, 0))
-        assertNull(AniList.percent(null, 12))
     }
 
     @Test

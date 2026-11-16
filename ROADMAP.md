@@ -298,16 +298,16 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   - **Armadilhas já vistas:** `MediaListCollection` repete os títulos nas listas personalizadas (filtrar `isCustomList`); quem não dá nota vem com `meanScore` 0 (não mostrar nota);
     `releaseYears` só ordena por contagem, id, progresso ou nota (ordenar por ano no cliente).
   - **Dado proposto** (campo sem leitura = `null`; nomes originais do AniList, a tradução fica no app): `user`, `animeCount`, `mangaCount`, `episodesWatched`, `minutesWatched`,
-    `chaptersRead`, `genres[{name,count}]` (5 a 6), `studios[{name,count,minutes}]`, `watching[{title,progress,episodes,nextEpisode,airingAt}]`, `recent[{title,type,action,progress,at}]`
+    `chaptersRead`, `genres[{name,count}]` (5 a 6), `studios[{name,count,minutes}]`, `recent[{title,type,action,progress,at}]`
     (3 a 10), `followers`, `following`, `updatedAt`. Das atividades só título, ação e progresso (sem texto livre). Imagens (avatar e capa) ficam fora do v1.
   - **Agente:** plugin `anilist` (fluxo `/novo-plugin-agente`): conversão pura e estática, par simulado, testes e linha no `agent/README.md`. **App:** modelo em `Sources.kt`, cartões, textos em `Texts.kt`
     (fluxo `/fonte-no-app`). Onde aparece: um cartão "Anime" na aba Início (mais barato) ou uma tela própria; com a navegação em submenus (item acima) a tela pode entrar sem disputar a barra. A decidir.
   - **Contrato:** **muda** `docs/protocolo-v1.md` (fonte opcional nova; acréscimo compatível, o app antigo ignora a fonte), então precisa ser combinado com o mantenedor antes do código. Sem ação de efeito no PC.
-  - **Falta provar:** formato real de `nextAiringEpisode` (o usuário de teste não tinha anime no ar), perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
+  - **Falta provar:** perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
   - **Feito em 16/11/2026** (ramo `feat/fonte-anilist`; falta só provar com um usuário real e no tablet, cenário 26 de `app/docs/teste-manual.md`): plugin `anilist` no agente (uma consulta por coleta; o id numérico
     é resolvido uma vez e guardado), par simulado, tutorial e campo "Usuário do AniList" na janela (`settings.json`, sem cofre), seção `anilist` em `docs/protocolo-v1.md`; no app, o modelo, a tela **Mídia › Anime**
     (decidido: tela própria, filha de Mídia, e não cartão no Início) e as contas de tempo em `AniList.kt`. A consulta foi **validada contra a API real** com um id inexistente (a forma está aceita; o `404` vem em HTTP 404
-    com `errors`, não em 200). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
+    com `errors`, não em 200). Provado no tablet com um perfil real em 16/11/2026 (beta.4). Em 16/11/2026 o mantenedor **retirou a lista "assistindo agora"** (`watching`, que existiu só na `beta.4`): saiu da tela, da consulta, do simulador e do contrato (beta.5). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
 - [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
   é decisão do mantenedor.
 - [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).
