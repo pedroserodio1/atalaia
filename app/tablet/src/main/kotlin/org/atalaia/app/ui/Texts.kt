@@ -116,6 +116,10 @@ object Texts {
     const val DISK = "Disco"
     const val CPU_LAST_60 = "CPU · últimos 60 s"
 
+    fun cpuCores(n: Int): String = "$n núcleos"
+
+    fun cpuCoresPeak(percent: Int): String = "pico $percent%"
+
     const val MIXER = "Mixer"
     const val MASTER = "Volume geral"
     const val MUTED = "mudo"

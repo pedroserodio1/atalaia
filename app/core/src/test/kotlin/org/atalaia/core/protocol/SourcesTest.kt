@@ -233,6 +233,15 @@ class SourcesTest {
     }
 
     @Test
+    fun system_com_uso_por_nucleo() {
+        val d = decode<SystemData>("system", """{"cpu":{"percent":16,"cores":[31,39,0,100]},"ram":{"usedMb":1,"totalMb":2}}""")
+        assertEquals(listOf(31, 39, 0, 100), d.cpu.cores)
+        assertNull(decode<SystemData>("system", """{"cpu":{"percent":16}}""").cpu.cores)                 // agente antigo: sem o campo
+        assertNull(decode<SystemData>("system", """{"cpu":{"percent":16,"cores":null}}""").cpu.cores)    // contadores indisponíveis: sem leitura, nunca lista de zeros
+        assertEquals(emptyList<Int>(), decode<SystemData>("system", """{"cpu":{"cores":[],"novo":1}}""").cpu.cores)
+    }
+
+    @Test
     fun network() {
         val d = decode<NetworkData>(
             "network",
