@@ -26,6 +26,21 @@ class LatencyTest {
     }
 
     @Test
+    fun cor_da_barra_pelos_limites_do_ping() {
+        assertEquals(NetQuality.GOOD, Latency.sample(0))
+        assertEquals(NetQuality.GOOD, Latency.sample(149))
+        assertEquals(NetQuality.OK, Latency.sample(150))
+        assertEquals(NetQuality.OK, Latency.sample(299))
+        assertEquals(NetQuality.BAD, Latency.sample(300))
+    }
+
+    @Test
+    fun a_barra_e_a_qualidade_do_alvo_nunca_discordam_no_ping() {
+        // Um alvo estável (sem jitter nem perda) com ping v tem de ter a mesma classe que uma barra de v ms: foi a incoerência vista no tablet (186 ms "regular" com barras coral).
+        for (v in 0..400) assertEquals(Latency.sample(v), Latency.quality(target(v, 0, 0, listOf(v))), "ping $v ms")
+    }
+
+    @Test
     fun sem_resposta_e_sem_medida() {
         assertEquals(NetQuality.DOWN, Latency.quality(target(null, null, 100, listOf(null, null))))
         assertEquals(NetQuality.DOWN, Latency.quality(target(null, null, 90, listOf(null))))     // perda não é 100 mas nada respondeu: não finge
