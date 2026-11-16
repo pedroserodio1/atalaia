@@ -157,7 +157,7 @@ public sealed class NetworkPlugin : IPlugin
         return (window[^1], (int)Math.Round(ok.Average(), MidpointRounding.AwayFromZero), ok.Min(), ok.Max(), jitter, loss);
     }
 
-    /// <summary>Os alvos e as janelas → <c>data</c> do protocolo. Só o nome do alvo sai, nunca o endereço.</summary>
+    /// <summary>Os alvos e as janelas → <c>data</c> do protocolo. Só o nome do alvo sai (e se ele é o roteador), nunca o endereço.</summary>
     public static JsonElement Build(IReadOnlyList<NetworkTarget> targets, IReadOnlyList<List<int?>> windows) => Json.ToElement(new
     {
         targets = targets.Select((t, i) =>
@@ -166,6 +166,7 @@ public sealed class NetworkPlugin : IPlugin
             return new
             {
                 name = t.Name,
+                gateway = IsGateway(t.Address),   // só diz se é o roteador (para o tablet separar "internet fora" de "sem rede"); o endereço não sai
                 rttMs = s.Last,
                 avgMs = s.Avg,
                 minMs = s.Min,

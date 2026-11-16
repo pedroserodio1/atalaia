@@ -56,7 +56,7 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
    configuração do app. Em build de desenvolvimento (`-dev`) não há release: você escolhe um APK do seu computador. O QR leva à página da release,
    para instalar sem cabo.
 4. **Código de pareamento:** mostra o código de 6 dígitos (só aqui e no menu da bandeja), copia, e conclui sozinho quando um tablet conecta (USB ou Wi-Fi).
-5. **Fontes de dados:** as dez fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
+5. **Fontes de dados:** as treze fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
    banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`). **Clima, Steam e Discord têm o botão Configurar**, com um
    formulário por fonte (veja [Credenciais das fontes](#credenciais-das-fontes-pela-janela)): o que é segredo vai para um cofre criptografado
    com a sua conta do Windows e **nunca volta à tela** (só "Configurada", com Trocar e Remover).

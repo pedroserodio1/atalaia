@@ -294,6 +294,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   No app, **Sistema ganha o primeiro filho (Sistema › Rede)**, com um cartão por alvo e o gráfico dos últimos ~60 s. **Provado no PC** (com o roteador e a internet reais e um endereço que nunca responde): o gateway é achado
   sozinho, os tempos batem com o `ping` e a perda de 100% não derruba a fonte. **Ficou de fora desta beta** (continua `[ ]`): sinal do tablet, velocidade, dispositivos da rede, alerta de "internet caiu" no cartão do relógio e o gráfico de tráfego (o item "Tráfego de rede" abaixo).
   **Falta provar:** a tela no tablet (gráfico legível a 862 × 505 dp, desempenho no T68), roteador que ignora ICMP e a escolha do gateway com VPN ou várias placas.
+  Beta.7 (16/11/2026; falta provar no tablet, cenário 29 de `app/docs/teste-manual.md`): a cor de cada barra do gráfico passou a seguir a mesma regra da qualidade (menta, âmbar, coral) e o **alerta "internet caiu"**
+  no cartão do relógio entrou: "Internet fora" (o roteador responde e todos os alvos de internet ficam 3 amostras, ~6 s, sem resposta) ou "Sem rede" (nenhum responde), em qualquer aba, abaixo da queda de energia
+  e acima dos limites; tocar abre Sistema › Rede. Acréscimo ao contrato aprovado pelo mantenedor: `gateway` (booleano, opcional) em cada alvo de `network` (não revela o endereço). A regra é uma função pura sobre as
+  amostras que o agente já manda (`Latency.outage`), sem estado no app.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
   nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).

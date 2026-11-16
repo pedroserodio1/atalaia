@@ -246,12 +246,15 @@ public sealed class SimNetwork() : SimBase("network", "Rede", 2000)
 {
     private readonly List<int?> _router = [];
     private readonly List<int?> _internet = [];
+    private int _tick;
 
     public override Task<JsonElement?> CollectAsync(CancellationToken ct)
     {
+        // A cada ~2 min a internet fica 12 s fora (o roteador segue vivo), para o aviso "Internet fora" do relógio aparecer em --simulate.
+        var outage = ++_tick % 60 >= 54;
         Add(_router, Random.Shared.NextDouble() < 0.01 ? null : (int)Rand(1, 6));
-        Add(_internet, Random.Shared.NextDouble() < 0.12 ? null : (int)Rand(9, 38));
-        return Result(new { targets = new[] { Target("Roteador", _router), Target("Internet", _internet) } });
+        Add(_internet, outage || Random.Shared.NextDouble() < 0.12 ? null : (int)Rand(9, 38));
+        return Result(new { targets = new[] { Target("Roteador", _router, gateway: true), Target("Internet", _internet, gateway: false) } });
     }
 
     private static void Add(List<int?> window, int? sample)
@@ -260,13 +263,14 @@ public sealed class SimNetwork() : SimBase("network", "Rede", 2000)
         if (window.Count > 30) window.RemoveAt(0);
     }
 
-    private static object Target(string name, List<int?> window)
+    private static object Target(string name, List<int?> window, bool gateway)
     {
         var ok = window.Where(s => s.HasValue).Select(s => s!.Value).ToList();
         int? Some(Func<int> f) => ok.Count > 0 ? f() : null;
         return new
         {
             name,
+            gateway,
             rttMs = window[^1],
             avgMs = Some(() => (int)Math.Round(ok.Average())),
             minMs = Some(() => ok.Min()),

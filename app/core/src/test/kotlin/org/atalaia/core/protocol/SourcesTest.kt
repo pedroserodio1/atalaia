@@ -249,6 +249,8 @@ class SourcesTest {
             {"name":"Internet","rttMs":null,"avgMs":null,"minMs":null,"maxMs":null,"jitterMs":null,"lossPercent":100,"samples":[null,null]}]}""",
         )
         assertEquals(listOf("Roteador", "Internet"), d.targets.map { it.name })
+        assertEquals(listOf(true, false), decode<NetworkData>("network", """{"targets":[{"name":"R","gateway":true},{"name":"I","gateway":false}]}""").targets.map { it.gateway })
+        assertEquals(false, d.targets[0].gateway)                       // agente antigo: sem o campo vale false
         assertEquals(2, d.targets[0].rttMs)
         assertEquals(25, d.targets[0].lossPercent)
         assertEquals(listOf(3, 4, null, 2), d.targets[0].samples)         // null = pacote sem resposta
