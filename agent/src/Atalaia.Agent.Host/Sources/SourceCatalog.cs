@@ -28,7 +28,7 @@ internal static class SourceCatalog
 {
     public static readonly IReadOnlyList<SourceInfo> All =
     [
-        new("system", "Sistema", "CPU, RAM, disco e rede"),
+        new("system", "Sistema", "CPU (inclusive por núcleo), RAM, disco e rede"),
         new("gpu", "GPU", "temperatura e uso, via nvidia-smi"),
         new("media", "Mídia", "música tocando e capa"),
         new("audio", "Áudio", "volume geral e por aplicativo"),

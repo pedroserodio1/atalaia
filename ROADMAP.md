@@ -323,6 +323,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
 - [ ] **Tráfego de rede** (`system.net`) na aba Sistema.
 - [ ] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
   MINOR e compatível com o v1, mas é mudança de contrato: combinar com o mantenedor antes. Só uso; temperatura e frequência por núcleo ficam fora.
+  Feito em 16/11/2026 (beta.6; falta provar no tablet, cenário 28 de `app/docs/teste-manual.md`): campo `system.cpu.cores` (lista de inteiros de 0 a 100, na ordem dos núcleos do Windows; `null` sem os
+  contadores `Processor`), aprovado pelo mantenedor. Agente: leitura por núcleo no plugin `system`, simulador com 16 núcleos e seção atualizada em `docs/protocolo-v1.md`. App: cartão com uma barra por núcleo ao lado
+  do gráfico de 60 s (coral a partir de 85%, pico em texto) e lógica em `CpuCores.kt`. **Provado no PC** (16 núcleos reais, valores coerentes entre as coletas). Limite conhecido: acima de 64 núcleos lógicos só entram
+  os que o Windows lista por número simples. **Falta provar:** a tela no tablet e a comparação com o Gerenciador de Tarefas sob carga.
 - [ ] **Discord: volume e mudo por pessoa.** `SET_USER_VOICE_SETTINGS` (`volume` de 0 a 200, `mute`; `pan` fica fora). Tocar num membro abre o controle dele.
   Exige o plugin publicar o id do membro (decidir com o mantenedor se vai o id do Discord ou um identificador opaco, já que passa pela rede local), duas
   ações novas (`set_user_volume`, `toggle_user_mute`) e id desconhecido devolvendo `unknown_session` ou `invalid_args`. Mesma regra do slider: envia ao soltar.

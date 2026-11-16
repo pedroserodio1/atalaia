@@ -387,6 +387,17 @@ Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem deslig
 8. **Privacidade:** o endereço dos alvos (IP) não aparece no tablet nem no log do agente.
 9. Desempenho: sem animação; a tela lê o estado a 2 Hz (repetir a medição de quadros do cenário 12 com a Rede aberta).
 
+## 28. Núcleos da CPU (Sistema › Visão geral)
+
+Precisa do agente da beta.6 (o campo `system.cpu.cores`) ou do `--simulate`, que traz 16 núcleos. Não há o que configurar.
+
+1. Em **Sistema**, ao lado do gráfico "CPU · últimos 60 s" aparece o cartão "N núcleos" (N = o número de núcleos lógicos do PC), com uma barra por núcleo e `pico N%` no canto. O gráfico dos 60 s continua ocupando o resto da largura.
+2. Conferir o N contra o Gerenciador de Tarefas (aba Desempenho › CPU, "Processadores lógicos") e abrir um jogo ou rodar uma carga: as barras acompanham o Gerenciador, uma por núcleo, e a barra passa a **coral** a partir de 85%.
+3. Com a CPU quase parada as barras ficam baixas, mas uma barra com algum uso nunca some (tem altura mínima); com 0% fica só o fundo.
+4. **Agente antigo** (beta.5 ou anterior) ou contadores indisponíveis: o cartão não aparece e nada quebra. Dado velho: a etiqueta "velho" aparece no cartão, como nos outros.
+5. Em PC com mais de 32 núcleos lógicos as barras ficam finas mas legíveis (conferir se houver como). Em PC com mais de 64, só entram os núcleos que o Windows lista por número simples (limite conhecido).
+6. Desempenho: sem animação; repetir a medição de quadros do cenário 12 com a tela Sistema aberta.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -416,3 +427,4 @@ Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem deslig
 | 25 Agenda | | |
 | 26 Anime | | |
 | 27 Rede | | |
+| 28 Núcleos da CPU | | |
