@@ -3,6 +3,7 @@
 
 package org.atalaia.app.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -146,7 +151,7 @@ private fun MixerRow(
  * toda. Estados por ícone: o forma diz o estado, a cor só reforça.
  */
 @Composable
-fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, send: ActionSender, modifier: Modifier) {
+fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, covers: CoverRepository, send: ActionSender, modifier: Modifier) {
     val d = state.dataOf<DiscordData>("discord")
     val freshness = state.freshness("discord", now)
     if (d == null || !d.connected) {
@@ -191,7 +196,8 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, s
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
             } else {
                 Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
-                    channel.members.forEach { MemberRow(it) }
+                    val connected = state.connection is ConnectionState.Connected
+                    channel.members.forEach { MemberRow(it, connected, covers) }
                 }
                 if (state.hasAction("discord", "leave_call")) LeaveCallBar { send.send("discord", "leave_call") }
             }
@@ -239,13 +245,21 @@ private fun VolumeColumn(icon: IconKind, value: Int?, max: Int, enabled: Boolean
 }
 
 @Composable
-private fun MemberRow(m: DiscordMember) {
+private fun MemberRow(m: DiscordMember, connected: Boolean, covers: CoverRepository) {
+    // A foto vem do agente (GET /cover/{hash}, o mesmo caminho das capas): o app não busca nada da internet. Sem foto, ou enquanto ela não chega, vale a inicial.
+    val avatar by produceState<ImageBitmap?>(null, m.avatarHash, connected) {
+        value = m.avatarHash?.takeIf { connected }?.let { covers.load(it) }
+    }
     Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         // Quem fala ganha anel menta, nome em menta e o ícone de som; mudo e surdo são ícones cortados (o estado nunca depende só da cor).
         Box(
             Modifier.size(34.dp).background(Palette.Border, CircleShape).border(if (m.speaking) 3.dp else 1.dp, if (m.speaking) Palette.Mint else Palette.Border, CircleShape),
             contentAlignment = Alignment.Center,
-        ) { BodyText(m.name.take(1).uppercase(), sp = 14) }
+        ) {
+            val img = avatar
+            if (img != null) Image(img, null, Modifier.size(34.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+            else BodyText(m.name.take(1).uppercase(), sp = 14)
+        }
         Box(Modifier.weight(1f)) { BodyText(m.name, if (m.speaking) Palette.Mint else Palette.Text, 16) }
         if (m.speaking) PanelIcon(IconKind.VOLUME, Palette.Mint, 22.dp)
         if (m.deafened) {

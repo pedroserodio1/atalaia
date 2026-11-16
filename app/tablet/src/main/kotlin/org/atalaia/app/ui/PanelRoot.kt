@@ -231,7 +231,7 @@ fun PanelRoot(app: PanelApp) {
                         Nav.MEDIA -> NowPlayingScreen(state, now, feedback, app.covers, ::act, content)
                         Nav.MIXER -> MixerScreen(state, now, app.clock, ::act, content)
                         Nav.ANIME -> AniListScreen(state, now, time, content)
-                        Nav.COMM -> DiscordScreen(state, now, feedback, app.clock, ::act, content)
+                        Nav.COMM -> DiscordScreen(state, now, feedback, app.clock, app.covers, ::act, content)
                         Nav.GAME -> GameScreen(state, now, content)
                         Nav.AGENDA, Nav.AGENDA_WEEK, Nav.AGENDA_MONTH -> AgendaScreen(
                             view = when (nav.dest) { Nav.AGENDA_WEEK -> AgendaView.WEEK; Nav.AGENDA_MONTH -> AgendaView.MONTH; else -> AgendaView.DAY },

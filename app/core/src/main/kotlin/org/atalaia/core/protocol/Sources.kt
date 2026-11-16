@@ -237,6 +237,8 @@ data class DiscordMember(
     val muted: Boolean = false,
     val deafened: Boolean = false,
     val speaking: Boolean = false,
+    /** O hash da foto do membro (16 hexadecimais) para pedir em `GET /cover/{hash}`; `null` sem avatar ou enquanto o agente não baixou (a tela usa a inicial). Campo da beta.7. */
+    val avatarHash: String? = null,
 )
 
 /** Qualidade da conexão de voz: `state` é `connected`, `connecting` ou `no_route`; `pingMs` só em `connected`. */
