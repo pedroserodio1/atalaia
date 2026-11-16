@@ -13,6 +13,7 @@ using Atalaia.Agent.Host.Sources;
 using Atalaia.Agent.Host.Startup;
 using Atalaia.Agent.Host.Updates;
 using Atalaia.Agent.Host.Usb;
+using Atalaia.Agent.Plugins.Calendar;
 using Atalaia.Agent.Plugins.System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -82,6 +83,7 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
         r.Register("sources.set", a => SourcesSet(CommandRouter.Text(a, "id", 32), Bool(a, "enabled")));
         r.Register("sources.configure", a => SourcesConfigure(CommandRouter.Text(a, "id", 32), FormValues(a)));
         r.Register("sources.clearConfig", a => SourcesClearConfig(CommandRouter.Text(a, "id", 32)));
+        r.Register("sources.setCalendars", a => SourcesSetCalendars(CalendarItems(a)));
         r.Register("sources.test", a => SourcesTest(CommandRouter.Text(a, "id", 32), OptionalValues(a)));
         r.Register("sources.openPage", a => SourcesOpenPage(CommandRouter.Text(a, "id", 32)));
 
@@ -408,6 +410,10 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
                 ["needs"] = new JsonArray([.. needs.Select(n => (JsonNode)JsonValue.Create(n)!)]),
             };
             var fields = SourceCredentials.For(info.Id);
+            // Agenda: a janela mostra uma lista. Só os nomes voltam para a página; o link é segredo e nunca sai do cofre.
+            if (info.Id == "calendar")
+                entry["calendars"] = new JsonArray([.. CalendarPlugin.ParseLinks(s.Runtime.Config[fields[0].Key("calendar")], out _)
+                    .Select(c => (JsonNode)new JsonObject { ["name"] = c.Name })]);
             if (fields.Count > 0) entry["fields"] = new JsonArray([.. fields.Select(f => FieldJson(info.Id, f))]);
             if (SourceHelp.For(info.Id) is { } help) entry["help"] = HelpJson(info.Id, help);
             list.Add(entry);
@@ -515,6 +521,74 @@ internal sealed class StepCommands(StepServices s, ILogger? logger = null)
             () => changes.All(c => s.Runtime.Config[c.Key.Key(id)] == c.Value),
             "Uma variável de ambiente está mandando sobre este valor: remova-a para mudar por aqui.",
             vault => { foreach (var (f, v) in changes.Where(c => c.Key.Secret)) vault[f.Key(id)] = v; });
+        return SourcesJson();
+    }
+
+    private sealed record CalendarItem(string? Name, string? Url, int? Keep);
+
+    /// <summary><c>items</c>: até 5 agendas, cada uma com <c>name</c> e o link novo (<c>url</c>) ou o índice do que já estava guardado (<c>keep</c>).</summary>
+    private static List<CalendarItem> CalendarItems(JsonElement a)
+    {
+        if (!a.TryGetProperty("items", out var arr) || arr.ValueKind != JsonValueKind.Array) throw new CommandException("invalid_args", "Faltam as agendas.");
+        if (arr.GetArrayLength() > CalendarPlugin.MaxLinks) throw new CommandException("invalid_args", $"No máximo {CalendarPlugin.MaxLinks} agendas.");
+        var items = new List<CalendarItem>();
+        foreach (var e in arr.EnumerateArray())
+        {
+            if (e.ValueKind != JsonValueKind.Object) throw new CommandException("invalid_args", "Cada agenda precisa ser um objeto.");
+            string? Str(string n) => e.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+            int? keep = e.TryGetProperty("keep", out var k) && k.ValueKind == JsonValueKind.Number && k.TryGetInt32(out var i) ? i : null;
+            if (Str("name") is { Length: > 256 } || Str("url") is { Length: > SourceCredentials.MaxLengthLinks })
+                throw new CommandException("invalid_args", "Valor grande demais.");
+            items.Add(new CalendarItem(Str("name"), Str("url"), keep));
+        }
+        return items;
+    }
+
+    /// <summary>
+    /// A lista de agendas da janela. Cada uma leva um nome e o link novo, ou "manter" (o índice do link que já está no cofre, porque ele nunca volta para a
+    /// página). Lista vazia apaga tudo. Os erros dizem qual agenda e nunca repetem o link.
+    /// </summary>
+    private async Task<JsonNode?> SourcesSetCalendars(List<CalendarItem> items)
+    {
+        var field = SourceCredentials.For("calendar").Single();
+        var key = field.Key("calendar");
+        if (!string.IsNullOrWhiteSpace(s.Probe("calendar").Env(field.EnvName("calendar"))))
+            throw new CommandException("overridden", $"Definido por variável de ambiente ({field.EnvName("calendar")}): remova-a para mudar por aqui.");
+
+        var saved = CalendarPlugin.ParseLinks(s.Runtime.Config[key], out _);
+        var parts = new List<string>();
+        var errors = new List<string>();
+        for (var i = 0; i < items.Count; i++)
+        {
+            var label = $"Agenda {i + 1}";
+            var name = (items[i].Name ?? "").Trim();
+            if (name.Length > CalendarPlugin.MaxName) { errors.Add($"{label}: o nome tem no máximo {CalendarPlugin.MaxName} caracteres."); continue; }
+            if (name.Contains(';') || name.Contains("http", StringComparison.OrdinalIgnoreCase) || name.Any(char.IsControl))
+            { errors.Add($"{label}: o nome não pode ter ponto e vírgula, \"http\" nem quebra de linha."); continue; }
+
+            string link;
+            var typed = (items[i].Url ?? "").Trim();
+            if (typed.Length > 0)
+            {
+                var one = CalendarPlugin.ParseLinks(typed, out var linkError);
+                if (linkError is not null || one.Count != 1 || typed.Any(char.IsWhiteSpace))
+                { errors.Add($"{label}: o link precisa começar com https:// e estar inteiro, sem espaços."); continue; }
+                link = one[0].Url.OriginalString;
+            }
+            else if (items[i].Keep is int k && k >= 0 && k < saved.Count) link = saved[k].Url.OriginalString;
+            else { errors.Add($"{label}: cole o link desta agenda."); continue; }
+
+            parts.Add(name.Length > 0 ? $"{name} {link}" : link);
+        }
+        if (errors.Count > 0) throw new CommandException("invalid_fields", string.Join(" ", errors));
+
+        var value = parts.Count == 0 ? null : string.Join("; ", parts);
+        if (value is { Length: > SourceCredentials.MaxLengthLinks }) throw new CommandException("invalid_fields", "As agendas juntas passaram do tamanho aceito.");
+        await ApplyAsync(
+            _ => { },
+            () => (s.Runtime.Config[key] ?? "") == (value ?? ""),
+            "Uma variável de ambiente está mandando sobre este valor: remova-a para mudar por aqui.",
+            vault => vault[key] = value);
         return SourcesJson();
     }
 

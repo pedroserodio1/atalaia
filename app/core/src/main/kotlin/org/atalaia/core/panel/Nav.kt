@@ -22,17 +22,18 @@ object Nav {
     val MIXER: Dest = listOf("media", "mixer")
     val GAME: Dest = listOf("game")
     val COMM: Dest = listOf("comm")
-    val AGENDA: Dest = listOf("home", "agenda")
-    val AGENDA_WEEK: Dest = listOf("home", "agenda", "week")
-    val AGENDA_MONTH: Dest = listOf("home", "agenda", "month")
+    val AGENDA: Dest = listOf("agenda")
+    val AGENDA_WEEK: Dest = listOf("agenda", "week")
+    val AGENDA_MONTH: Dest = listOf("agenda", "month")
 
     /** A árvore de hoje. Cada fonte nova entra aqui como um filho (ou um nó novo), junto com a tela dela. */
     val tree: List<NavNode> = listOf(
-        NavNode("home", listOf(NavNode("agenda", listOf(NavNode("week"), NavNode("month"))))),   // Início: Principal, Agenda (Dia, Semana, Mês)
+        NavNode("home"),
         NavNode("system"),
         NavNode("media", listOf(NavNode("mixer"))),
         NavNode("game"),
         NavNode("comm"),
+        NavNode("agenda", listOf(NavNode("week"), NavNode("month"))),   // a principal é o Dia; a barra da raiz cabe 6 abas de 88 dp em ~556 dp
     )
 
     /** O nó do caminho, ou `null` se o caminho não existe (ou é vazio). */

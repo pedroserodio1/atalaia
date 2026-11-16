@@ -142,21 +142,20 @@ class NavTest {
         assertNull(Nav.nodeAt(emptyList()))
         val s = NavState().tap(Nav.MEDIA)
         assertEquals(listOf(Nav.MEDIA, Nav.MIXER), s.entries())
-        // Sistema, Jogo e Comunicação ainda não têm filhos: tocar neles não troca a barra.
-        for (leaf in listOf(Nav.SYSTEM, Nav.GAME, Nav.COMM)) assertFalse(NavState().tap(leaf).canBack)
+        // Início, Sistema, Jogo e Comunicação ainda não têm filhos: tocar neles não troca a barra.
+        for (leaf in listOf(Nav.HOME, Nav.SYSTEM, Nav.GAME, Nav.COMM)) assertFalse(NavState().tap(leaf).canBack)
     }
 
     @Test
-    fun a_agenda_fica_dentro_de_inicio_com_dia_semana_e_mes() {
-        val inicio = NavState().tap(Nav.HOME)
-        assertEquals(listOf(Nav.HOME, Nav.AGENDA), inicio.entries())
-        val agenda = inicio.tap(Nav.AGENDA)
+    fun a_agenda_e_uma_aba_da_raiz_com_dia_semana_e_mes() {
+        assertEquals(listOf(Nav.HOME, Nav.SYSTEM, Nav.MEDIA, Nav.GAME, Nav.COMM, Nav.AGENDA), NavState().entries())   // seis abas: é o máximo que cabe na barra
+        val agenda = NavState().tap(Nav.AGENDA)
         assertEquals(Nav.AGENDA, agenda.dest)
         assertEquals(listOf(Nav.AGENDA, Nav.AGENDA_WEEK, Nav.AGENDA_MONTH), agenda.entries())    // Dia (a principal), Semana e Mês
         val mes = agenda.tap(Nav.AGENDA_MONTH)
         assertEquals(Nav.AGENDA_MONTH, mes.dest)
         assertEquals(Nav.AGENDA, mes.bar)
-        assertEquals(Nav.HOME, mes.back().bar)                                                       // voltar sobe um nível
+        assertEquals(emptyList<String>(), mes.back().bar)                                              // voltar sobe um nível, à raiz
         assertEquals(NavState(Nav.HOME, emptyList()), mes.auto(Nav.HOME))                           // inatividade zera o submenu
         assertEquals(NavState(Nav.AGENDA_WEEK, Nav.AGENDA), NavState().goTo(Nav.AGENDA_WEEK))
     }
