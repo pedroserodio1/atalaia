@@ -25,6 +25,27 @@ object Texts {
     const val NAV_WEEK = "Semana"
     const val NAV_MONTH = "Mês"
     const val NAV_ANIME = "Anime"
+    const val NAV_NET = "Rede"
+    const val NAV_OVERVIEW = "Visão geral"
+
+    const val NET_OFF = "A Rede está desligada. Ligue em Fontes de dados, no PC."
+    const val NET_NO_DATA = "Sem dados da Rede"
+
+    fun netQuality(q: org.atalaia.core.panel.NetQuality): String = when (q) {
+        org.atalaia.core.panel.NetQuality.GOOD -> "ótimo"
+        org.atalaia.core.panel.NetQuality.OK -> "regular"
+        org.atalaia.core.panel.NetQuality.BAD -> "ruim"
+        org.atalaia.core.panel.NetQuality.DOWN -> "sem resposta"
+        org.atalaia.core.panel.NetQuality.NONE -> "medindo"
+    }
+
+    /** `méd 10 ms · jitter 1 ms`. */
+    fun netAverage(avg: String, jitter: String): String = "méd $avg · jitter $jitter"
+
+    fun netLoss(loss: Int?): String = "perda ${loss?.let { "$it%" } ?: NO_VALUE}"
+
+    /** `↓ 3,3 Mb/s · ↑ 60 kb/s` (o tráfego geral do PC, vindo do `system`). */
+    fun netTraffic(rx: String?, tx: String?): String = "↓ ${rx ?: NO_VALUE} · ↑ ${tx ?: NO_VALUE}"
 
     const val ANIME_OFF = "O AniList está desligado ou sem usuário. Configure no PC (Fontes de dados)."
     const val ANIME_NO_DATA = "Sem dados do AniList"

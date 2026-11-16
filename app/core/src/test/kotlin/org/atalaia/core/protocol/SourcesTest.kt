@@ -233,6 +233,27 @@ class SourcesTest {
     }
 
     @Test
+    fun network() {
+        val d = decode<NetworkData>(
+            "network",
+            """{"targets":[{"name":"Roteador","rttMs":2,"avgMs":3,"minMs":1,"maxMs":6,"jitterMs":1,"lossPercent":25,"samples":[3,4,null,2]},
+            {"name":"Internet","rttMs":null,"avgMs":null,"minMs":null,"maxMs":null,"jitterMs":null,"lossPercent":100,"samples":[null,null]}]}""",
+        )
+        assertEquals(listOf("Roteador", "Internet"), d.targets.map { it.name })
+        assertEquals(2, d.targets[0].rttMs)
+        assertEquals(25, d.targets[0].lossPercent)
+        assertEquals(listOf(3, 4, null, 2), d.targets[0].samples)         // null = pacote sem resposta
+        assertNull(d.targets[1].rttMs)                                    // sem leitura: null, nunca 0
+        assertNull(d.targets[1].avgMs)
+        assertEquals(100, d.targets[1].lossPercent)
+        // campo ausente, null e campo extra
+        assertEquals(0, decode<NetworkData>("network", "{}").targets.size)
+        val bare = decode<NetworkData>("network", """{"targets":[{"name":"X","novo":1}]}""").targets.single()
+        assertNull(bare.lossPercent)
+        assertTrue(bare.samples.isEmpty())
+    }
+
+    @Test
     fun notifications_so_nome_e_contagem() {
         val d = decode<NotificationsData>("notifications", """{"count":4,"apps":[{"name":"Discord","count":2},{"name":"WhatsApp","count":1}]}""")
         assertEquals(4, d.count)

@@ -145,8 +145,21 @@ class NavTest {
         assertNotNull(Nav.nodeAt(Nav.ANIME))
         assertEquals(NavState(Nav.ANIME, Nav.MEDIA), NavState().goTo(Nav.ANIME))
         assertEquals(listOf(Nav.MEDIA, Nav.MIXER, Nav.ANIME), Nav.arcOptions(Nav.MEDIA, emptyList()))
-        // Início, Sistema e Jogo ainda não têm filhos: tocar neles não troca a barra.
-        for (leaf in listOf(Nav.HOME, Nav.SYSTEM, Nav.GAME)) assertFalse(NavState().tap(leaf).canBack)
+        // Início e Jogo ainda não têm filhos: tocar neles não troca a barra.
+        for (leaf in listOf(Nav.HOME, Nav.GAME)) assertFalse(NavState().tap(leaf).canBack)
+    }
+
+    @Test
+    fun a_rede_e_filha_do_sistema() {
+        val sistema = NavState().tap(Nav.SYSTEM)
+        assertEquals(Nav.SYSTEM, sistema.dest)                                         // a principal do Sistema é a visão geral de hoje
+        assertEquals(listOf(Nav.SYSTEM, Nav.NET), sistema.entries())
+        val rede = sistema.tap(Nav.NET)
+        assertEquals(NavState(Nav.NET, Nav.SYSTEM), rede)
+        assertEquals(NavState(Nav.NET, Nav.SYSTEM), NavState().goTo(Nav.NET))
+        assertEquals(listOf(Nav.SYSTEM, Nav.NET), Nav.arcOptions(Nav.SYSTEM, emptyList()))
+        assertEquals(emptyList<String>(), rede.back().bar)
+        assertEquals(NavState(Nav.HOME, emptyList()), rede.auto(Nav.HOME))              // inatividade zera o submenu
     }
 
     @Test
