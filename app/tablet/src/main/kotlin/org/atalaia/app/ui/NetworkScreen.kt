@@ -110,7 +110,7 @@ private fun Chart(samples: List<Int?>, max: Int, modifier: Modifier) {
                 drawRect(Palette.Coral.copy(alpha = 0.35f), Offset(x, 0f), Size(bar, size.height))
             } else {
                 val h = (size.height * v / max).coerceIn(2.dp.toPx(), size.height)
-                drawRect(if (v >= 150) Palette.Coral else Palette.Mint, Offset(x, size.height - h), Size(bar, h))
+                drawRect(qualityColor(Latency.sample(v)), Offset(x, size.height - h), Size(bar, h))
             }
         }
     }
