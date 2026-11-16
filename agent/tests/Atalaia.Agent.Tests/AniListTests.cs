@@ -24,12 +24,6 @@ public class AniListTests
               "genres":[{"genre":"Action","count":61},{"genre":"Comedy","count":48},{"genre":"","count":1}],
               "studios":[{"studio":{"name":"Estúdio Exemplo"},"count":12,"minutesWatched":4100},{"studio":{"name":"Outro Estúdio"},"count":7,"minutesWatched":2200}]},
             "manga":{"count":37,"chaptersRead":1204}}},
-          "MediaListCollection":{"lists":[
-            {"isCustomList":false,"entries":[
-              {"progress":5,"media":{"title":{"romaji":"Anime de Exemplo","english":"Example Anime"},"episodes":12,"nextAiringEpisode":{"episode":6,"airingAt":1763650000}}},
-              {"progress":11,"media":{"title":{"romaji":null,"english":"Only English"},"episodes":null,"nextAiringEpisode":null}}]},
-            {"isCustomList":true,"entries":[
-              {"progress":5,"media":{"title":{"romaji":"Anime de Exemplo","english":"Example Anime"},"episodes":12,"nextAiringEpisode":null}}]}]},
           "Page":{"activities":[
             {"status":"watched episode","progress":"5","createdAt":1763640000,"media":{"type":"ANIME","title":{"romaji":"Anime de Exemplo","english":null}}},
             {"status":"completed","progress":null,"createdAt":1763630000,"media":{"type":"MANGA","title":{"romaji":"Mangá de Exemplo","english":null}}},
@@ -74,23 +68,6 @@ public class AniListTests
     }
 
     [Fact]
-    public void Assistindo_vem_so_da_lista_padrao_e_o_que_nao_tem_leitura_e_null()
-    {
-        var watching = List(AniListPlugin.Parse(Full, Now), "watching");
-        Assert.Equal(2, watching.Length);                                               // a lista personalizada repete o título e fica de fora
-        Assert.Equal("Anime de Exemplo", watching[0].GetProperty("title").GetString());
-        Assert.Equal(5, watching[0].GetProperty("progress").GetInt32());
-        Assert.Equal(12, watching[0].GetProperty("episodes").GetInt32());
-        Assert.Equal(6, watching[0].GetProperty("nextEpisode").GetInt32());
-        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1763650000), DateTimeOffset.Parse(watching[0].GetProperty("airingAt").GetString()!, CultureInfo.InvariantCulture));
-
-        Assert.Equal("Only English", watching[1].GetProperty("title").GetString());     // sem romaji, vale o inglês
-        Assert.Equal(JsonValueKind.Null, watching[1].GetProperty("episodes").ValueKind);        // anime sem total conhecido
-        Assert.Equal(JsonValueKind.Null, watching[1].GetProperty("nextEpisode").ValueKind);     // fora do ar: sem próximo episódio
-        Assert.Equal(JsonValueKind.Null, watching[1].GetProperty("airingAt").ValueKind);
-    }
-
-    [Fact]
     public void Atividades_trazem_so_titulo_acao_e_progresso_e_pulam_as_sem_midia()
     {
         var recent = List(AniListPlugin.Parse(Full, Now), "recent");
@@ -107,26 +84,24 @@ public class AniListTests
     }
 
     [Fact]
-    public void Limita_o_que_assiste_e_as_atividades()
+    public void Limita_as_atividades()
     {
-        var entries = string.Join(',', Enumerable.Range(1, 15).Select(i => "{\"progress\":" + i + ",\"media\":{\"title\":{\"romaji\":\"A" + i + "\"},\"episodes\":24,\"nextAiringEpisode\":null}}"));
         var acts = string.Join(',', Enumerable.Range(1, 15).Select(i => "{\"status\":\"watched episode\",\"progress\":\"" + i + "\",\"createdAt\":1763640000,\"media\":{\"type\":\"ANIME\",\"title\":{\"romaji\":\"A" + i + "\"}}}"));
-        var d = AniListPlugin.Parse("{\"data\":{\"MediaListCollection\":{\"lists\":[{\"isCustomList\":false,\"entries\":[" + entries + "]}]},\"Page\":{\"activities\":[" + acts + "]}}}", Now);
-        Assert.Equal(AniListPlugin.MaxWatching, List(d, "watching").Length);
+        var d = AniListPlugin.Parse("{\"data\":{\"Page\":{\"activities\":[" + acts + "]}}}", Now);
         Assert.Equal(AniListPlugin.MaxRecent, List(d, "recent").Length);
     }
 
     [Fact]
     public void Campo_ausente_vira_null_e_lista_ausente_vira_vazia()
     {
-        var d = AniListPlugin.Parse("""{"data":{"User":{"name":"X","statistics":{"anime":{"count":0},"manga":null}},"MediaListCollection":null,"Page":null,"followers":null}}""", Now);
+        var d = AniListPlugin.Parse("""{"data":{"User":{"name":"X","statistics":{"anime":{"count":0},"manga":null}},"Page":null,"followers":null}}""", Now);
         Assert.Equal("X", d.GetProperty("user").GetString());
         Assert.Equal(0, d.GetProperty("animeCount").GetInt32());                        // zero de verdade continua zero
         Assert.Equal(JsonValueKind.Null, d.GetProperty("mangaCount").ValueKind);        // sem leitura: null, nunca 0
         Assert.Equal(JsonValueKind.Null, d.GetProperty("episodesWatched").ValueKind);
         Assert.Equal(JsonValueKind.Null, d.GetProperty("followers").ValueKind);
         Assert.Equal(JsonValueKind.Null, d.GetProperty("following").ValueKind);
-        foreach (var name in new[] { "genres", "studios", "watching", "recent" }) Assert.Empty(List(d, name));
+        foreach (var name in new[] { "genres", "studios", "recent" }) Assert.Empty(List(d, name));
 
         var none = AniListPlugin.Parse("""{"data":{"User":null}}""", Now);
         Assert.Equal("", none.GetProperty("user").GetString());                         // texto sem valor é ""
@@ -203,6 +178,7 @@ public class AniListTests
     {
         var q = AniListPlugin.MainQuery;
         Assert.DoesNotContain("mutation", q, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("MediaListCollection", q);          // a lista "assistindo" saiu
         Assert.DoesNotContain("Viewer", q);                       // exige login
         Assert.DoesNotContain("notifications", q, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("TextActivity", q);                 // texto livre de outras pessoas fica fora
@@ -215,13 +191,9 @@ public class AniListTests
         var sim = new SimAniList();
         var d = (await sim.CollectAsync(CancellationToken.None))!.Value;
         Assert.Equal("anilist", sim.Id);
-        foreach (var name in new[] { "user", "animeCount", "mangaCount", "episodesWatched", "minutesWatched", "chaptersRead", "genres", "studios", "watching", "recent", "followers", "following", "updatedAt" })
+        foreach (var name in new[] { "user", "animeCount", "mangaCount", "episodesWatched", "minutesWatched", "chaptersRead", "genres", "studios", "recent", "followers", "following", "updatedAt" })
             Assert.True(d.TryGetProperty(name, out _), name);
-        var watching = List(d, "watching");
-        Assert.NotEmpty(watching);
-        foreach (var name in new[] { "title", "progress", "episodes", "nextEpisode", "airingAt" }) Assert.True(watching[0].TryGetProperty(name, out _), name);
-        Assert.Contains(watching, w => w.GetProperty("airingAt").ValueKind == JsonValueKind.String);    // um no ar, para o "próximo episódio"
-        Assert.Contains(watching, w => w.GetProperty("airingAt").ValueKind == JsonValueKind.Null);      // e um sem data
+        Assert.False(d.TryGetProperty("watching", out _));                                              // retirado na beta.5
         foreach (var name in new[] { "title", "type", "action", "progress", "at" }) Assert.True(List(d, "recent")[0].TryGetProperty(name, out _), name);
     }
 

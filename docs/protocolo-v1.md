@@ -289,7 +289,6 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 { "user": "ExemploOtaku", "animeCount": 142, "mangaCount": 37, "episodesWatched": 2310, "minutesWatched": 55440, "chaptersRead": 1204,
   "genres": [ { "name": "Action", "count": 61 } ],
   "studios": [ { "name": "Estúdio Exemplo", "count": 12, "minutes": 4100 } ],
-  "watching": [ { "title": "Anime de Exemplo", "progress": 5, "episodes": 12, "nextEpisode": 6, "airingAt": "2026-11-17T18:00:00-03:00" } ],
   "recent": [ { "title": "Anime de Exemplo", "type": "ANIME", "action": "watched episode", "progress": "5", "at": "2026-11-16T09:00:00-03:00" } ],
   "followers": 18, "following": 25,
   "updatedAt": "2026-11-16T12:00:00-03:00" }
@@ -297,11 +296,10 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 
 - Acréscimo da 0.4.0. Só leitura, **sem login e sem chave**: usa a API GraphQL pública do AniList (`https://graphql.anilist.co`) e só o nome de usuário do perfil,
   que precisa ser público. Uma consulta por coleta; o agente resolve o id numérico do usuário na primeira vez e o guarda. Intervalo padrão: 10 min (a API limita pedidos por minuto).
-- `genres` (até 6, por contagem) e `studios` (até 5) vêm das estatísticas de **anime**; `watching` (até 10) é a lista "assistindo" padrão, sem repetir título das listas personalizadas;
-  `recent` (até 10) são as últimas atividades **de lista** (assistiu episódio, leu capítulo, completou...). Os nomes de `action` e `type` são os originais do AniList
+- `genres` (até 6, por contagem) e `studios` (até 5) vêm das estatísticas de **anime**; `recent` (até 10) são as últimas atividades **de lista** (assistiu episódio, leu capítulo, completou...). Os nomes de `action` e `type` são os originais do AniList
   (`watched episode`, `read chapter`, `completed`, `plans to watch`, `ANIME`, `MANGA`...): a tradução fica no app.
-- Título: o romaji, ou o inglês quando não há romaji. `nextEpisode` e `airingAt` só existem para anime ainda no ar (senão `null`); `episodes` é `null` quando o total é desconhecido.
-  `progress` em `recent` é o texto do AniList (`"5"`, `"3 - 5"`) e `""` quando a ação não tem progresso (`completed`). Campo sem leitura é `null`; listas sem itens são `[]`.
+- Título: o romaji, ou o inglês quando não há romaji. `watching` (a lista "assistindo") existiu só na `0.4.0-beta.4` e foi retirado antes da estável: clientes antigos
+  que o esperavam recebem uma lista vazia, e o app ignora o campo se um agente antigo o mandar. `progress` em `recent` é o texto do AniList (`"5"`, `"3 - 5"`) e `""` quando a ação não tem progresso (`completed`). Campo sem leitura é `null`; listas sem itens são `[]`.
 - Só título, ação e progresso das atividades; texto livre, mensagens, notificações e imagens (avatar e capa) **não** são lidos nem publicados.
 - Exige `username` na configuração (o que aparece em `anilist.co/user/NOME`). Não é segredo: vai no `settings.json`, sem cofre. Nasce desligada. A consulta vai com um `User-Agent`
   próprio (`Atalaia-Agent`): sem ele a Cloudflare que protege a API recusa com 403.
