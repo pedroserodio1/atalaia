@@ -330,9 +330,9 @@ Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
 
 ## 24. Submenus e arco (barra que troca, segurar e arrastar)
 
-Hoje só a Mídia tem submenu (Tocando agora e Mixer). Início, Sistema, Jogo e Comunicação abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
+Hoje a Mídia (Tocando agora e Mixer) e a Agenda (Dia, Semana e Mês) têm submenu. Início, Sistema, Jogo e Comunicação abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
 
-1. Barra da raiz: Início, Sistema, Mídia, Jogo, Comunicação. "Discord" deixou de ser aba: a tela dele é a Comunicação.
+1. Barra da raiz: Início, Sistema, Mídia, Jogo, Comunicação e Agenda (seis abas de 88 dp: conferir que a última não é cortada nem encosta na borda). "Discord" deixou de ser aba: a tela dele é a Comunicação.
 2. Toque em Mídia: abre "Tocando agora" e a barra vira `‹ | Tocando agora | Mixer`, com "Tocando agora" destacado. Toque em Mixer: abre o mixer, que agora ocupa a tela toda.
    Toque em `‹`: a barra volta à raiz e a tela continua a do Mixer, com Mídia destacada.
 3. Segure Mídia (~0,4 s) sem mexer o dedo: o arco abre **por cima** da tela (véu escuro, a barra à vista, nada se move) com "Tocando agora" e "Mixer". Arraste até Mixer (fica menta) e solte:
@@ -344,11 +344,12 @@ Hoje só a Mídia tem submenu (Tocando agora e Mixer). Início, Sistema, Jogo e 
 8. Sair e voltar ao app (ou recriar a atividade): continua na mesma tela e na mesma barra.
 9. Desempenho: sem animação; repetir a medição de quadros do arrasto (cenário 12) com o arco aberto.
 
-## 25. Agenda (Início › Agenda)
+## 25. Agenda (aba da raiz)
 
-Precisa de um link iCal secreto de verdade (ou `--simulate`, que traz eventos de exemplo e um que começa daqui a ~16 min). Na janela do agente: Fontes de dados, Agenda, Configurar: `Trabalho https://...; Pessoal https://...`.
+Precisa de um link iCal secreto de verdade (ou `--simulate`, que traz eventos de exemplo e um que começa daqui a ~16 min). Na janela do agente: Fontes de dados, Agenda, Configurar. É uma **lista**: uma linha por agenda, com o nome e o link, o botão Remover e o "+ Adicionar agenda" (até 5).
+Conferir que o link nunca volta para a tela (nas agendas já salvas o campo do link vem vazio com "link guardado"), que deixar o link em branco mantém o que estava e que remover uma do meio não troca os links das outras.
 
-1. Início › toque em **Início**: a barra vira `‹ | Principal | Agenda`. Toque em **Agenda**: abre o **Dia** e a barra vira `‹ | Dia | Semana | Mês`. Os eventos de hoje aparecem em ordem, o próximo com contorno menta.
+1. Toque na aba **Agenda** (a última da raiz): abre o **Dia** e a barra vira `‹ | Dia | Semana | Mês`. Os eventos de hoje aparecem em ordem, o próximo com contorno menta. O Início agora não tem submenu.
 2. **Semana** e **Mês**: as setas andam no tempo e "Hoje" volta; as setas param no mês atual e no seguinte (é o que o agente traz). O dia de hoje fica destacado. Com mais de uma agenda, a legenda mostra o nome e a cor de cada uma.
 3. **Chips da legenda:** tocar numa agenda a esconde na tela (a bolinha fica vazada e o nome apagado); tocar de novo mostra. Conferir que o **aviso do cartão do relógio** continua valendo para a agenda escondida.
 4. **Modal do dia:** na Semana ou no Mês, tocar num dia abre o modal por cima (véu escuro, nada se mexe): o dia por extenso, os eventos, setas para o dia anterior e o seguinte, X e "Abrir o dia". Tocar fora fecha; "Abrir o dia" leva à tela Dia daquela data.
