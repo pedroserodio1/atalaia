@@ -79,7 +79,9 @@ private fun TargetRow(t: NetworkTarget) {
         }
         Column(Modifier.width(128.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             BigText(Latency.ms(t.rttMs), 24, if (t.rttMs == null) Palette.TextMuted else Palette.Text)
-            MonoText(Texts.netAverage(Latency.ms(t.avgMs), Latency.ms(t.jitterMs)), Palette.TextMuted, 11)
+            // Uma estatística por linha: juntas, "méd 2 ms · jitter 0 ms" não cabe nos 128 dp e o valor do jitter virava "…".
+            MonoText(Texts.netAverage(Latency.ms(t.avgMs)), Palette.TextMuted, 11)
+            MonoText(Texts.netJitter(Latency.ms(t.jitterMs)), Palette.TextMuted, 11)
             val loss = t.lossPercent
             MonoText(Texts.netLoss(loss), if (loss != null && loss > 0) Palette.Coral else Palette.TextMuted, 11)
         }
