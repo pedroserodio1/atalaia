@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,11 +32,13 @@ import org.atalaia.app.ui.theme.Palette
 import org.atalaia.core.panel.Latency
 import org.atalaia.core.panel.NetQuality
 import org.atalaia.core.panel.Pt
+import org.atalaia.core.panel.Traffic
 import org.atalaia.core.protocol.NetworkData
 import org.atalaia.core.protocol.NetworkTarget
 import org.atalaia.core.protocol.SystemData
 import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
+import org.atalaia.core.state.NetSample
 
 private val Amber = Palette.Calendars[2]
 
@@ -49,18 +55,48 @@ fun NetworkScreen(state: AppState, now: Long, modifier: Modifier) {
     val freshness = state.freshness("network", now)
     val net = state.dataOf<SystemData>("system")?.net
     PanelCard(modifier.fillMaxWidth()) {
-        CardLabel(
-            Texts.NAV_NET, freshness,
-            trailing = if (net?.rxKbps != null || net?.txKbps != null) Texts.netTraffic(net.rxKbps?.let { Pt.rate(it) }, net.txKbps?.let { Pt.rate(it) }) else null,
-        )
-        if (data == null || data.targets.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                BodyText(if (freshness == Freshness.DISABLED) Texts.NET_OFF else Texts.NET_NO_DATA, Palette.TextMuted, 16)
-            }
-            return@PanelCard
-        }
+        CardLabel(Texts.NAV_NET, freshness)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            data.targets.forEach { TargetRow(it) }
+            // O tráfego é do `system` e existe mesmo com a fonte Rede desligada: o gráfico aparece sempre que há leitura.
+            if (state.netHistory.isNotEmpty()) TrafficCard(state.netHistory, net?.rxKbps, net?.txKbps)
+            if (data == null || data.targets.isEmpty()) {
+                BodyText(if (freshness == Freshness.DISABLED) Texts.NET_OFF else Texts.NET_NO_DATA, Palette.TextMuted, 16)
+            } else {
+                data.targets.forEach { TargetRow(it) }
+            }
+        }
+    }
+}
+
+private val Upload = Palette.Calendars[1]
+
+/** O tráfego geral do PC (descida em menta, subida em azul) dos últimos ~60 s, com a escala em texto. Duas linhas desenhadas à mão; sem animação. */
+@Composable
+private fun TrafficCard(history: List<NetSample>, rx: Long?, tx: Long?) {
+    val max = Traffic.chartMax(history)
+    Column(
+        Modifier.fillMaxWidth().border(1.dp, Palette.Border, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            MonoText(Texts.netDown(rx?.let { Pt.rate(it) }), Palette.Mint, 13)
+            MonoText(Texts.netUp(tx?.let { Pt.rate(it) }), Upload, 13)
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { MonoText(Texts.netScale(Pt.rate(max)), Palette.TextMuted, 11) }
+        }
+        Canvas(Modifier.fillMaxWidth().height(52.dp)) {
+            for (f in listOf(0f, 0.5f, 1f)) drawLine(Palette.Border, Offset(0f, size.height * (1f - f)), Offset(size.width, size.height * (1f - f)), strokeWidth = 1.dp.toPx())
+            if (history.size < 2) return@Canvas
+            fun line(color: Color, pick: (NetSample) -> Long) {
+                val path = Path()
+                history.forEachIndexed { i, s ->
+                    val x = size.width * i / 59f
+                    val y = size.height * (1f - (pick(s).toFloat() / max).coerceIn(0f, 1f))
+                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                }
+                drawPath(path, color, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+            }
+            line(Palette.Mint) { it.rxKbps }
+            line(Upload) { it.txKbps }
         }
     }
 }
