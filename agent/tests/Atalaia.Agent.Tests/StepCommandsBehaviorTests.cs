@@ -544,12 +544,12 @@ public class CodeSourcesAndSummaryTests : StepTestBase
     }
 
     [Fact]
-    public async Task Fontes_sao_as_doze_com_estado_e_o_que_falta_configurar()
+    public async Task Fontes_sao_as_treze_com_estado_e_o_que_falta_configurar()
     {
         var d = await H.Data("sources.get");
         Assert.True(d.GetProperty("simulate").GetBoolean());
         var sources = d.GetProperty("sources").EnumerateArray().ToArray();
-        Assert.Equal(12, sources.Length);
+        Assert.Equal(13, sources.Length);
         Assert.Equal("system", sources[0].GetProperty("id").GetString());
         Assert.All(sources, s => Assert.NotEqual("disabled", s.GetProperty("status").GetString()));   // simulado: todas ligadas
 
@@ -604,8 +604,8 @@ public class CodeSourcesAndSummaryTests : StepTestBase
         Assert.Equal("ok", items["app"].GetProperty("status").GetString());               // mesma versão do agente
         Assert.Equal("off", items["tablet"].GetProperty("status").GetString());           // ninguém conectado
         Assert.Equal("warn", items["sources"].GetProperty("status").GetString());         // fontes pedindo ajuste
-        Assert.Contains("12 de 12 ligadas", items["sources"].GetProperty("text").GetString());
-        Assert.Contains("7 pedem ajuste", items["sources"].GetProperty("text").GetString());
+        Assert.Contains("13 de 13 ligadas", items["sources"].GetProperty("text").GetString());
+        Assert.Contains("8 pedem ajuste", items["sources"].GetProperty("text").GetString());
         Assert.Equal("off", d.GetProperty("startup").GetString());
         Assert.True(d.GetProperty("autoCheck").GetBoolean());   // padrão: ligado
     }
