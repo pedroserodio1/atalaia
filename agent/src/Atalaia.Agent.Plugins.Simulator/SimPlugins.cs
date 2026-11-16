@@ -42,13 +42,15 @@ public abstract class SimBase(string id, string name, int intervalMs = 1000) : I
 public sealed class SimSystem() : SimBase("system", "Sistema")
 {
     private double _cpu = 10, _ram = 12000;
+    private readonly double[] _cores = Enumerable.Range(0, 16).Select(i => 8.0 + i * 3).ToArray();
     public override Task<JsonElement?> CollectAsync(CancellationToken ct)
     {
         _cpu = Walk(_cpu, 10, 2, 95);
         _ram = Walk(_ram, 300, 6000, 28000);
+        for (var i = 0; i < _cores.Length; i++) _cores[i] = Walk(_cores[i], 15, 1, 98);
         return Result(new
         {
-            cpu = new { percent = (int)Math.Round(_cpu) },
+            cpu = new { percent = (int)Math.Round(_cpu), cores = _cores.Select(c => (int)Math.Round(c)).ToArray() },
             ram = new { usedMb = (int)Math.Round(_ram), totalMb = 32768 },
             disks = new[] { new { name = "C:", usedGb = 412.0, totalGb = 931.0 }, new { name = "D:", usedGb = 1210.0, totalGb = 1863.0 } },
             net = new { rxKbps = (int)Rand(0, 9000), txKbps = (int)Rand(0, 800), mac = "AA:BB:CC:DD:EE:FF" },

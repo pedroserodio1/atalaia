@@ -378,7 +378,7 @@ Precisa de um usuário do AniList com perfil público (ou `--simulate`, que traz
 Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem desligada) ou do `--simulate`, que traz dois alvos, um deles perdendo pacotes de vez em quando. Na janela do agente: Configurar mostra a **lista de alvos** (nome e endereço por linha, até 4, Remover, Adicionar e "Restaurar o padrão"); o endereço é `gateway` (o roteador desta máquina) ou um IPv4.
 
 1. Toque em **Sistema**: a barra vira `‹ | Visão geral | Rede` e a tela é a de sempre (o cenário 1 continua valendo). Toque em **Rede**: abre a tela, com o tráfego (`↓ ... · ↑ ...`) à direita do título.
-2. Um cartão por alvo: o nome, a **qualidade em texto** (ótimo, regular, ruim, sem resposta, ou "medindo" nos primeiros segundos), o tempo atual grande, `méd N ms · jitter N ms` e `perda N%` (coral se passar de 0).
+2. Um cartão por alvo: o nome, a **qualidade em texto** (ótimo, regular, ruim, sem resposta, ou "medindo" nos primeiros segundos), o tempo atual grande e, abaixo, `méd N ms`, `jitter N ms` e `perda N%` (coral se passar de 0), uma por linha, sem corte. "Ruim" só aparece com perda a partir de 5%, jitter alto (40 ms ou mais) ou ping muito alto (300 ms ou mais); um servidor distante e estável (por exemplo, 190 ms) é "regular".
 3. **Gráfico:** barras dos últimos ~60 s, enchendo da direita para a esquerda; a escala sobe em degraus (20, 50, 100, 200...) e o ping de 3 ms não vira uma linha reta. Um pacote perdido aparece como **faixa coral** de ponta a ponta, nunca como barra de zero.
 4. **Prova com a rede de verdade:** conferir o tempo do roteador e o da internet contra o `ping` do Windows no PC. Pôr um alvo que nunca responde (`192.0.2.1`) e ver "sem resposta", perda 100% e `—` nos tempos (nunca `0 ms`); desligar o Wi-Fi do PC por uns segundos e ver o gráfico mostrar a lacuna.
 5. **Roteador que ignora ping:** se o alvo `gateway` aparecer sempre "sem resposta", anotar o modelo do roteador e trocar o alvo (o tutorial da janela explica).
@@ -386,6 +386,17 @@ Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem deslig
 7. Alvo com nome longo corta com `…`; a tela rola na vertical com 4 alvos (conferir em 862 × 505 dp).
 8. **Privacidade:** o endereço dos alvos (IP) não aparece no tablet nem no log do agente.
 9. Desempenho: sem animação; a tela lê o estado a 2 Hz (repetir a medição de quadros do cenário 12 com a Rede aberta).
+
+## 28. Núcleos da CPU (Sistema › Visão geral)
+
+Precisa do agente da beta.6 (o campo `system.cpu.cores`) ou do `--simulate`, que traz 16 núcleos. Não há o que configurar.
+
+1. Em **Sistema**, ao lado do gráfico "CPU · últimos 60 s" aparece o cartão "N núcleos" (N = o número de núcleos lógicos do PC), com uma barra por núcleo e `pico N%` no canto. O gráfico dos 60 s continua ocupando o resto da largura.
+2. Conferir o N contra o Gerenciador de Tarefas (aba Desempenho › CPU, "Processadores lógicos") e abrir um jogo ou rodar uma carga: as barras acompanham o Gerenciador, uma por núcleo, e a barra passa a **coral** a partir de 85%.
+3. Com a CPU quase parada as barras ficam baixas, mas uma barra com algum uso nunca some (tem altura mínima); com 0% fica só o fundo.
+4. **Agente antigo** (beta.5 ou anterior) ou contadores indisponíveis: o cartão não aparece e nada quebra. Dado velho: a etiqueta "velho" aparece no cartão, como nos outros.
+5. Em PC com mais de 32 núcleos lógicos as barras ficam finas mas legíveis (conferir se houver como). Em PC com mais de 64, só entram os núcleos que o Windows lista por número simples (limite conhecido).
+6. Desempenho: sem animação; repetir a medição de quadros do cenário 12 com a tela Sistema aberta.
 
 ## Resultado
 
@@ -416,3 +427,4 @@ Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem deslig
 | 25 Agenda | | |
 | 26 Anime | | |
 | 27 Rede | | |
+| 28 Núcleos da CPU | | |

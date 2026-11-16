@@ -39,8 +39,10 @@ object Texts {
         org.atalaia.core.panel.NetQuality.NONE -> "medindo"
     }
 
-    /** `méd 10 ms · jitter 1 ms`. */
-    fun netAverage(avg: String, jitter: String): String = "méd $avg · jitter $jitter"
+    /** `méd 10 ms` e `jitter 1 ms`, uma por linha. */
+    fun netAverage(avg: String): String = "méd $avg"
+
+    fun netJitter(jitter: String): String = "jitter $jitter"
 
     fun netLoss(loss: Int?): String = "perda ${loss?.let { "$it%" } ?: NO_VALUE}"
 
@@ -113,6 +115,10 @@ object Texts {
     const val NETWORK = "Rede"
     const val DISK = "Disco"
     const val CPU_LAST_60 = "CPU · últimos 60 s"
+
+    fun cpuCores(n: Int): String = "$n núcleos"
+
+    fun cpuCoresPeak(percent: Int): String = "pico $percent%"
 
     const val MIXER = "Mixer"
     const val MASTER = "Volume geral"

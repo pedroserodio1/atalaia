@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -145,9 +146,13 @@ fun SystemScreen(state: AppState, now: Long, modifier: Modifier) {
             MetricCard("RAM", ram, state.freshness("system", now), sub = sys?.ram?.usedMb?.let { Pt.gb(it) } ?: "", Modifier.weight(1f))
             MetricCard("VRAM", vram, state.freshness("gpu", now), sub = gpu?.vramUsedMb?.let { Pt.gb(it.toLong()) } ?: "", Modifier.weight(1f))
         }
-        PanelCard(Modifier.fillMaxWidth().weight(1f)) {
-            CardLabel(Texts.CPU_LAST_60, state.freshness("system", now))
-            Sparkline(state.cpuHistory, Modifier.fillMaxSize().padding(top = 8.dp))
+        Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            PanelCard(Modifier.weight(1f).fillMaxHeight()) {
+                CardLabel(Texts.CPU_LAST_60, state.freshness("system", now))
+                Sparkline(state.cpuHistory, Modifier.fillMaxSize().padding(top = 8.dp))
+            }
+            // O uso por núcleo (agente a partir da beta.6): sem o campo (agente antigo ou contadores indisponíveis) o cartão não aparece e o gráfico ocupa a largura toda.
+            sys?.cpu?.cores?.takeIf { it.isNotEmpty() }?.let { CpuCoresCard(it, state.freshness("system", now), Modifier.width(230.dp).fillMaxHeight()) }
         }
         Row(Modifier.fillMaxWidth().height(84.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             PanelCard(Modifier.weight(1f).fillMaxHeight()) {
