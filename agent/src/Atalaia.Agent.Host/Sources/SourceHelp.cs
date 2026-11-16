@@ -21,6 +21,7 @@ internal sealed record SourceHelp(string Title, IReadOnlyList<string> Steps, IRe
         ["discord"] = "https://discord.com/developers/applications",
         ["weather"] = "https://www.openstreetmap.org/",
         ["calendar"] = "https://calendar.google.com/calendar/r/settings",
+        ["anilist"] = "https://anilist.co/",
     };
 
     private static readonly Dictionary<string, SourceHelp> All = new(StringComparer.Ordinal)
@@ -86,6 +87,21 @@ internal sealed record SourceHelp(string Title, IReadOnlyList<string> Steps, IRe
                 "Agenda da empresa: o administrador pode bloquear o endereço secreto, e aí ele não aparece em Integrar agenda.",
             ],
             "Abrir o Google Agenda"),
+
+        ["anilist"] = new(
+            "Como achar o seu usuário do AniList",
+            [
+                "Entre em anilist.co e abra o seu perfil: o endereço é anilist.co/user/NOME. O NOME é o que vai em Configurar.",
+                "Cole só o nome (sem o endereço e sem @). Não precisa de senha, chave nem login: a fonte lê só o que o seu perfil mostra para qualquer pessoa.",
+                "O perfil precisa ser público. Se você marcou o perfil como privado nas configurações do AniList, a fonte não enxerga nada.",
+                "Privacidade: do perfil saem para o tablet só as contagens, os gêneros e estúdios mais vistos, o que você está assistindo e os títulos das últimas atividades. Texto, mensagens e notificações do AniList não são lidos.",
+            ],
+            [
+                "Usuário não encontrado: confira a grafia do nome no endereço do seu perfil.",
+                "Sem dados: confira a internet. Se o perfil foi criado agora ou nunca marcou um anime como assistindo, os números e a lista ficam vazios.",
+                "Limite de pedidos: o AniList limita quantos pedidos por minuto aceita; a fonte pede uma vez a cada 10 minutos e tenta de novo sozinha.",
+            ],
+            "Abrir o AniList"),
 
         ["ups"] = new(
             "Quando o nobreak funciona",

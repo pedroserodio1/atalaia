@@ -304,6 +304,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
     (fluxo `/fonte-no-app`). Onde aparece: um cartão "Anime" na aba Início (mais barato) ou uma tela própria; com a navegação em submenus (item acima) a tela pode entrar sem disputar a barra. A decidir.
   - **Contrato:** **muda** `docs/protocolo-v1.md` (fonte opcional nova; acréscimo compatível, o app antigo ignora a fonte), então precisa ser combinado com o mantenedor antes do código. Sem ação de efeito no PC.
   - **Falta provar:** formato real de `nextAiringEpisode` (o usuário de teste não tinha anime no ar), perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
+  - **Feito em 16/11/2026** (ramo `feat/fonte-anilist`; falta só provar com um usuário real e no tablet, cenário 26 de `app/docs/teste-manual.md`): plugin `anilist` no agente (uma consulta por coleta; o id numérico
+    é resolvido uma vez e guardado), par simulado, tutorial e campo "Usuário do AniList" na janela (`settings.json`, sem cofre), seção `anilist` em `docs/protocolo-v1.md`; no app, o modelo, a tela **Mídia › Anime**
+    (decidido: tela própria, filha de Mídia, e não cartão no Início) e as contas de tempo em `AniList.kt`. A consulta foi **validada contra a API real** com um id inexistente (a forma está aceita; o `404` vem em HTTP 404
+    com `errors`, não em 200). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
 - [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
   é decisão do mantenedor.
 - [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).

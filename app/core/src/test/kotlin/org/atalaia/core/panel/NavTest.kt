@@ -141,7 +141,10 @@ class NavTest {
         assertNull(Nav.nodeAt(listOf("media", "nada")))
         assertNull(Nav.nodeAt(emptyList()))
         val s = NavState().tap(Nav.MEDIA)
-        assertEquals(listOf(Nav.MEDIA, Nav.MIXER), s.entries())
+        assertEquals(listOf(Nav.MEDIA, Nav.MIXER, Nav.ANIME), s.entries())       // Tocando agora (a principal), Mixer e Anime
+        assertNotNull(Nav.nodeAt(Nav.ANIME))
+        assertEquals(NavState(Nav.ANIME, Nav.MEDIA), NavState().goTo(Nav.ANIME))
+        assertEquals(listOf(Nav.MEDIA, Nav.MIXER, Nav.ANIME), Nav.arcOptions(Nav.MEDIA, emptyList()))
         // Início, Sistema e Jogo ainda não têm filhos: tocar neles não troca a barra.
         for (leaf in listOf(Nav.HOME, Nav.SYSTEM, Nav.GAME)) assertFalse(NavState().tap(leaf).canBack)
     }

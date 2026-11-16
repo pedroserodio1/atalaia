@@ -20,6 +20,7 @@ object Nav {
     val SYSTEM: Dest = listOf("system")
     val MEDIA: Dest = listOf("media")
     val MIXER: Dest = listOf("media", "mixer")
+    val ANIME: Dest = listOf("media", "anime")
     val GAME: Dest = listOf("game")
     val COMM: Dest = listOf("comm")
     val AGENDA: Dest = listOf("comm", "agenda")
@@ -30,7 +31,7 @@ object Nav {
     val tree: List<NavNode> = listOf(
         NavNode("home"),
         NavNode("system"),
-        NavNode("media", listOf(NavNode("mixer"))),
+        NavNode("media", listOf(NavNode("mixer"), NavNode("anime"))),
         NavNode("game"),
         // Comunicação reúne o que chega de pessoas e compromissos: a principal é o Discord ("Pessoas"); a Agenda (principal = Dia) é filha dela.
         // A raiz fica com 5 abas e sobra vaga ao Deck da 0.5.0 (a barra cabe 6 de 88 dp em ~556 dp).

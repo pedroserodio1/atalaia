@@ -209,3 +209,39 @@ public sealed class SimCalendar() : SimBase("calendar", "Agenda", 5000)
         });
     }
 }
+
+/// <summary>AniList de exemplo (usuário de mentira), com um anime no ar para o "próximo episódio" aparecer.</summary>
+public sealed class SimAniList() : SimBase("anilist", "AniList", 10000)
+{
+    public override IReadOnlyList<ActionDescriptor> Actions { get; } = [RefreshAction];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        var now = DateTimeOffset.Now;
+        return Result(new
+        {
+            user = "ExemploOtaku",
+            animeCount = 142,
+            mangaCount = 37,
+            episodesWatched = 2310,
+            minutesWatched = 55440,
+            chaptersRead = 1204,
+            genres = new[] { new { name = "Action", count = 61 }, new { name = "Comedy", count = 48 }, new { name = "Drama", count = 33 }, new { name = "Fantasy", count = 29 }, new { name = "Slice of Life", count = 21 } },
+            studios = new[] { new { name = "Estúdio Exemplo", count = 12, minutes = 4100 }, new { name = "Outro Estúdio", count = 7, minutes = 2200 }, new { name = "Terceiro Estúdio", count = 5, minutes = 1500 } },
+            watching = new[]
+            {
+                new { title = "Anime de Exemplo", progress = (int?)5, episodes = (int?)12, nextEpisode = (int?)6, airingAt = (string?)Json.Iso(now.AddHours(30)) },
+                new { title = "Outro Anime de Exemplo", progress = (int?)11, episodes = (int?)24, nextEpisode = (int?)null, airingAt = (string?)null },
+            },
+            recent = new[]
+            {
+                new { title = "Anime de Exemplo", type = "ANIME", action = "watched episode", progress = "5", at = (string?)Json.Iso(now.AddHours(-3)) },
+                new { title = "Mangá de Exemplo", type = "MANGA", action = "read chapter", progress = "112", at = (string?)Json.Iso(now.AddDays(-1)) },
+                new { title = "Filme de Exemplo", type = "ANIME", action = "completed", progress = "", at = (string?)Json.Iso(now.AddDays(-2)) },
+            },
+            followers = 18,
+            following = 25,
+            updatedAt = Json.Iso(now),
+        });
+    }
+}

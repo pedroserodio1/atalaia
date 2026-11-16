@@ -21,7 +21,7 @@ internal sealed record SourceProbe(
     string UserHome);                        // %USERPROFILE%
 
 /// <summary>
-/// As onze fontes que o agente publica, na ordem do registro, com a descrição para o usuário e o que falta configurar. A lista é a do
+/// As doze fontes que o agente publica, na ordem do registro, com a descrição para o usuário e o que falta configurar. A lista é a do
 /// <c>PluginRegistry</c> (um teste confere que são as mesmas): fonte nova no agente entra aqui também.
 /// </summary>
 internal static class SourceCatalog
@@ -39,6 +39,7 @@ internal static class SourceCatalog
         new("steam", "Steam", "jogo atual, biblioteca e amigos"),
         new("discord", "Discord", "chamada de voz"),
         new("calendar", "Agenda", "eventos de agendas por link iCal secreto (só título e horário)"),
+        new("anilist", "AniList", "anime e mangá do seu perfil público, sem login"),
     ];
 
     /// <summary>O que falta para a fonte funcionar, em português (vazio = pronta). Nunca devolve o valor de uma chave, só diz que falta.</summary>
@@ -65,6 +66,9 @@ internal static class SourceCatalog
             case "calendar":
                 return Blank(p.Option("urls")) is not null
                     ? [] : ["Falta o link iCal secreto de pelo menos uma agenda: use o botão Configurar (o link fica criptografado neste PC) ou defina a variável de ambiente ATALAIA_Plugins__calendar__urls."];
+            case "anilist":
+                return Blank(p.Option("username")) is not null
+                    ? [] : ["Falta o seu nome de usuário do AniList: use o botão Configurar (o nome que aparece em anilist.co/user/NOME; o perfil precisa ser público) ou defina a variável de ambiente ATALAIA_Plugins__anilist__username."];
             default:
                 return [];
         }

@@ -330,12 +330,12 @@ Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
 
 ## 24. Submenus e arco (barra que troca, segurar e arrastar)
 
-Hoje a Mídia (Tocando agora e Mixer) e a Comunicação (Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês: submenu dentro de submenu) têm submenu. Início, Sistema e Jogo abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
+Hoje a Mídia (Tocando agora, Mixer e Anime) e a Comunicação (Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês: submenu dentro de submenu) têm submenu. Início, Sistema e Jogo abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
 
 1. Barra da raiz: Início, Sistema, Mídia, Jogo e Comunicação (cinco abas de 88 dp, com folga à direita para o Deck da 0.5.0). "Discord" deixou de ser aba: a tela dele é a Comunicação (a "Pessoas" da barra dela).
-2. Toque em Mídia: abre "Tocando agora" e a barra vira `‹ | Tocando agora | Mixer`, com "Tocando agora" destacado. Toque em Mixer: abre o mixer, que agora ocupa a tela toda.
+2. Toque em Mídia: abre "Tocando agora" e a barra vira `‹ | Tocando agora | Mixer | Anime`, com "Tocando agora" destacado. Toque em Mixer: abre o mixer, que agora ocupa a tela toda.
    Toque em `‹`: a barra volta à raiz e a tela continua a do Mixer, com Mídia destacada.
-3. Segure Mídia (~0,4 s) sem mexer o dedo: o arco abre **por cima** da tela (véu escuro, a barra à vista, nada se move) com "Tocando agora" e "Mixer". Arraste até Mixer (fica menta) e solte:
+3. Segure Mídia (~0,4 s) sem mexer o dedo: o arco abre **por cima** da tela (véu escuro, a barra à vista, nada se move) com "Tocando agora", "Mixer" e "Anime". Arraste até Mixer (fica menta) e solte:
    abre o Mixer direto e a barra mostra o submenu de Mídia. Segure e solte longe dos botões, ou ainda no ponto de origem: fecha sem mudar nada.
 4. Segure Início, Sistema ou Jogo: não abre arco (não têm filhos); soltar depois do tempo vale como toque. Segure Comunicação: o arco mostra "Pessoas" e "Agenda"; arrastar até Agenda e soltar abre o Dia, com a barra `‹ | Dia | Semana | Mês`.
 5. Mexer o dedo antes do tempo do toque longo: não abre o arco e não conta como toque.
@@ -359,6 +359,20 @@ Conferir que o link nunca volta para a tela (nas agendas já salvas o campo do l
 7. Dado velho, fonte desligada ou sem link: a tela Agenda diz "desligada ou sem link" / "velho" em vez de números fingindo ser atuais, e não toca nem avisa.
 8. Eventos que se repetem (reunião toda segunda), de dia inteiro, que viram a meia-noite e de agendas com fuso diferente do PC aparecem nos dias certos.
 9. Desempenho: o modal e a troca de visão não podem pesar (sem animação); repetir a medição de quadros do arrasto (cenário 12) na tela do Mês.
+
+## 26. Anime (Mídia › Anime, AniList)
+
+Precisa de um usuário do AniList com perfil público (ou `--simulate`, que traz um perfil de exemplo). Na janela do agente: Fontes de dados, AniList, Configurar: **só o nome de usuário** (sem senha, sem chave; não vai para o cofre). A fonte nasce desligada.
+
+1. Toque em **Mídia**, depois em **Anime** (ou segure Mídia e arraste até Anime): abre a tela, com "Anime · NOME" no alto e "N seguidores · N seguindo" à direita.
+2. **Contagens:** animes, episódios, tempo assistido (por exemplo, `38 d 12 h`), mangás e capítulos. Campo sem leitura aparece como `—`, nunca como `0`.
+3. **Assistindo agora:** título, `ep. 5/12` e a barrinha de progresso. Anime que ainda está no ar mostra em menta `próx. ep. 6 em 1 d 6 h`; sem total de episódios não há barra. Conferir com um anime que você está vendo de verdade.
+4. **Últimas atividades:** `Assistiu ep. 5 · há 3 h`, `Completou · há 2 d`... Conferir os verbos (assistiu, leu, completou, largou, pausou, quer assistir) contra o que o site mostra no seu perfil.
+5. **Gêneros** (barras relativas ao maior) e **estúdios** (`12 animes · 2 d 20 h`) mais vistos.
+6. **Estados:** fonte desligada ou sem usuário diz "desligado ou sem usuário"; usuário com grafia errada deixa a fonte em erro com a mensagem "usuário não encontrado" na janela do agente; sem internet o cartão passa a "velho". Perfil **privado** e usuário que nunca marcou nada ainda **não foram provados**: anotar o que aparece.
+7. A tela rola na vertical e título longo corta com `…` sem empurrar a outra coluna (conferir em 862 × 505 dp).
+8. **Privacidade:** no log do agente não pode aparecer o nome de usuário; só títulos, ações e contagens saem do PC.
+9. Limite da API: o agente pede uma vez a cada 10 min. Se a janela mostrar "limite de pedidos atingido", anotar a hora.
 
 ## Resultado
 
