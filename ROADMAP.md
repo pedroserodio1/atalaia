@@ -9,12 +9,12 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 
 ## Onde estamos
 
-- **Agente (Windows):** 12 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `steam`, `discord`, `weather`, `notifications`, `calendar` e `anilist`; as duas últimas nascem desligadas),
+- **Agente (Windows):** 13 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `steam`, `discord`, `weather`, `notifications`, `calendar`, `anilist` e `network`; as três últimas nascem desligadas),
   bandeja, janela de configuração (WinForms + WebView2) com onboarding de 6 passos, módulo USB (`adb reverse`), cofre de segredos, atualização
   automática.
-- **App (tablet):** 5 abas na raiz (Início, Sistema, Mídia, Jogo, Comunicação) com **submenus** (Mídia: Tocando agora, Mixer e Anime; Comunicação: Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês),
+- **App (tablet):** 5 abas na raiz (Início, Sistema, Mídia, Jogo, Comunicação) com **submenus** (Sistema: Visão geral e Rede; Mídia: Tocando agora, Mixer e Anime; Comunicação: Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês),
   coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; a `beta.4` (Agenda dentro da Comunicação e fonte AniList) está mesclada em `beta/0.4.0`, ainda sem tag); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; a `beta.5` (Anime sem "assistindo agora" e fonte Rede) está mesclada em `beta/0.4.0`, ainda sem tag); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -288,6 +288,12 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   Código e testes prontos (ramo `feat/agenda-ical`): plugin, simulador, tutorial e configuração pela janela; modelo, telas, aviso e som no app. Na janela do agente o cadastro é uma **lista** (nome e link por linha, Remover, Adicionar, até 5), e o link nunca volta para a tela. **Falta provar** com um link iCal real e no tablet (cenário 25 de `app/docs/teste-manual.md`);
   a tela foi desenhada em mock mas nunca rodou num aparelho.
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
+  Primeiro pedaço feito em 16/11/2026 (beta.5; falta provar no tablet, cenário 27 de `app/docs/teste-manual.md`): fonte **`network`** (decidida com o mantenedor: id `network`, nasce **desligada**, alvos
+  padrão `Roteador gateway; Internet 1.1.1.1`, só IPv4). O agente faz `ping` (ICMP, sem administrador, sem dependência nova) a até 4 alvos, guarda 30 amostras por alvo e publica média, mín, máx, jitter e perda
+  em inteiros (`null` é sem leitura; perda de 100% é medida válida e não erro); **só o nome do alvo** vai para o tablet, nunca o IP. A janela do agente tem a **lista de alvos** (nome e endereço por linha).
+  No app, **Sistema ganha o primeiro filho (Sistema › Rede)**, com um cartão por alvo e o gráfico dos últimos ~60 s. **Provado no PC** (com o roteador e a internet reais e um endereço que nunca responde): o gateway é achado
+  sozinho, os tempos batem com o `ping` e a perda de 100% não derruba a fonte. **Ficou de fora desta beta** (continua `[ ]`): sinal do tablet, velocidade, dispositivos da rede, alerta de "internet caiu" no cartão do relógio e o gráfico de tráfego (o item "Tráfego de rede" abaixo).
+  **Falta provar:** a tela no tablet (gráfico legível a 862 × 505 dp, desempenho no T68), roteador que ignora ICMP e a escolha do gateway com VPN ou várias placas.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
   nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).
@@ -298,16 +304,16 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   - **Armadilhas já vistas:** `MediaListCollection` repete os títulos nas listas personalizadas (filtrar `isCustomList`); quem não dá nota vem com `meanScore` 0 (não mostrar nota);
     `releaseYears` só ordena por contagem, id, progresso ou nota (ordenar por ano no cliente).
   - **Dado proposto** (campo sem leitura = `null`; nomes originais do AniList, a tradução fica no app): `user`, `animeCount`, `mangaCount`, `episodesWatched`, `minutesWatched`,
-    `chaptersRead`, `genres[{name,count}]` (5 a 6), `studios[{name,count,minutes}]`, `watching[{title,progress,episodes,nextEpisode,airingAt}]`, `recent[{title,type,action,progress,at}]`
+    `chaptersRead`, `genres[{name,count}]` (5 a 6), `studios[{name,count,minutes}]`, `recent[{title,type,action,progress,at}]`
     (3 a 10), `followers`, `following`, `updatedAt`. Das atividades só título, ação e progresso (sem texto livre). Imagens (avatar e capa) ficam fora do v1.
   - **Agente:** plugin `anilist` (fluxo `/novo-plugin-agente`): conversão pura e estática, par simulado, testes e linha no `agent/README.md`. **App:** modelo em `Sources.kt`, cartões, textos em `Texts.kt`
     (fluxo `/fonte-no-app`). Onde aparece: um cartão "Anime" na aba Início (mais barato) ou uma tela própria; com a navegação em submenus (item acima) a tela pode entrar sem disputar a barra. A decidir.
   - **Contrato:** **muda** `docs/protocolo-v1.md` (fonte opcional nova; acréscimo compatível, o app antigo ignora a fonte), então precisa ser combinado com o mantenedor antes do código. Sem ação de efeito no PC.
-  - **Falta provar:** formato real de `nextAiringEpisode` (o usuário de teste não tinha anime no ar), perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
+  - **Falta provar:** perfil privado e usuário inexistente, e se o limite volta a 90 req/min.
   - **Feito em 16/11/2026** (ramo `feat/fonte-anilist`; falta só provar com um usuário real e no tablet, cenário 26 de `app/docs/teste-manual.md`): plugin `anilist` no agente (uma consulta por coleta; o id numérico
     é resolvido uma vez e guardado), par simulado, tutorial e campo "Usuário do AniList" na janela (`settings.json`, sem cofre), seção `anilist` em `docs/protocolo-v1.md`; no app, o modelo, a tela **Mídia › Anime**
     (decidido: tela própria, filha de Mídia, e não cartão no Início) e as contas de tempo em `AniList.kt`. A consulta foi **validada contra a API real** com um id inexistente (a forma está aceita; o `404` vem em HTTP 404
-    com `errors`, não em 200). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
+    com `errors`, não em 200). Provado no tablet com um perfil real em 16/11/2026 (beta.4). Em 16/11/2026 o mantenedor **retirou a lista "assistindo agora"** (`watching`, que existiu só na `beta.4`): saiu da tela, da consulta, do simulador e do contrato (beta.5). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
 - [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
   é decisão do mantenedor.
 - [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).

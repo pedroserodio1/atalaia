@@ -10,13 +10,12 @@ using Atalaia.Agent.Core;
 namespace Atalaia.Agent.Plugins.AniList;
 
 /// <summary>
-/// Anime e mangá do perfil público do AniList (API GraphQL, <b>sem login e sem chave</b>). Só leitura: estatísticas, o que está assistindo, as últimas
-/// atividades e a contagem de seguidores. A configuração é só o nome de usuário (<c>Plugins:anilist:username</c>); nada disso vai para o log.
+/// Anime e mangá do perfil público do AniList (API GraphQL, <b>sem login e sem chave</b>). Só leitura: estatísticas, as últimas atividades
+/// e a contagem de seguidores. A configuração é só o nome de usuário (<c>Plugins:anilist:username</c>); nada disso vai para o log.
 /// </summary>
 public sealed partial class AniListPlugin : IPlugin
 {
     public const string Endpoint = "https://graphql.anilist.co";
-    public const int MaxWatching = 10;
     public const int MaxRecent = 10;
 
     private const string IdQuery = "query ($name: String!) { User(name: $name) { id } }";
@@ -32,9 +31,6 @@ public sealed partial class AniListPlugin : IPlugin
                 studios(limit: 5, sort: COUNT_DESC) { studio { name } count minutesWatched } }
               manga { count chaptersRead }
             }
-          }
-          MediaListCollection(userId: $id, type: ANIME, status: CURRENT, sort: UPDATED_TIME_DESC) {
-            lists { isCustomList entries { progress media { title { romaji english } episodes nextAiringEpisode { episode airingAt } } } }
           }
           Page(perPage: 10) {
             activities(userId: $id, type: MEDIA_LIST, sort: ID_DESC) {
@@ -144,35 +140,12 @@ public sealed partial class AniListPlugin : IPlugin
             genres = Items(Get(anime, "genres")).Select(g => new { name = Str(g, "genre") ?? "", count = Int(g, "count") }).Where(g => g.name.Length > 0).ToList(),
             studios = Items(Get(anime, "studios")).Select(s => new { name = Str(Get(s, "studio"), "name") ?? "", count = Int(s, "count"), minutes = Int(s, "minutesWatched") })
                 .Where(s => s.name.Length > 0).ToList(),
-            watching = Watching(data),
             recent = Items(Get(Get(data, "Page"), "activities")).Select(Recent).OfType<object>().Take(MaxRecent).ToList(),
             followers = Int(Get(Get(data, "followers"), "pageInfo"), "total"),
             following = Int(Get(Get(data, "following"), "pageInfo"), "total"),
             updatedAt = Json.Iso(now),
         });
     }
-
-    // O mesmo título aparece nas listas personalizadas do usuário: só vale a lista padrão (isCustomList falso).
-    private static List<object> Watching(JsonElement data) =>
-        Items(Get(Get(data, "MediaListCollection"), "lists"))
-            .Where(l => Get(l, "isCustomList") is not { ValueKind: JsonValueKind.True })
-            .SelectMany(l => Items(Get(l, "entries")))
-            .Select(e =>
-            {
-                var media = Get(e, "media");
-                var title = Title(media);
-                if (title is null) return null;
-                var next = Get(media, "nextAiringEpisode");
-                return (object)new
-                {
-                    title,
-                    progress = Int(e, "progress"),
-                    episodes = Int(media, "episodes"),
-                    nextEpisode = Int(next, "episode"),
-                    airingAt = Unix(next, "airingAt"),
-                };
-            })
-            .OfType<object>().Take(MaxWatching).ToList();
 
     // Das atividades só o título, a ação e o progresso (a API não manda texto livre nesse tipo, e o que não é de lista é filtrado na consulta).
     private static object? Recent(JsonElement a)

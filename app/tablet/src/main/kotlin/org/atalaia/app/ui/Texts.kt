@@ -25,14 +25,33 @@ object Texts {
     const val NAV_WEEK = "Semana"
     const val NAV_MONTH = "Mês"
     const val NAV_ANIME = "Anime"
+    const val NAV_NET = "Rede"
+    const val NAV_OVERVIEW = "Visão geral"
+
+    const val NET_OFF = "A Rede está desligada. Ligue em Fontes de dados, no PC."
+    const val NET_NO_DATA = "Sem dados da Rede"
+
+    fun netQuality(q: org.atalaia.core.panel.NetQuality): String = when (q) {
+        org.atalaia.core.panel.NetQuality.GOOD -> "ótimo"
+        org.atalaia.core.panel.NetQuality.OK -> "regular"
+        org.atalaia.core.panel.NetQuality.BAD -> "ruim"
+        org.atalaia.core.panel.NetQuality.DOWN -> "sem resposta"
+        org.atalaia.core.panel.NetQuality.NONE -> "medindo"
+    }
+
+    /** `méd 10 ms · jitter 1 ms`. */
+    fun netAverage(avg: String, jitter: String): String = "méd $avg · jitter $jitter"
+
+    fun netLoss(loss: Int?): String = "perda ${loss?.let { "$it%" } ?: NO_VALUE}"
+
+    /** `↓ 3,3 Mb/s · ↑ 60 kb/s` (o tráfego geral do PC, vindo do `system`). */
+    fun netTraffic(rx: String?, tx: String?): String = "↓ ${rx ?: NO_VALUE} · ↑ ${tx ?: NO_VALUE}"
 
     const val ANIME_OFF = "O AniList está desligado ou sem usuário. Configure no PC (Fontes de dados)."
     const val ANIME_NO_DATA = "Sem dados do AniList"
-    const val ANIME_WATCHING = "Assistindo agora"
     const val ANIME_RECENT = "Últimas atividades"
     const val ANIME_GENRES = "Gêneros mais vistos"
     const val ANIME_STUDIOS = "Estúdios mais vistos"
-    const val ANIME_NOTHING_WATCHING = "Nada marcado como assistindo."
     const val ANIME_NOTHING_RECENT = "Sem atividades recentes."
     const val ANIME_STAT_ANIME = "animes"
     const val ANIME_STAT_EPISODES = "episódios"
@@ -44,16 +63,6 @@ object Texts {
         followers == null && following == null -> null
         else -> "${followers ?: NO_VALUE} seguidores · ${following ?: NO_VALUE} seguindo"
     }
-
-    /** `ep. 5/12` (total conhecido) ou `ep. 5`. */
-    fun animeProgress(progress: Int?, episodes: Int?): String = when {
-        progress == null -> NO_VALUE
-        episodes != null && episodes > 0 -> "ep. $progress/$episodes"
-        else -> "ep. $progress"
-    }
-
-    /** `próx. ep. 6 em 1 d 6 h`; sem número do episódio, só o tempo. */
-    fun animeNext(nextEpisode: Int?, until: String): String = if (nextEpisode == null) "próx. $until" else "próx. ep. $nextEpisode $until"
 
     /** `12 animes · 2 d 20 h`. */
     fun animeStudio(count: Int?, watched: String?): String = listOfNotNull(count?.let { "$it animes" }, watched).joinToString(" · ")

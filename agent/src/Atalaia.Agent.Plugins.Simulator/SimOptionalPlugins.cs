@@ -210,7 +210,7 @@ public sealed class SimCalendar() : SimBase("calendar", "Agenda", 5000)
     }
 }
 
-/// <summary>AniList de exemplo (usuário de mentira), com um anime no ar para o "próximo episódio" aparecer.</summary>
+/// <summary>AniList de exemplo (usuário de mentira).</summary>
 public sealed class SimAniList() : SimBase("anilist", "AniList", 10000)
 {
     public override IReadOnlyList<ActionDescriptor> Actions { get; } = [RefreshAction];
@@ -228,11 +228,6 @@ public sealed class SimAniList() : SimBase("anilist", "AniList", 10000)
             chaptersRead = 1204,
             genres = new[] { new { name = "Action", count = 61 }, new { name = "Comedy", count = 48 }, new { name = "Drama", count = 33 }, new { name = "Fantasy", count = 29 }, new { name = "Slice of Life", count = 21 } },
             studios = new[] { new { name = "Estúdio Exemplo", count = 12, minutes = 4100 }, new { name = "Outro Estúdio", count = 7, minutes = 2200 }, new { name = "Terceiro Estúdio", count = 5, minutes = 1500 } },
-            watching = new[]
-            {
-                new { title = "Anime de Exemplo", progress = (int?)5, episodes = (int?)12, nextEpisode = (int?)6, airingAt = (string?)Json.Iso(now.AddHours(30)) },
-                new { title = "Outro Anime de Exemplo", progress = (int?)11, episodes = (int?)24, nextEpisode = (int?)null, airingAt = (string?)null },
-            },
             recent = new[]
             {
                 new { title = "Anime de Exemplo", type = "ANIME", action = "watched episode", progress = "5", at = (string?)Json.Iso(now.AddHours(-3)) },
@@ -243,5 +238,42 @@ public sealed class SimAniList() : SimBase("anilist", "AniList", 10000)
             following = 25,
             updatedAt = Json.Iso(now),
         });
+    }
+}
+
+/// <summary>Rede de exemplo: o roteador responde sempre; a internet oscila e perde um pacote de vez em quando (para o app mostrar os dois estados).</summary>
+public sealed class SimNetwork() : SimBase("network", "Rede", 2000)
+{
+    private readonly List<int?> _router = [];
+    private readonly List<int?> _internet = [];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        Add(_router, Random.Shared.NextDouble() < 0.01 ? null : (int)Rand(1, 6));
+        Add(_internet, Random.Shared.NextDouble() < 0.12 ? null : (int)Rand(9, 38));
+        return Result(new { targets = new[] { Target("Roteador", _router), Target("Internet", _internet) } });
+    }
+
+    private static void Add(List<int?> window, int? sample)
+    {
+        window.Add(sample);
+        if (window.Count > 30) window.RemoveAt(0);
+    }
+
+    private static object Target(string name, List<int?> window)
+    {
+        var ok = window.Where(s => s.HasValue).Select(s => s!.Value).ToList();
+        int? Some(Func<int> f) => ok.Count > 0 ? f() : null;
+        return new
+        {
+            name,
+            rttMs = window[^1],
+            avgMs = Some(() => (int)Math.Round(ok.Average())),
+            minMs = Some(() => ok.Min()),
+            maxMs = Some(() => ok.Max()),
+            jitterMs = ok.Count > 1 ? (int?)Math.Round(Enumerable.Range(1, ok.Count - 1).Average(i => Math.Abs(ok[i] - ok[i - 1]))) : null,
+            lossPercent = (int)Math.Round(100.0 * (window.Count - ok.Count) / window.Count),
+            samples = window.ToList(),
+        };
     }
 }

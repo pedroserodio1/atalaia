@@ -221,6 +221,7 @@ fun PanelRoot(app: PanelApp) {
                     when (nav.dest) {
                         Nav.HOME -> HomeScreen(state, now, onClearNotifications = { act("notifications", "clear_all") }, modifier = content)
                         Nav.SYSTEM -> SystemScreen(state, now, content)
+                        Nav.NET -> NetworkScreen(state, now, content)
                         Nav.MEDIA -> NowPlayingScreen(state, now, feedback, app.covers, ::act, content)
                         Nav.MIXER -> MixerScreen(state, now, app.clock, ::act, content)
                         Nav.ANIME -> AniListScreen(state, now, time, content)

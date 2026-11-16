@@ -18,6 +18,7 @@ class NavNode(val id: String, val kids: List<NavNode> = emptyList())
 object Nav {
     val HOME: Dest = listOf("home")
     val SYSTEM: Dest = listOf("system")
+    val NET: Dest = listOf("system", "net")
     val MEDIA: Dest = listOf("media")
     val MIXER: Dest = listOf("media", "mixer")
     val ANIME: Dest = listOf("media", "anime")
@@ -30,7 +31,7 @@ object Nav {
     /** A árvore de hoje. Cada fonte nova entra aqui como um filho (ou um nó novo), junto com a tela dela. */
     val tree: List<NavNode> = listOf(
         NavNode("home"),
-        NavNode("system"),
+        NavNode("system", listOf(NavNode("net"))),   // a principal é a visão geral; cada fonte de PC nova (Servidores, Nobreak...) entra aqui como filha
         NavNode("media", listOf(NavNode("mixer"), NavNode("anime"))),
         NavNode("game"),
         // Comunicação reúne o que chega de pessoas e compromissos: a principal é o Discord ("Pessoas"); a Agenda (principal = Dia) é filha dela.

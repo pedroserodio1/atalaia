@@ -20,7 +20,7 @@ public class SourceCatalogTests
     {
         var registered = PluginRegistry.Build(new ConfigurationBuilder().Build(), simulate: true).Select(r => r.Plugin.Id).ToArray();
         Assert.Equal(registered.Order(StringComparer.Ordinal), SourceCatalog.All.Select(s => s.Id).Order(StringComparer.Ordinal));
-        Assert.Equal(12, SourceCatalog.All.Count);
+        Assert.Equal(13, SourceCatalog.All.Count);
         Assert.Equal(SourceCatalog.All.Count, SourceCatalog.All.Select(s => s.Id).Distinct().Count());
         Assert.All(SourceCatalog.All, s => { Assert.False(string.IsNullOrWhiteSpace(s.Name)); Assert.False(string.IsNullOrWhiteSpace(s.Description)); });
     }

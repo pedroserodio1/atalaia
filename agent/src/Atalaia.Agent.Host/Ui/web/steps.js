@@ -364,6 +364,7 @@ let editingSource = null;   // id da fonte com o formulário aberto: enquanto ho
  */
 function configForm(v, s) {
   if (s.id === 'calendar') return calendarForm(v, s);
+  if (s.id === 'network') return networkForm(v, s);
   const inputs = {};
   const error = h('div', { class: 'hint warn', role: 'alert' });
   const fields = s.fields.map((f) => {
@@ -453,6 +454,56 @@ function calendarForm(v, s) {
   return h('div', { class: 'cfg' }, list, error,
     h('div', { class: 'hint' }, 'O link é o segredo: fica criptografado neste PC e nunca é mostrado. Tirar todas as agendas e salvar apaga a configuração. A cor de cada agenda no tablet segue a ordem desta lista.'),
     h('div', { class: 'btnrow' }, save, add, cancel));
+}
+
+/**
+ * Os alvos do ping da Rede são uma lista: uma linha por alvo, com o nome (só do usuário) e o endereço (`gateway` ou um IPv4), e botões para remover e
+ * adicionar (até 4). Não é segredo, então os valores atuais voltam para a tela. Salva pelo mesmo comando dos outros formulários, com o texto `Nome endereço; ...`.
+ */
+function networkForm(v, s) {
+  const MAX = 4;
+  const DEFAULTS = [{ name: 'Roteador', addr: 'gateway' }, { name: 'Internet', addr: '1.1.1.1' }];
+  const field = s.fields[0];
+  const error = h('div', { class: 'hint warn', role: 'alert' });
+  const cancel = h('button', { type: 'button', class: 'btn small' }, 'Cancelar');
+  cancel.addEventListener('click', () => { editingSource = null; v.paint(); });
+  if (field.fromEnv) {
+    return h('div', { class: 'cfg' },
+      h('div', { class: 'hint' }, `Definidos pela variável de ambiente ${field.envName}: ela manda sobre esta lista.`),
+      h('div', { class: 'btnrow' }, cancel));
+  }
+  const parse = (text) => (text || '').split(/[;\n]/).map((x) => x.trim()).filter(Boolean).map((part) => {
+    const cut = part.search(/\s\S*$/);
+    return cut < 0 ? { name: '', addr: part } : { name: part.slice(0, cut).trim(), addr: part.slice(cut).trim() };
+  });
+  let rows = parse(field.value);
+  if (rows.length === 0) rows = DEFAULTS.map((r) => ({ ...r }));
+  const list = h('div', { class: 'alist' });
+  const add = h('button', { type: 'button', class: 'btn small' }, '+ Adicionar alvo');
+  const defaults = h('button', { type: 'button', class: 'btn small' }, 'Restaurar o padrão');
+  const save = h('button', { type: 'button', class: 'btn small primary' }, 'Salvar');
+  const sync = () => list.querySelectorAll('.arow').forEach((el, i) => { rows[i].name = el.querySelector('.aname').value; rows[i].addr = el.querySelector('.aurl').value; });
+  const paint = () => {
+    list.replaceChildren(...rows.map((r, i) => h('div', { class: 'arow' },
+      h('input', { type: 'text', class: 'input aname', maxlength: '24', autocomplete: 'off', spellcheck: 'false', 'aria-label': `Nome do alvo ${i + 1}`, placeholder: `Alvo ${i + 1}`, value: r.name }),
+      h('input', { type: 'text', class: 'input aurl', maxlength: '15', autocomplete: 'off', spellcheck: 'false', 'aria-label': `Endereço do alvo ${i + 1}`, placeholder: 'gateway ou 1.1.1.1', value: r.addr }),
+      h('button', { type: 'button', class: 'btn small', 'aria-label': `Remover o alvo ${i + 1}`, onclick: () => { sync(); rows.splice(i, 1); paint(); } }, 'Remover'))));
+    add.disabled = rows.length >= MAX;
+  };
+  add.addEventListener('click', () => { sync(); if (rows.length < MAX) rows.push({ name: '', addr: '' }); paint(); });
+  defaults.addEventListener('click', () => { rows = DEFAULTS.map((r) => ({ ...r })); error.textContent = ''; paint(); });
+  paint();
+
+  const lock = (on) => { for (const b of [save, cancel, add, defaults]) b.disabled = on; };
+  save.addEventListener('click', async () => {
+    sync(); error.textContent = ''; lock(true); save.textContent = 'Salvando…';
+    const targets = rows.map((r) => `${r.name.trim()} ${r.addr.trim()}`.trim()).join('; ');
+    try { const data = await call('sources.configure', { id: s.id, values: { targets } }); editingSource = null; v.set(data); }
+    catch (err) { error.textContent = err.message; lock(false); save.textContent = 'Salvar'; paint(); }
+  });
+  return h('div', { class: 'cfg' }, list, error,
+    h('div', { class: 'hint' }, 'O endereço é gateway (o roteador desta máquina) ou um IPv4 com os quatro números. Só o nome vai para o tablet, nunca o endereço.'),
+    h('div', { class: 'btnrow' }, save, add, defaults, cancel));
 }
 
 function sourcesStep() {

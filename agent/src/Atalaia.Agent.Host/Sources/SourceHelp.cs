@@ -94,14 +94,29 @@ internal sealed record SourceHelp(string Title, IReadOnlyList<string> Steps, IRe
                 "Entre em anilist.co e abra o seu perfil: o endereço é anilist.co/user/NOME. O NOME é o que vai em Configurar.",
                 "Cole só o nome (sem o endereço e sem @). Não precisa de senha, chave nem login: a fonte lê só o que o seu perfil mostra para qualquer pessoa.",
                 "O perfil precisa ser público. Se você marcou o perfil como privado nas configurações do AniList, a fonte não enxerga nada.",
-                "Privacidade: do perfil saem para o tablet só as contagens, os gêneros e estúdios mais vistos, o que você está assistindo e os títulos das últimas atividades. Texto, mensagens e notificações do AniList não são lidos.",
+                "Privacidade: do perfil saem para o tablet só as contagens, os gêneros e estúdios mais vistos e os títulos das últimas atividades. Texto, mensagens e notificações do AniList não são lidos.",
             ],
             [
                 "Usuário não encontrado: confira a grafia do nome no endereço do seu perfil.",
-                "Sem dados: confira a internet. Se o perfil foi criado agora ou nunca marcou um anime como assistindo, os números e a lista ficam vazios.",
+                "Sem dados: confira a internet. Se o perfil foi criado agora ou ainda não tem atividades, os números e a lista ficam vazios.",
                 "Limite de pedidos: o AniList limita quantos pedidos por minuto aceita; a fonte pede uma vez a cada 10 minutos e tenta de novo sozinha.",
             ],
             "Abrir o AniList"),
+
+        ["network"] = new(
+            "Como funcionam os alvos da Rede",
+            [
+                "A Rede mede o tempo de resposta (ping) até alguns endereços e mostra, no tablet, o tempo atual, a média, o jitter (a variação entre respostas) e a perda de pacotes dos últimos 60 segundos.",
+                "Em Configurar, cada linha é um alvo: um nome (só seu) e o endereço. O endereço é a palavra gateway (o roteador desta máquina) ou um IPv4 com os quatro números, como 1.1.1.1. Nome de site não vale. Até 4 alvos.",
+                "Para saber se o problema é o Wi-Fi ou o provedor, use um alvo no roteador (gateway) e um na internet (por exemplo, 1.1.1.1 ou 8.8.8.8): se só o da internet piora, é o provedor.",
+                "Privacidade: só o nome do alvo vai para o tablet, nunca o endereço. O agente só envia pacotes de ping, sem administrador, e só para os alvos que você escolheu.",
+            ],
+            [
+                "Perda de 100% no roteador: alguns roteadores ignoram ping. Troque o alvo por outro endereço da sua rede ou deixe só os da internet.",
+                "Endereço recusado: ele precisa ser gateway ou quatro números separados por ponto, sem espaços. O nome tem no máximo 24 caracteres.",
+                "Gateway sem resposta: com VPN ou várias placas de rede, o gateway escolhido pode não ser o do roteador. Use o endereço do roteador no lugar de gateway.",
+            ],
+            null),
 
         ["ups"] = new(
             "Quando o nobreak funciona",
