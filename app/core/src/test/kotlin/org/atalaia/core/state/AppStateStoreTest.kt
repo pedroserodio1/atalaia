@@ -346,6 +346,21 @@ class AppStateStoreTest {
         assertEquals(70, x.s.cpuHistory.last())
     }
 
+    @Test
+    fun historico_do_trafego_guarda_as_ultimas_60_leituras_completas() = runTest {
+        val x = ctx()
+        x.feed(hello())
+        for (i in 1..70) x.feed(update("system", agentT0 + i * 1000L, """{"cpu":{"percent":1},"net":{"rxKbps":$i,"txKbps":${i * 2}}}"""))
+        assertEquals(60, x.s.netHistory.size)
+        assertEquals(NetSample(11, 22), x.s.netHistory.first())
+        assertEquals(NetSample(70, 140), x.s.netHistory.last())
+        // leitura incompleta (sem tx, ou sem net) não entra: nunca vira 0 fingindo leitura
+        x.feed(update("system", agentT0 + 71_000, """{"cpu":{"percent":1},"net":{"rxKbps":5,"txKbps":null}}"""))
+        x.feed(update("system", agentT0 + 72_000, """{"cpu":{"percent":1}}"""))
+        assertEquals(60, x.s.netHistory.size)
+        assertEquals(NetSample(70, 140), x.s.netHistory.last())
+    }
+
     // ---------------------------------------------------------------- ligado à conexão de verdade
 
     @Test

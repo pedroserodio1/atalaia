@@ -30,6 +30,12 @@ public sealed class DiscordPlugin : IPlugin
     private volatile Stream? _live;                                  // pipe da sessão autenticada; nulo = sem conexão
     private readonly SemaphoreSlim _write = new(1, 1);               // o laço de leitura e as ações escrevem no mesmo pipe
     private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> _pending = new();
+    private const int AvatarMaxBytes = 262_144;                                          // 256 KB: um avatar de 64 px tem poucos KB; mais que isso não é avatar
+    private static readonly TimeSpan AvatarTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan AvatarRetry = TimeSpan.FromMinutes(1);
+    private readonly ConcurrentDictionary<string, string> _avatarBlobs = new();          // "id/hash" → hash da imagem no BlobStore (volta à call sem baixar de novo)
+    private readonly ConcurrentDictionary<string, DateTime> _avatarFailed = new();       // falhou há pouco: espera um minuto antes de tentar de novo
+    private int _avatarBusy;
 
     public string Id => "discord";
     public string Name => "Discord";
@@ -65,8 +71,64 @@ public sealed class DiscordPlugin : IPlugin
         return Task.CompletedTask;
     }
 
-    public Task<JsonElement?> CollectAsync(CancellationToken ct) =>
-        _fatal is { } f ? throw new InvalidOperationException(f) : Task.FromResult<JsonElement?>(_state.ToJson());
+    public Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        if (_fatal is { } f) throw new InvalidOperationException(f);
+        StartAvatarFetch();
+        return Task.FromResult<JsonElement?>(_state.ToJson());
+    }
+
+    // ---------------------------------------------------------------- avatares (cola de rede; provada ao vivo, não nos testes)
+
+    /// <summary>Baixa em segundo plano os avatares que faltam, um de cada vez; o resultado entra no estado e sai na próxima coleta. Falha deixa a inicial no círculo do tablet.</summary>
+    private void StartAvatarFetch()
+    {
+        var todo = _state.PendingAvatars();
+        if (todo.Count == 0 || Interlocked.CompareExchange(ref _avatarBusy, 1, 0) != 0) return;
+        var stop = _cts?.Token ?? CancellationToken.None;
+        _ = Task.Run(async () =>
+        {
+            try { foreach (var (id, avatar) in todo) await FetchAvatarAsync(id, avatar, stop); }
+            finally { Volatile.Write(ref _avatarBusy, 0); }
+        }, stop);
+    }
+
+    private async Task FetchAvatarAsync(string id, string avatar, CancellationToken stop)
+    {
+        var key = $"{id}/{avatar}";
+        if (_avatarBlobs.TryGetValue(key, out var known)) { _state.SetAvatarBlob(id, avatar, known); return; }
+        if (_avatarFailed.TryGetValue(key, out var at) && DateTime.UtcNow - at < AvatarRetry) return;
+        try
+        {
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(stop);
+            limit.CancelAfter(AvatarTimeout);
+            using var resp = await _http.GetAsync(DiscordState.AvatarUrl(id, avatar), HttpCompletionOption.ResponseHeadersRead, limit.Token);
+            if (!resp.IsSuccessStatusCode || resp.Content.Headers.ContentType?.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) != true) throw new InvalidDataException();
+            await using var body = await resp.Content.ReadAsStreamAsync(limit.Token);
+            var bytes = await ReadLimitedAsync(body, AvatarMaxBytes, limit.Token) ?? throw new InvalidDataException();
+            var blob = _ctx.Blobs.PutAvatar(bytes);
+            _avatarBlobs[key] = blob;
+            _state.SetAvatarBlob(id, avatar, blob);
+        }
+        catch (Exception e) when (e is HttpRequestException or InvalidDataException or OperationCanceledException or IOException)
+        {
+            _avatarFailed[key] = DateTime.UtcNow;   // sem log de id nem de nome; o círculo do tablet fica com a inicial
+        }
+    }
+
+    /// <summary>Lê o corpo até <paramref name="max"/> bytes; <c>null</c> se passar disso ou vier vazio (não é avatar).</summary>
+    public static async Task<byte[]?> ReadLimitedAsync(Stream source, int max, CancellationToken ct)
+    {
+        using var ms = new MemoryStream();
+        var buffer = new byte[8192];
+        int n;
+        while ((n = await source.ReadAsync(buffer, ct)) > 0)
+        {
+            if (ms.Length + n > max) return null;
+            ms.Write(buffer, 0, n);
+        }
+        return ms.Length == 0 ? null : ms.ToArray();
+    }
 
     /// <summary>
     /// Ações de voz pelo <c>SET_VOICE_SETTINGS</c> do RPC e <c>leave_call</c> pelo <c>SELECT_VOICE_CHANNEL</c> com canal nulo

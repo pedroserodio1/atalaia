@@ -378,8 +378,9 @@ Precisa de um usuário do AniList com perfil público (ou `--simulate`, que traz
 Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem desligada) ou do `--simulate`, que traz dois alvos, um deles perdendo pacotes de vez em quando. Na janela do agente: Configurar mostra a **lista de alvos** (nome e endereço por linha, até 4, Remover, Adicionar e "Restaurar o padrão"); o endereço é `gateway` (o roteador desta máquina) ou um IPv4.
 
 1. Toque em **Sistema**: a barra vira `‹ | Visão geral | Rede` e a tela é a de sempre (o cenário 1 continua valendo). Toque em **Rede**: abre a tela, com o tráfego (`↓ ... · ↑ ...`) à direita do título.
+1b. **Gráfico de tráfego** no alto da tela: duas linhas dos últimos ~60 s (descida `↓` em menta, subida `↑` em azul), com os valores atuais e a `escala até N Mb/s` em texto. Conferir contra o Gerenciador de Tarefas (aba Desempenho › Ethernet/Wi-Fi) com um download rodando: a linha sobe e a escala muda de degrau (1, 5, 10, 50, 100 Mb/s...) em vez de a linha ficar espremida. Aparece mesmo com a fonte Rede desligada (o tráfego vem da fonte Sistema).
 2. Um cartão por alvo: o nome, a **qualidade em texto** (ótimo, regular, ruim, sem resposta, ou "medindo" nos primeiros segundos), o tempo atual grande e, abaixo, `méd N ms`, `jitter N ms` e `perda N%` (coral se passar de 0), uma por linha, sem corte. "Ruim" só aparece com perda a partir de 5%, jitter alto (40 ms ou mais) ou ping muito alto (300 ms ou mais); um servidor distante e estável (por exemplo, 190 ms) é "regular".
-3. **Gráfico:** barras dos últimos ~60 s, enchendo da direita para a esquerda; a escala sobe em degraus (20, 50, 100, 200...) e o ping de 3 ms não vira uma linha reta. Um pacote perdido aparece como **faixa coral** de ponta a ponta, nunca como barra de zero.
+3. **Gráfico:** barras dos últimos ~60 s, enchendo da direita para a esquerda; a escala sobe em degraus (20, 50, 100, 200...) e o ping de 3 ms não vira uma linha reta. Um pacote perdido aparece como **faixa coral** de ponta a ponta, nunca como barra de zero. A **cor da barra** segue a mesma regra da qualidade: menta abaixo de 150 ms, âmbar de 150 a 299 ms ("regular") e coral a partir de 300 ms; um servidor distante e estável (por exemplo, 190 ms) tem barras âmbar e "regular".
 4. **Prova com a rede de verdade:** conferir o tempo do roteador e o da internet contra o `ping` do Windows no PC. Pôr um alvo que nunca responde (`192.0.2.1`) e ver "sem resposta", perda 100% e `—` nos tempos (nunca `0 ms`); desligar o Wi-Fi do PC por uns segundos e ver o gráfico mostrar a lacuna.
 5. **Roteador que ignora ping:** se o alvo `gateway` aparecer sempre "sem resposta", anotar o modelo do roteador e trocar o alvo (o tutorial da janela explica).
 6. Fonte desligada: a tela diz "A Rede está desligada. Ligue em Fontes de dados, no PC."; agente sem dado: "Sem dados da Rede"; agente fora do ar: "velho", sem fingir números atuais.
@@ -397,6 +398,29 @@ Precisa do agente da beta.6 (o campo `system.cpu.cores`) ou do `--simulate`, que
 4. **Agente antigo** (beta.5 ou anterior) ou contadores indisponíveis: o cartão não aparece e nada quebra. Dado velho: a etiqueta "velho" aparece no cartão, como nos outros.
 5. Em PC com mais de 32 núcleos lógicos as barras ficam finas mas legíveis (conferir se houver como). Em PC com mais de 64, só entram os núcleos que o Windows lista por número simples (limite conhecido).
 6. Desempenho: sem animação; repetir a medição de quadros do cenário 12 com a tela Sistema aberta.
+
+## 29. Rede fora (aviso no cartão do relógio)
+
+Precisa da fonte **Rede** ligada, com um alvo `gateway` e pelo menos um alvo de internet (o padrão `Roteador gateway; Internet 1.1.1.1`), no agente da beta.7. Com `--simulate`, a internet cai por 12 s a cada ~2 min com o roteador vivo, e o aviso aparece sozinho.
+
+1. **Internet fora:** em Fontes de dados › Rede › Configurar, trocar o alvo da internet por `192.0.2.1` (que nunca responde). Em ~6 s o cartão do relógio, **em qualquer aba**, passa a mostrar "Internet fora" (borda e texto coral). Voltar o alvo para `1.1.1.1`: o aviso some sozinho quando o alvo responde.
+2. **Toque:** com o aviso na tela, um toque curto no cartão abre Sistema › Rede (e o toque longo continua abrindo a configuração). Sem o aviso, o toque volta a dispensar o aviso do download ou a abrir a Agenda, como antes.
+3. **Sem rede:** tirar o cabo do PC (ou desligar o Wi-Fi dele) com o tablet conectado por **USB**: nenhum alvo responde e o relógio mostra "Sem rede". Pelo Wi-Fi o tablet também perde o agente e mostra o banner de conexão, não este aviso.
+4. **Prioridade:** a queda de energia (nobreak na bateria) mostra o aviso da energia e não o de rede; com a rede fora e um limite estourado (GPU, RAM ou disco), mostra o da rede. Agenda e download ficam por baixo.
+5. **Sem falso alarme:** uma perda solta (um pacote) ou duas seguidas não acendem o aviso; fonte desligada, "velha" ou sem dado também não.
+6. **Roteador que ignora ping:** se o alvo `gateway` nunca responde e a internet sim, o aviso não aparece (nenhum "Internet fora" falso); se for o contrário e só o roteador ignora ICMP, anotar o que o relógio mostra.
+7. Reconectar o tablet (fechar e abrir o app) com a internet fora: o aviso volta na hora, porque o histórico vem do agente.
+
+## 30. Foto dos membros do Discord (Comunicação › Pessoas)
+
+Precisa de uma call de verdade (o `--simulate` não traz foto). Agente da beta.7 com a fonte Discord ligada.
+
+1. Entrar numa call com o Discord aberto no PC. Em Comunicação › Pessoas, o círculo de cada pessoa que tem foto no Discord passa da **inicial** para a **foto** em poucos segundos (a inicial aparece primeiro, até a imagem chegar).
+2. Quem não tem foto personalizada continua com a inicial. Quem fala continua com o anel menta (o anel fica por cima da foto), e mudo/surdo seguem como ícones cortados.
+3. Alguém entra na call: a foto dele aparece sozinha. Alguém troca a foto no Discord: a nova aparece na atualização seguinte da voz.
+4. **Sem internet no PC** ou o CDN fora: as iniciais ficam e nada quebra; o agente tenta de novo em ~1 min. O agente da beta.6 ou anterior: só iniciais, sem erro.
+5. **Privacidade:** no log do agente não aparece nome nem id de ninguém; a foto não é gravada em disco (só na memória do agente), e o tablet não conversa com a internet para isso (conferir que o Wi-Fi do tablet pode estar sem internet e a foto ainda aparece).
+6. Memória e desempenho: numa call grande (10+ pessoas) a tela rola sem engasgo e as capas da mídia continuam carregando (as fotos têm reserva própria no agente e não despejam a capa).
 
 ## Resultado
 
@@ -428,3 +452,5 @@ Precisa do agente da beta.6 (o campo `system.cpu.cores`) ou do `--simulate`, que
 | 26 Anime | | |
 | 27 Rede | | |
 | 28 Núcleos da CPU | | |
+| 29 Rede fora | | |
+| 30 Foto dos membros do Discord | | |

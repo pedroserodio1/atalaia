@@ -30,6 +30,8 @@ object Texts {
 
     const val NET_OFF = "A Rede está desligada. Ligue em Fontes de dados, no PC."
     const val NET_NO_DATA = "Sem dados da Rede"
+    const val NET_OUTAGE_INTERNET = "Internet fora"
+    const val NET_OUTAGE_NONET = "Sem rede"
 
     fun netQuality(q: org.atalaia.core.panel.NetQuality): String = when (q) {
         org.atalaia.core.panel.NetQuality.GOOD -> "ótimo"
@@ -46,8 +48,12 @@ object Texts {
 
     fun netLoss(loss: Int?): String = "perda ${loss?.let { "$it%" } ?: NO_VALUE}"
 
-    /** `↓ 3,3 Mb/s · ↑ 60 kb/s` (o tráfego geral do PC, vindo do `system`). */
-    fun netTraffic(rx: String?, tx: String?): String = "↓ ${rx ?: NO_VALUE} · ↑ ${tx ?: NO_VALUE}"
+    fun netDown(rx: String?): String = "↓ ${rx ?: NO_VALUE}"
+
+    fun netUp(tx: String?): String = "↑ ${tx ?: NO_VALUE}"
+
+    /** `escala até 1 Mb/s`: o teto do gráfico de tráfego, para ninguém ler a altura da linha sem saber a escala. */
+    fun netScale(max: String): String = "escala até $max"
 
     const val ANIME_OFF = "O AniList está desligado ou sem usuário. Configure no PC (Fontes de dados)."
     const val ANIME_NO_DATA = "Sem dados do AniList"

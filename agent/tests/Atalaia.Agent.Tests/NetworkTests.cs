@@ -94,9 +94,18 @@ public class NetworkTests
             Assert.Equal(100, items[1].GetProperty("lossPercent").GetInt32());
             // O endereço nunca sai.
             Assert.DoesNotContain("1.1.1.1", d.GetRawText());
-            Assert.DoesNotContain("gateway", d.GetRawText());
+            Assert.DoesNotContain("\"gateway\":\"", d.GetRawText());   // o campo gateway é só um booleano, nunca o valor configurado
         }
         finally { CultureInfo.CurrentCulture = saved; }
+    }
+
+    [Fact]
+    public void O_alvo_gateway_vai_marcado_sem_revelar_o_endereco()
+    {
+        var targets = NetworkPlugin.ParseTargets("Roteador gateway; Internet 1.1.1.1", out _);
+        var items = NetworkPlugin.Build(targets, [Win(3), Win(10)]).GetProperty("targets").EnumerateArray().ToArray();
+        Assert.True(items[0].GetProperty("gateway").GetBoolean());
+        Assert.False(items[1].GetProperty("gateway").GetBoolean());
     }
 
     [Fact]
@@ -159,8 +168,10 @@ public class NetworkTests
         Assert.Equal("network", sim.Id);
         var items = d.GetProperty("targets").EnumerateArray().ToArray();
         Assert.Equal(["Roteador", "Internet"], items.Select(t => t.GetProperty("name").GetString()).ToArray());
-        foreach (var name in new[] { "rttMs", "avgMs", "minMs", "maxMs", "jitterMs", "lossPercent", "samples" }) Assert.True(items[0].TryGetProperty(name, out _), name);
+        foreach (var name in new[] { "gateway", "rttMs", "avgMs", "minMs", "maxMs", "jitterMs", "lossPercent", "samples" }) Assert.True(items[0].TryGetProperty(name, out _), name);
         Assert.Equal(NetworkPlugin.WindowSize, items[0].GetProperty("samples").GetArrayLength());
+        Assert.True(items[0].GetProperty("gateway").GetBoolean());          // o Roteador é o gateway
+        Assert.False(items[1].GetProperty("gateway").GetBoolean());
     }
 
     [Fact]
@@ -173,6 +184,24 @@ public class NetworkTests
         Assert.False(SourceCredentials.TryValidate(f, "Site example.com", out _, out var error));
         Assert.DoesNotContain("example.com", error);
         Assert.False(SourceCredentials.TryValidate(f, "   ", out _, out _));
+    }
+
+    [Fact]
+    public async Task O_simulador_derruba_so_a_internet_por_alguns_segundos_a_cada_2_minutos()
+    {
+        var sim = new SimNetwork();
+        var internetDown = 0;
+        var routerAlive = true;
+        for (var i = 0; i < 60; i++)
+        {
+            var d = (await sim.CollectAsync(CancellationToken.None))!.Value;
+            var items = d.GetProperty("targets").EnumerateArray().ToArray();
+            var last3 = items[1].GetProperty("samples").EnumerateArray().TakeLast(3).Select(x => x.ValueKind == JsonValueKind.Null).ToArray();
+            if (last3.Length == 3 && last3.All(x => x)) internetDown++;
+            if (i >= 55 && items[0].GetProperty("samples").EnumerateArray().TakeLast(3).All(x => x.ValueKind == JsonValueKind.Null)) routerAlive = false;
+        }
+        Assert.True(internetDown > 0, "a queda simulada precisa aparecer para o aviso poder ser visto em --simulate");
+        Assert.True(routerAlive);   // o roteador segue vivo no episódio (um pacote perdido solto não conta)
     }
 
     private sealed class FakeCtx(IDictionary<string, string?> options) : IPluginContext

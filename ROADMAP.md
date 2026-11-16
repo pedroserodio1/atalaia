@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas na raiz (Início, Sistema, Mídia, Jogo, Comunicação) com **submenus** (Sistema: Visão geral e Rede; Mídia: Tocando agora, Mixer e Anime; Comunicação: Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês),
   coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; `v0.4.0-beta.5` (Anime sem "assistindo agora" e fonte Rede) publicada em 16/11/2026; a `beta.6` (ajustes da tela Rede e uso por núcleo da CPU) está mesclada em `beta/0.4.0`, ainda sem tag); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; `v0.4.0-beta.5` (Anime sem "assistindo agora" e fonte Rede) publicada em 16/11/2026; `v0.4.0-beta.6` (ajustes da tela Rede e uso por núcleo da CPU) publicada em 16/11/2026; a `beta.7` (cor das barras da Rede, alerta "internet caiu" no relógio, gráfico de tráfego e foto dos membros do Discord) está mesclada em `beta/0.4.0`, ainda sem tag); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -294,6 +294,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   No app, **Sistema ganha o primeiro filho (Sistema › Rede)**, com um cartão por alvo e o gráfico dos últimos ~60 s. **Provado no PC** (com o roteador e a internet reais e um endereço que nunca responde): o gateway é achado
   sozinho, os tempos batem com o `ping` e a perda de 100% não derruba a fonte. **Ficou de fora desta beta** (continua `[ ]`): sinal do tablet, velocidade, dispositivos da rede, alerta de "internet caiu" no cartão do relógio e o gráfico de tráfego (o item "Tráfego de rede" abaixo).
   **Falta provar:** a tela no tablet (gráfico legível a 862 × 505 dp, desempenho no T68), roteador que ignora ICMP e a escolha do gateway com VPN ou várias placas.
+  Beta.7 (16/11/2026; falta provar no tablet, cenário 29 de `app/docs/teste-manual.md`): a cor de cada barra do gráfico passou a seguir a mesma regra da qualidade (menta, âmbar, coral) e o **alerta "internet caiu"**
+  no cartão do relógio entrou: "Internet fora" (o roteador responde e todos os alvos de internet ficam 3 amostras, ~6 s, sem resposta) ou "Sem rede" (nenhum responde), em qualquer aba, abaixo da queda de energia
+  e acima dos limites; tocar abre Sistema › Rede. Acréscimo ao contrato aprovado pelo mantenedor: `gateway` (booleano, opcional) em cada alvo de `network` (não revela o endereço). A regra é uma função pura sobre as
+  amostras que o agente já manda (`Latency.outage`), sem estado no app.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
   nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).
@@ -320,7 +324,7 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
 - [ ] **Nobreak real** fora do `--simulate`, conferido contra os valores do aparelho. Hoje só há compatibilidade com Intelbras (ver
   "Contribuições bem-vindas").
 - [ ] **Notificações do Windows** com texto legível (ainda a confirmar se o texto vem completo).
-- [ ] **Tráfego de rede** (`system.net`) na aba Sistema.
+- [ ] **Tráfego de rede** (`system.net`) na aba Sistema. Os números `↓/↑` já existiam (cartão "Rede" da visão geral); em 16/11/2026 (beta.7; falta provar no tablet, cenário 27) entrou o **gráfico** dos últimos ~60 s no alto de Sistema › Rede, só no app (histórico de 60 leituras no `AppState`, escala em degraus em `Traffic.kt`). Fica `[ ]` até provar com um download de verdade no tablet.
 - [ ] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
   MINOR e compatível com o v1, mas é mudança de contrato: combinar com o mantenedor antes. Só uso; temperatura e frequência por núcleo ficam fora.
   Feito em 16/11/2026 (beta.6; falta provar no tablet, cenário 28 de `app/docs/teste-manual.md`): campo `system.cpu.cores` (lista de inteiros de 0 a 100, na ordem dos núcleos do Windows; `null` sem os
@@ -334,6 +338,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   agente baixa, reduz (~64 px) e serve pelo `GET /cover/{hash}` que já existe (mesmo hash de 16 caracteres do SHA-256), e o membro ganha um `avatarHash`
   opcional. Cuidados: o agente só fala com **um endereço fixo** do CDN, definido no código (nunca vindo do conteúdo); falha de rede mantém a inicial no círculo;
   no app, `inSampleSize` e cache pequeno (poucos avatares), nada de `Bitmap` grande. A conferir: formato da URL do avatar e se vale guardar em disco ou só em memória.
+  Código e testes prontos em 16/11/2026 (beta.7; **falta provar numa call de verdade e no tablet**, cenário 30 de `app/docs/teste-manual.md`; por isso o item continua `[ ]`): `members[].avatarHash` opcional no contrato
+  (aprovado pelo mantenedor); o agente baixa de `https://cdn.discordapp.com/avatars/{id}/{hash}.png?size=64` (host fixo no código; id e hash validados por regex, 64 px já pedidos ao CDN, no máximo 256 KB, 5 s de timeout,
+  um por vez, nova tentativa depois de 1 min) e guarda **só em memória**, numa reserva própria do `BlobStore` (32 avatares, separada das 8 capas, para não despejar a capa); o app mostra a foto pelo `CoverRepository` existente
+  e cai na inicial sem foto. Conferido em leitura: o CDN responde `image/png` com ~1 KB para o tamanho 64.
 
 ## 0.5.0: ações no PC
 

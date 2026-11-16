@@ -59,6 +59,9 @@ data class SourceEntry(
 /** Queda de energia em curso. `fromEvent` = veio do `power_fail`; senão veio de um snapshot com `onBattery` (reconexão). */
 data class UpsAlert(val message: String, val agentTs: Long, val fromEvent: Boolean)
 
+/** Uma leitura do tráfego de rede do PC (`system.net`), em kilobits por segundo. */
+data class NetSample(val rxKbps: Long, val txKbps: Long)
+
 data class AppState(
     val connection: ConnectionState = ConnectionState.Stopped,
     val agent: AgentInfo? = null,
@@ -71,6 +74,8 @@ data class AppState(
     val epoch: Long = 0,
     /** Últimos 60 valores de `system.cpu.percent` (um por segundo no ritmo normal do agente), do mais antigo ao mais novo. */
     val cpuHistory: List<Int> = emptyList(),
+    /** Últimas 60 leituras de `system.net` (rx e tx; um por segundo no ritmo normal), do mais antigo ao mais novo. Só entra leitura completa (as duas). */
+    val netHistory: List<NetSample> = emptyList(),
     /** Limites estourados (GPU, RAM, disco), já com o anti-ruído; a tela filtra dado velho com [limitAlerts]. */
     val limitAlerts: List<LimitAlert> = emptyList(),
     /**
