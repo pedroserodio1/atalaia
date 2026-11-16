@@ -104,11 +104,14 @@ tensões, `freqHz`, `powerW`. Campo sem leitura vai como `null`.
 ### `system`
 
 ```json
-{ "cpu": { "percent": 0 }, "ram": { "usedMb": 0, "totalMb": 0 },
+{ "cpu": { "percent": 0, "cores": [0, 0] }, "ram": { "usedMb": 0, "totalMb": 0 },
   "disks": [ { "name": "C:", "usedGb": 0, "totalGb": 0 } ],
   "net": { "rxKbps": 0, "txKbps": 0, "mac": "AA:BB:CC:DD:EE:FF" } }
 ```
 
+- `cpu.cores` (acréscimo opcional da 0.4.0): o uso de **cada núcleo lógico**, em porcentagem inteira de 0 a 100, na ordem dos núcleos do Windows (contadores `Processor` de
+  `% Processor Time`, um por núcleo). `null` quando os contadores não estão disponíveis (o resto de `system` segue normal). Só uso: temperatura e frequência por núcleo
+  **não** são publicadas. Em máquinas com mais de 64 núcleos lógicos só entram os núcleos que o Windows lista por número simples. Clientes antigos ignoram o campo.
 - `net.mac` (acréscimo opcional da 0.3.0): MAC da placa que o plugin escolhe para o `rxKbps`, **só se ela for de cabo**
   (Ethernet, GigabitEthernet, FastEthernetT, FastEthernetFx ou Ethernet3Megabit), em hexadecimal **maiúsculo** separado por `:`.
   Placa Wi-Fi ou nenhuma placa: `null`. Não muda entre coletas (não gera `update` a mais) e nunca vai para o log.
