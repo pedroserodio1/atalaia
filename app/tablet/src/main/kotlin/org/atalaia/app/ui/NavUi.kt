@@ -80,6 +80,7 @@ private object NavLook {
             "system" -> Texts.TAB_SYSTEM
             "media" -> Texts.TAB_MEDIA
             "mixer" -> Texts.MIXER
+            "anime" -> Texts.NAV_ANIME
             "game" -> Texts.TAB_GAME
             "comm" -> Texts.TAB_COMM
             "agenda" -> Texts.NAV_AGENDA
@@ -97,6 +98,7 @@ private object NavLook {
             "system" -> IconKind.CPU
             "media" -> IconKind.MUSIC
             "mixer" -> IconKind.SLIDERS
+            "anime" -> IconKind.TV
             "game" -> IconKind.GAMEPAD
             "comm" -> IconKind.HEADSET
             "agenda" -> IconKind.CALENDAR

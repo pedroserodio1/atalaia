@@ -24,6 +24,39 @@ object Texts {
     const val NAV_PEOPLE = "Pessoas"
     const val NAV_WEEK = "Semana"
     const val NAV_MONTH = "Mês"
+    const val NAV_ANIME = "Anime"
+
+    const val ANIME_OFF = "O AniList está desligado ou sem usuário. Configure no PC (Fontes de dados)."
+    const val ANIME_NO_DATA = "Sem dados do AniList"
+    const val ANIME_WATCHING = "Assistindo agora"
+    const val ANIME_RECENT = "Últimas atividades"
+    const val ANIME_GENRES = "Gêneros mais vistos"
+    const val ANIME_STUDIOS = "Estúdios mais vistos"
+    const val ANIME_NOTHING_WATCHING = "Nada marcado como assistindo."
+    const val ANIME_NOTHING_RECENT = "Sem atividades recentes."
+    const val ANIME_STAT_ANIME = "animes"
+    const val ANIME_STAT_EPISODES = "episódios"
+    const val ANIME_STAT_TIME = "assistidos"
+    const val ANIME_STAT_MANGA = "mangás"
+    const val ANIME_STAT_CHAPTERS = "capítulos"
+
+    fun animeFollowers(followers: Int?, following: Int?): String? = when {
+        followers == null && following == null -> null
+        else -> "${followers ?: NO_VALUE} seguidores · ${following ?: NO_VALUE} seguindo"
+    }
+
+    /** `ep. 5/12` (total conhecido) ou `ep. 5`. */
+    fun animeProgress(progress: Int?, episodes: Int?): String = when {
+        progress == null -> NO_VALUE
+        episodes != null && episodes > 0 -> "ep. $progress/$episodes"
+        else -> "ep. $progress"
+    }
+
+    /** `próx. ep. 6 em 1 d 6 h`; sem número do episódio, só o tempo. */
+    fun animeNext(nextEpisode: Int?, until: String): String = if (nextEpisode == null) "próx. $until" else "próx. ep. $nextEpisode $until"
+
+    /** `12 animes · 2 d 20 h`. */
+    fun animeStudio(count: Int?, watched: String?): String = listOfNotNull(count?.let { "$it animes" }, watched).joinToString(" · ")
 
     const val AGENDA_TODAY = "Hoje"
     const val AGENDA_OPEN_DAY = "Abrir o dia"
