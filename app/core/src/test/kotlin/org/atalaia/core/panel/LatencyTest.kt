@@ -14,12 +14,14 @@ class LatencyTest {
     @Test
     fun qualidade_pelos_numeros() {
         assertEquals(NetQuality.GOOD, Latency.quality(target(12, 2, 0)))
-        assertEquals(NetQuality.OK, Latency.quality(target(85, 2, 0)))        // ping alto
-        assertEquals(NetQuality.OK, Latency.quality(target(12, 20, 0)))       // jitter
+        assertEquals(NetQuality.GOOD, Latency.quality(target(85, 2, 0)))      // ping médio e estável
+        assertEquals(NetQuality.OK, Latency.quality(target(187, 3, 0)))       // servidor distante e estável (um servidor de jogo): regular, nunca ruim
+        assertEquals(NetQuality.OK, Latency.quality(target(12, 20, 0)))       // oscilação média
         assertEquals(NetQuality.OK, Latency.quality(target(12, 2, 3)))        // um pouco de perda
         assertEquals(NetQuality.BAD, Latency.quality(target(12, 2, 5)))       // perda a partir de 5%
-        assertEquals(NetQuality.BAD, Latency.quality(target(160, 2, 0)))
-        assertEquals(NetQuality.BAD, Latency.quality(target(12, 45, 0)))
+        assertEquals(NetQuality.BAD, Latency.quality(target(300, 2, 0)))      // ping muito alto
+        assertEquals(NetQuality.BAD, Latency.quality(target(12, 45, 0)))      // oscilação alta
+        assertEquals(NetQuality.BAD, Latency.quality(target(187, 60, 0)))     // distante e oscilando
         assertEquals(NetQuality.GOOD, Latency.quality(target(0, 0, 0)))        // respostas em menos de 1 ms: zero de verdade
     }
 

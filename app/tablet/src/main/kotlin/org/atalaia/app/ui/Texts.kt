@@ -39,8 +39,10 @@ object Texts {
         org.atalaia.core.panel.NetQuality.NONE -> "medindo"
     }
 
-    /** `méd 10 ms · jitter 1 ms`. */
-    fun netAverage(avg: String, jitter: String): String = "méd $avg · jitter $jitter"
+    /** `méd 10 ms` e `jitter 1 ms`, uma por linha. */
+    fun netAverage(avg: String): String = "méd $avg"
+
+    fun netJitter(jitter: String): String = "jitter $jitter"
 
     fun netLoss(loss: Int?): String = "perda ${loss?.let { "$it%" } ?: NO_VALUE}"
 

@@ -10,7 +10,8 @@ enum class NetQuality { GOOD, OK, BAD, DOWN, NONE }
 
 /*
  * Contas da tela Rede, sem Android. O agente já manda os números prontos (média, jitter, perda); aqui só se decide o que chamar de bom ou ruim e como
- * escalar o gráfico. Os limites são de uso geral (jogo e chamada de voz): perda a partir de 5% ou ping acima de 150 ms já atrapalha.
+ * escalar o gráfico. "Ruim" é só para o que atrapalha de verdade: perda a partir de 5%, oscilação (jitter) alta ou ping **muito** alto. Um servidor distante com ping
+ * estável (200 ms, por exemplo) é "regular", não "ruim": a distância não é defeito da conexão.
  */
 object Latency {
     private val chartSteps = listOf(20, 50, 100, 200, 500, 1000)
@@ -21,8 +22,8 @@ object Latency {
         val avg = t.avgMs ?: 0
         val jitter = t.jitterMs ?: 0
         return when {
-            loss >= 5 || avg >= 150 || jitter >= 40 -> NetQuality.BAD
-            loss > 0 || avg >= 80 || jitter >= 15 -> NetQuality.OK
+            loss >= 5 || avg >= 300 || jitter >= 40 -> NetQuality.BAD
+            loss > 0 || avg >= 150 || jitter >= 15 -> NetQuality.OK
             else -> NetQuality.GOOD
         }
     }
