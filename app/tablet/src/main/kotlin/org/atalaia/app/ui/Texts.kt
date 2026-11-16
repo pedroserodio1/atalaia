@@ -21,6 +21,7 @@ object Texts {
     const val NAV_BACK = "Voltar"
     const val NAV_AGENDA = "Agenda"
     const val NAV_DAY = "Dia"
+    const val NAV_PEOPLE = "Pessoas"
     const val NAV_WEEK = "Semana"
     const val NAV_MONTH = "Mês"
 

@@ -207,6 +207,7 @@ fun PanelRoot(app: PanelApp) {
                     onOpenConfig = ::requestConfig,
                     onDismissDownload = app.store::dismissDownload,
                     agendaAlert = agendaAlert,
+                    onOpenAgenda = { nav = nav.goTo(Nav.AGENDA) },
                     modifier = Modifier.width(270.dp).fillMaxHeight(),
                 )
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {

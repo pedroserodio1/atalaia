@@ -235,6 +235,16 @@ class ContextTest {
     }
 
     @Test
+    fun call_ativa_com_o_usuario_na_agenda_nao_puxa_nem_volta_ao_inicio() = runTest {
+        val r = rig(); r.connect()
+        r.tab = Nav.AGENDA_WEEK                 // a Agenda mora sob a Comunicação
+        r.call = true
+        assertNull(r.run(2))                    // a call entrou, mas já se está no contexto: não puxa
+        assertNull(r.run(10 * 60))              // e, com a call rolando, a inatividade não tira dali
+        assertEquals(Nav.AGENDA_WEEK, r.tab)
+    }
+
+    @Test
     fun jogo_abriu_com_o_usuario_ja_dentro_do_contexto_nao_puxa() = runTest {
         val r = rig(); r.connect()
         r.tab = listOf("game", "fps")          // já está numa tela do contexto Jogo (um submenu)

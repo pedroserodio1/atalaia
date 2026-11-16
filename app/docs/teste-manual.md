@@ -330,30 +330,31 @@ Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
 
 ## 24. Submenus e arco (barra que troca, segurar e arrastar)
 
-Hoje a Mídia (Tocando agora e Mixer) e a Agenda (Dia, Semana e Mês) têm submenu. Início, Sistema, Jogo e Comunicação abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
+Hoje a Mídia (Tocando agora e Mixer) e a Comunicação (Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês: submenu dentro de submenu) têm submenu. Início, Sistema e Jogo abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
 
-1. Barra da raiz: Início, Sistema, Mídia, Jogo, Comunicação e Agenda (seis abas de 88 dp: conferir que a última não é cortada nem encosta na borda). "Discord" deixou de ser aba: a tela dele é a Comunicação.
+1. Barra da raiz: Início, Sistema, Mídia, Jogo e Comunicação (cinco abas de 88 dp, com folga à direita para o Deck da 0.5.0). "Discord" deixou de ser aba: a tela dele é a Comunicação (a "Pessoas" da barra dela).
 2. Toque em Mídia: abre "Tocando agora" e a barra vira `‹ | Tocando agora | Mixer`, com "Tocando agora" destacado. Toque em Mixer: abre o mixer, que agora ocupa a tela toda.
    Toque em `‹`: a barra volta à raiz e a tela continua a do Mixer, com Mídia destacada.
 3. Segure Mídia (~0,4 s) sem mexer o dedo: o arco abre **por cima** da tela (véu escuro, a barra à vista, nada se move) com "Tocando agora" e "Mixer". Arraste até Mixer (fica menta) e solte:
    abre o Mixer direto e a barra mostra o submenu de Mídia. Segure e solte longe dos botões, ou ainda no ponto de origem: fecha sem mudar nada.
-4. Segure Início, Sistema, Jogo ou Comunicação: não abre arco (não têm filhos); soltar depois do tempo vale como toque.
+4. Segure Início, Sistema ou Jogo: não abre arco (não têm filhos); soltar depois do tempo vale como toque. Segure Comunicação: o arco mostra "Pessoas" e "Agenda"; arrastar até Agenda e soltar abre o Dia, com a barra `‹ | Dia | Semana | Mês`.
 5. Mexer o dedo antes do tempo do toque longo: não abre o arco e não conta como toque.
 6. Os botões do arco e os nomes cabem na tela e não se sobrepõem (o nome fica do lado de fora do arco); conferir também com Mídia, que é a aba do meio.
 7. Troca por contexto (cenário 17) com o submenu aberto: estando em Mídia, Mixer e o jogo abrir, vai para Jogo; 5 min sem toque volta ao Início e a barra volta à raiz.
 8. Sair e voltar ao app (ou recriar a atividade): continua na mesma tela e na mesma barra.
 9. Desempenho: sem animação; repetir a medição de quadros do arrasto (cenário 12) com o arco aberto.
 
-## 25. Agenda (aba da raiz)
+## 25. Agenda (Comunicação › Agenda)
 
 Precisa de um link iCal secreto de verdade (ou `--simulate`, que traz eventos de exemplo e um que começa daqui a ~16 min). Na janela do agente: Fontes de dados, Agenda, Configurar. É uma **lista**: uma linha por agenda, com o nome e o link, o botão Remover e o "+ Adicionar agenda" (até 5).
 Conferir que o link nunca volta para a tela (nas agendas já salvas o campo do link vem vazio com "link guardado"), que deixar o link em branco mantém o que estava e que remover uma do meio não troca os links das outras.
 
-1. Toque na aba **Agenda** (a última da raiz): abre o **Dia** e a barra vira `‹ | Dia | Semana | Mês`. Os eventos de hoje aparecem em ordem, o próximo com contorno menta. O Início agora não tem submenu.
+1. Toque em **Comunicação**: abre o Discord e a barra vira `‹ | Pessoas | Agenda`. Toque em **Agenda**: abre o **Dia** e a barra vira `‹ | Dia | Semana | Mês`; `‹` sobe para `‹ | Pessoas | Agenda` e outro `‹` volta à raiz. Os eventos de hoje aparecem em ordem, o próximo com contorno menta. O Início não tem submenu.
+   Com uma call rolando e a Agenda aberta, o painel não pula para o Discord nem volta ao Início por inatividade (já se está na Comunicação).
 2. **Semana** e **Mês**: as setas andam no tempo e "Hoje" volta; as setas param no mês atual e no seguinte (é o que o agente traz). O dia de hoje fica destacado. Com mais de uma agenda, a legenda mostra o nome e a cor de cada uma.
 3. **Chips da legenda:** tocar numa agenda a esconde na tela (a bolinha fica vazada e o nome apagado); tocar de novo mostra. Conferir que o **aviso do cartão do relógio** continua valendo para a agenda escondida.
 4. **Modal do dia:** na Semana ou no Mês, tocar num dia abre o modal por cima (véu escuro, nada se mexe): o dia por extenso, os eventos, setas para o dia anterior e o seguinte, X e "Abrir o dia". Tocar fora fecha; "Abrir o dia" leva à tela Dia daquela data.
-5. **Aviso:** com um evento começando em até 15 min, o cartão do relógio mostra "Em N min · título" com borda menta (abaixo de queda de energia e de limite, que mandam). O tablet toca **um bipe em 15 min e dois em 5 min**, uma vez por evento. Conferir o volume de notificação do tablet e que a opção "Som do aviso de agenda" (configuração) desliga o som.
+5. **Aviso:** com um evento começando em até 15 min, o cartão do relógio mostra "Em N min · título" com borda menta (**tocar no cartão abre o Dia da Agenda**; sem o aviso, o toque só dispensa o aviso do download) (abaixo de queda de energia e de limite, que mandam). O tablet toca **um bipe em 15 min e dois em 5 min**, uma vez por evento. Conferir o volume de notificação do tablet e que a opção "Som do aviso de agenda" (configuração) desliga o som.
 6. **Anti-ruído do som:** abrir o app faltando 4 min toca só o de 5 min (não dobra); reconectar o agente não repete o som; evento de dia inteiro nunca toca.
 7. Dado velho, fonte desligada ou sem link: a tela Agenda diz "desligada ou sem link" / "velho" em vez de números fingindo ser atuais, e não toca nem avisa.
 8. Eventos que se repetem (reunião toda segunda), de dia inteiro, que viram a meia-noite e de agendas com fuso diferente do PC aparecem nos dias certos.
