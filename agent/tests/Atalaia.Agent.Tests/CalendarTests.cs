@@ -258,3 +258,124 @@ public class CalendarTests
         public ILogger Logger => null!;
     }
 }
+
+/// <summary>A lista de agendas da janela: só os nomes voltam para a página; o link é segredo e fica no cofre.</summary>
+public class CalendarWindowTests : StepTestBase
+{
+    private const string KeyName = "Plugins:calendar:urls";
+    private const string LinkA = "https://a.example/ical/FAKEKEY0123456789ABCDEF/basic.ics";
+    private const string LinkB = "https://b.example/ical/FAKEKEY0123456789ABCDEG/basic.ics";
+    private const string LinkC = "https://c.example/ical/FAKEKEY0123456789ABCDEH/basic.ics";
+
+    private async Task<JsonElement> Source() =>
+        (await H.Data("sources.get")).GetProperty("sources").EnumerateArray().Single(s => s.GetProperty("id").GetString() == "calendar");
+
+    private static string[] Names(JsonElement source) => source.GetProperty("calendars").EnumerateArray().Select(c => c.GetProperty("name").GetString()!).ToArray();
+
+    private string? Saved() => H.Vault.Read().GetValueOrDefault(KeyName);
+
+    [Fact]
+    public async Task Sem_nada_guardado_a_lista_vem_vazia()
+    {
+        Assert.Empty(Names(await Source()));
+    }
+
+    [Fact]
+    public async Task Salvar_guarda_no_cofre_e_so_os_nomes_voltam_para_a_pagina()
+    {
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "Trabalho", url = LinkA }, new { name = "Pessoal", url = LinkB } } });
+
+        Assert.Equal($"Trabalho {LinkA}; Pessoal {LinkB}", Saved());
+        var source = await Source();
+        Assert.Equal(["Trabalho", "Pessoal"], Names(source));
+        Assert.DoesNotContain("a.example", source.ToString());          // o link nunca volta
+        Assert.DoesNotContain("FAKEKEY", source.ToString());
+        Assert.True(source.GetProperty("fields")[0].GetProperty("configured").GetBoolean());
+        Assert.False(source.GetProperty("fields")[0].TryGetProperty("value", out _));
+    }
+
+    [Fact]
+    public async Task Manter_reaproveita_o_link_guardado_mesmo_com_o_nome_mudado()
+    {
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "Trabalho", url = LinkA }, new { name = "Pessoal", url = LinkB } } });
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "Casa", keep = 1 }, new { name = "Trabalho", keep = 0 }, new { name = "", url = LinkC } } });
+
+        Assert.Equal($"Casa {LinkB}; Trabalho {LinkA}; {LinkC}", Saved());     // reordenou; o sem nome fica sem nome
+        Assert.Equal(["Casa", "Trabalho", "Agenda 3"], Names(await Source()));
+    }
+
+    [Fact]
+    public async Task Remover_uma_agenda_do_meio_mantem_os_links_das_outras()
+    {
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "A", url = LinkA }, new { name = "B", url = LinkB }, new { name = "C", url = LinkC } } });
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "A", keep = 0 }, new { name = "C", keep = 2 } } });
+
+        Assert.Equal($"A {LinkA}; C {LinkC}", Saved());
+    }
+
+    [Fact]
+    public async Task Lista_vazia_apaga_a_configuracao()
+    {
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "A", url = LinkA } } });
+        await H.Data("sources.setCalendars", new { items = Array.Empty<object>() });
+
+        Assert.Null(Saved());
+        Assert.Empty(Names(await Source()));
+    }
+
+    [Theory]
+    [InlineData("http://a.example/x.ics")]                       // só https
+    [InlineData("a.example/x.ics")]
+    [InlineData("https://user:senha@a.example/x.ics")]
+    [InlineData("Nome https://a.example/x.ics")]                 // o nome vai no campo do nome, não no do link
+    [InlineData("https://a.example/x.ics https://b.example/y.ics")]
+    public async Task Link_invalido_e_recusado_sem_repetir_o_valor_e_nada_muda(string url)
+    {
+        await H.Data("sources.setCalendars", new { items = new object[] { new { name = "A", url = LinkA } } });
+        var r = await H.Call("sources.setCalendars", new { items = new object[] { new { name = "B", url = LinkB }, new { name = "X", url } } });
+
+        Assert.False(r.GetProperty("ok").GetBoolean());
+        Assert.Equal("invalid_fields", r.GetProperty("error").GetString());
+        var message = r.GetProperty("message").GetString()!;
+        Assert.Contains("Agenda 2", message);                    // diz qual
+        Assert.DoesNotContain("a.example", message);
+        Assert.DoesNotContain("senha", message);
+        Assert.Equal($"A {LinkA}", Saved());                     // a recusa não mudou nada
+    }
+
+    [Fact]
+    public async Task Agenda_sem_link_e_sem_manter_e_recusada()
+    {
+        Assert.Equal("invalid_fields", await H.ErrorOf("sources.setCalendars", new { items = new object[] { new { name = "A" } } }));
+        Assert.Equal("invalid_fields", await H.ErrorOf("sources.setCalendars", new { items = new object[] { new { name = "A", keep = 0 } } }));   // nada guardado ainda
+        Assert.Null(Saved());
+    }
+
+    [Theory]
+    [InlineData("Nome; outro")]
+    [InlineData("Minha http agenda")]
+    [InlineData("Nome comprido demais para caber")]
+    public async Task Nome_invalido_e_recusado(string name)
+    {
+        Assert.Equal("invalid_fields", await H.ErrorOf("sources.setCalendars", new { items = new object[] { new { name, url = LinkA } } }));
+        Assert.Null(Saved());
+    }
+
+    [Fact]
+    public async Task Forma_errada_do_pedido_e_recusada()
+    {
+        Assert.Equal("invalid_args", await H.ErrorOf("sources.setCalendars"));
+        Assert.Equal("invalid_args", await H.ErrorOf("sources.setCalendars", new { items = "x" }));
+        Assert.Equal("invalid_args", await H.ErrorOf("sources.setCalendars", new { items = new object[] { "texto" } }));
+        var six = Enumerable.Range(1, 6).Select(i => (object)new { name = $"A{i}", url = $"https://e{i}.example/x.ics" }).ToArray();
+        Assert.Equal("invalid_args", await H.ErrorOf("sources.setCalendars", new { items = six }));
+    }
+
+    [Fact]
+    public async Task Variavel_de_ambiente_manda_sobre_a_lista()
+    {
+        H.Env["ATALAIA_Plugins__calendar__urls"] = "Env https://env.example/x.ics";
+        Assert.Equal("overridden", await H.ErrorOf("sources.setCalendars", new { items = new object[] { new { name = "A", url = LinkA } } }));
+        Assert.Null(Saved());
+    }
+}

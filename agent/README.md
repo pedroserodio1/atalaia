@@ -140,7 +140,7 @@ Em **Fontes de dados** (e no passo 5 do onboarding), o botão **Configurar** de 
 |---|---|---|
 | Clima (Open-Meteo) | `Plugins:weather:latitude` (−90 a 90) e `longitude` (−180 a 180), graus decimais **com ponto** | `settings.json` (não são segredo) |
 | Steam | `Plugins:steam:apiKey` (obrigatória) e `steamId64` (exatamente 17 dígitos) | `apiKey` no cofre; `steamId64` no `settings.json` |
-| Agenda | `Plugins:calendar:urls`: `Nome https://link`, separadas por `;` (até 5; nome opcional; só `https`) | no cofre (o link iCal é o segredo) |
+| Agenda | `Plugins:calendar:urls`. Na janela é uma **lista** (uma linha por agenda com nome e link, até 5, botões Remover e Adicionar; o link nunca volta para a tela). Por variável de ambiente: `Nome https://link` separadas por `;` (nome opcional; só `https`) | no cofre (o link iCal é o segredo) |
 | Discord | `Plugins:discord:clientId` e `clientSecret` (obrigatórios, sem espaços) | `clientSecret` no cofre; `clientId` (identificador público do aplicativo) no `settings.json` |
 
 - **Como conseguir.** Cada fonte com credencial (Steam, Discord, clima) e o nobreak têm um bloco **Como conseguir** na própria janela, com os passos

@@ -198,7 +198,7 @@ public class StepCommandsContractTests : StepTestBase
         Assert.Equal(
             ["app.get", "app.install", "app.pickLocal", "app.uninstallAndInstall", "app.useRelease", "code.copy", "code.get", "code.keep", "code.renew",
              "network.firewallCreate", "network.get", "network.setAdapter", "network.setLan", "network.setPort", "network.verify",
-             "sources.clearConfig", "sources.configure", "sources.get", "sources.openPage", "sources.set", "sources.test", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
+             "sources.clearConfig", "sources.configure", "sources.get", "sources.openPage", "sources.set", "sources.setCalendars", "sources.test", "startup.set", "summary.get", "updates.setAuto", "usb.browse", "usb.get", "usb.openDownload", "usb.setEnabled"],
             H.Router.Commands.Order(StringComparer.Ordinal).ToArray());
     }
 }
