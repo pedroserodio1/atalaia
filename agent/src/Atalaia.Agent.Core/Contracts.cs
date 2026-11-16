@@ -28,7 +28,11 @@ public interface IPluginContext
 }
 
 public interface IEventSink { void Emit(string kind, string severity, string message); }
-public interface IBlobStore { string Put(byte[] bytes); }    // devolve o hash; guarda os 8 mais recentes
+public interface IBlobStore
+{
+    string Put(byte[] bytes);          // capa da mídia: devolve o hash; guarda as 8 mais recentes
+    string PutAvatar(byte[] bytes);    // avatar de membro do Discord: reserva própria (as 32 mais recentes), para um grupo grande não despejar a capa
+}
 
 public record ActionDescriptor(string Name, string? Description = null);
 public record ActionResult(bool Ok, string? Error = null);

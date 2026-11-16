@@ -411,6 +411,17 @@ Precisa da fonte **Rede** ligada, com um alvo `gateway` e pelo menos um alvo de 
 6. **Roteador que ignora ping:** se o alvo `gateway` nunca responde e a internet sim, o aviso não aparece (nenhum "Internet fora" falso); se for o contrário e só o roteador ignora ICMP, anotar o que o relógio mostra.
 7. Reconectar o tablet (fechar e abrir o app) com a internet fora: o aviso volta na hora, porque o histórico vem do agente.
 
+## 30. Foto dos membros do Discord (Comunicação › Pessoas)
+
+Precisa de uma call de verdade (o `--simulate` não traz foto). Agente da beta.7 com a fonte Discord ligada.
+
+1. Entrar numa call com o Discord aberto no PC. Em Comunicação › Pessoas, o círculo de cada pessoa que tem foto no Discord passa da **inicial** para a **foto** em poucos segundos (a inicial aparece primeiro, até a imagem chegar).
+2. Quem não tem foto personalizada continua com a inicial. Quem fala continua com o anel menta (o anel fica por cima da foto), e mudo/surdo seguem como ícones cortados.
+3. Alguém entra na call: a foto dele aparece sozinha. Alguém troca a foto no Discord: a nova aparece na atualização seguinte da voz.
+4. **Sem internet no PC** ou o CDN fora: as iniciais ficam e nada quebra; o agente tenta de novo em ~1 min. O agente da beta.6 ou anterior: só iniciais, sem erro.
+5. **Privacidade:** no log do agente não aparece nome nem id de ninguém; a foto não é gravada em disco (só na memória do agente), e o tablet não conversa com a internet para isso (conferir que o Wi-Fi do tablet pode estar sem internet e a foto ainda aparece).
+6. Memória e desempenho: numa call grande (10+ pessoas) a tela rola sem engasgo e as capas da mídia continuam carregando (as fotos têm reserva própria no agente e não despejam a capa).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -442,3 +453,4 @@ Precisa da fonte **Rede** ligada, com um alvo `gateway` e pelo menos um alvo de 
 | 27 Rede | | |
 | 28 Núcleos da CPU | | |
 | 29 Rede fora | | |
+| 30 Foto dos membros do Discord | | |

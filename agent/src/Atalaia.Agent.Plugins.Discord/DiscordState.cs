@@ -2,14 +2,16 @@
 // Copyright (C) 2026 Pedro Serôdio
 
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Atalaia.Agent.Core;
 
 namespace Atalaia.Agent.Plugins.Discord;
 
 /// <summary>Estado da voz no Discord, atualizado pelos eventos. Nomes de pessoas nunca vão para log.</summary>
-public sealed class DiscordState
+public sealed partial class DiscordState
 {
-    private sealed record Member(string Name, bool Muted, bool Deafened);
+    /// <param name="Avatar">O hash do avatar no Discord (validado), ou <c>null</c>; <paramref name="AvatarBlob"/> é o hash da imagem já baixada (o que o tablet pede em <c>/cover</c>).</param>
+    private sealed record Member(string Name, bool Muted, bool Deafened, string? Avatar = null, string? AvatarBlob = null);
 
     private readonly object _lock = new();
     private bool _connected;
@@ -121,6 +123,7 @@ public sealed class DiscordState
                     {
                         name = m.Value.Name, muted = m.Value.Muted, deafened = m.Value.Deafened,
                         speaking = _speaking.Contains(m.Key),
+                        avatarHash = m.Value.AvatarBlob,
                     }).OrderBy(m => m.name, StringComparer.CurrentCultureIgnoreCase).ToList(),
                 },
             });
@@ -158,7 +161,48 @@ public sealed class DiscordState
         if (name.Length == 0) name = Str(u, "global_name");
         if (name.Length == 0) name = Str(u, "username");
         var vs = s.TryGetProperty("voice_state", out var v) ? v : default;
-        _members[id] = new Member(name, Bool(vs, "mute") || Bool(vs, "self_mute"), Bool(vs, "deaf") || Bool(vs, "self_deaf"));
+        var avatar = ValidAvatar(Str(u, "avatar"));
+        _members.TryGetValue(id, out var old);
+        var blob = old is not null && old.Avatar == avatar ? old.AvatarBlob : null;   // o mesmo avatar não baixa de novo a cada atualização de voz
+        _members[id] = new Member(name, Bool(vs, "mute") || Bool(vs, "self_mute"), Bool(vs, "deaf") || Bool(vs, "self_deaf"), avatar, blob);
+    }
+
+    // ---------------------------------------------------------------- avatares
+
+    [GeneratedRegex(@"^\d{15,25}$")]
+    private static partial Regex UserIdRule();
+
+    [GeneratedRegex(@"^(a_)?[0-9a-f]{32}$")]
+    private static partial Regex AvatarRule();
+
+    /// <summary>Id de usuário do Discord: só dígitos (snowflake). Entra em uma URL, então nada além disso passa.</summary>
+    public static bool IsUserId(string id) => UserIdRule().IsMatch(id);
+
+    /// <summary>O hash de avatar do Discord (32 hexadecimais, com <c>a_</c> na frente se animado), em minúsculas; <c>null</c> se vazio ou fora do formato (nunca entra em URL).</summary>
+    public static string? ValidAvatar(string hash)
+    {
+        var h = hash.ToLowerInvariant();
+        return AvatarRule().IsMatch(h) ? h : null;
+    }
+
+    /// <summary>
+    /// O endereço da imagem: **um host fixo do CDN do Discord**, definido aqui, com só o id e o hash já validados (nunca um endereço vindo do conteúdo). Peço 64 px
+    /// direto ao CDN e em PNG (o animado vem como o primeiro quadro), então o agente não redimensiona nada.
+    /// </summary>
+    public static string AvatarUrl(string userId, string avatar) => $"https://cdn.discordapp.com/avatars/{userId}/{avatar}.png?size=64";
+
+    /// <summary>Quem tem avatar e ainda não tem a imagem baixada.</summary>
+    public IReadOnlyList<(string Id, string Avatar)> PendingAvatars()
+    {
+        lock (_lock)
+            return [.. _members.Where(m => m.Value.Avatar is not null && m.Value.AvatarBlob is null && IsUserId(m.Key)).Select(m => (m.Key, m.Value.Avatar!))];
+    }
+
+    /// <summary>A imagem baixada (<paramref name="blob"/> = hash do <c>/cover</c>) vale só se o membro ainda está na call com o mesmo avatar.</summary>
+    public void SetAvatarBlob(string id, string avatar, string blob)
+    {
+        lock (_lock)
+            if (_members.TryGetValue(id, out var m) && m.Avatar == avatar) _members[id] = m with { AvatarBlob = blob };
     }
 
     private static string Str(JsonElement o, string name) =>

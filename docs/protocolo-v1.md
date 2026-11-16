@@ -253,11 +253,15 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 ```json
 { "connected": false, "user": "", "mute": false, "deaf": false, "inputVolume": 0, "outputVolume": 0,
   "channel": { "name": "", "guild": "", "connection": { "state": "connected", "pingMs": 38 },
-               "members": [ { "name": "", "muted": false, "deafened": false, "speaking": false } ] } }
+               "members": [ { "name": "", "muted": false, "deafened": false, "speaking": false, "avatarHash": "0123456789abcdef" } ] } }
 ```
 
 - Fala com o Discord **desktop** pelo pipe local. `connected: false` (com o resto vazio e `channel: null`)
   quando o Discord está fechado: isso não é erro do plugin. `channel` é `null` fora de canais de voz.
+- `members[].avatarHash` (acréscimo opcional da 0.4.0-beta.7): o hash (16 hexadecimais) da foto do membro, para o tablet pedir em `GET /cover/{hash}` (mesma rota e mesmo token das capas da mídia).
+  `null` sem avatar ou enquanto a imagem não foi baixada (o tablet mostra a inicial). O agente baixa do CDN do Discord, de **um host fixo definido no código** (`cdn.discordapp.com`), só com o
+  id e o hash validados (nunca um endereço vindo do conteúdo), em 64 px e no máximo 256 KB, e guarda **só em memória** (as 32 mais recentes, reserva separada da das capas). O app não busca
+  nada da internet. Falha de rede deixa `null` e tenta de novo depois de 1 min. Cliente antigo ignora o campo.
 - `channel.connection` (acréscimo opcional da 0.3.0): qualidade da conexão de voz, do evento `VOICE_CONNECTION_STATUS`
   (chega logo ao assinar e depois a cada ~5 s). `state` é `connected`, `connecting` (inclui reconectando) ou `no_route`;
   `pingMs` é o `average_ping` arredondado, só em `connected`, senão `null`. O objeto todo é `null` quando não há leitura

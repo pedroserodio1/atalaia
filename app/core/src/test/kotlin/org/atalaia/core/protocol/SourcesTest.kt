@@ -242,6 +242,23 @@ class SourcesTest {
     }
 
     @Test
+    fun discord_avatar_do_membro() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"channel":{"name":"Geral","guild":"X","members":[
+            {"name":"Ana","muted":false,"deafened":false,"speaking":true,"avatarHash":"0123456789abcdef"},
+            {"name":"Beto","muted":false,"deafened":false,"speaking":false,"avatarHash":null},
+            {"name":"Caio","muted":true,"deafened":false,"speaking":false},
+            {"name":"Dani","novo":1}]}}""",
+        )
+        val m = d.channel!!.members
+        assertEquals("0123456789abcdef", m[0].avatarHash)
+        assertNull(m[1].avatarHash)                            // sem imagem: null
+        assertNull(m[2].avatarHash)                            // agente antigo: sem o campo
+        assertNull(m[3].avatarHash)
+    }
+
+    @Test
     fun network() {
         val d = decode<NetworkData>(
             "network",

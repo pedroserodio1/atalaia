@@ -338,6 +338,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   agente baixa, reduz (~64 px) e serve pelo `GET /cover/{hash}` que já existe (mesmo hash de 16 caracteres do SHA-256), e o membro ganha um `avatarHash`
   opcional. Cuidados: o agente só fala com **um endereço fixo** do CDN, definido no código (nunca vindo do conteúdo); falha de rede mantém a inicial no círculo;
   no app, `inSampleSize` e cache pequeno (poucos avatares), nada de `Bitmap` grande. A conferir: formato da URL do avatar e se vale guardar em disco ou só em memória.
+  Código e testes prontos em 16/11/2026 (beta.7; **falta provar numa call de verdade e no tablet**, cenário 30 de `app/docs/teste-manual.md`; por isso o item continua `[ ]`): `members[].avatarHash` opcional no contrato
+  (aprovado pelo mantenedor); o agente baixa de `https://cdn.discordapp.com/avatars/{id}/{hash}.png?size=64` (host fixo no código; id e hash validados por regex, 64 px já pedidos ao CDN, no máximo 256 KB, 5 s de timeout,
+  um por vez, nova tentativa depois de 1 min) e guarda **só em memória**, numa reserva própria do `BlobStore` (32 avatares, separada das 8 capas, para não despejar a capa); o app mostra a foto pelo `CoverRepository` existente
+  e cai na inicial sem foto. Conferido em leitura: o CDN responde `image/png` com ~1 KB para o tamanho 64.
 
 ## 0.5.0: ações no PC
 
