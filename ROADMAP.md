@@ -288,6 +288,12 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   Código e testes prontos (ramo `feat/agenda-ical`): plugin, simulador, tutorial e configuração pela janela; modelo, telas, aviso e som no app. Na janela do agente o cadastro é uma **lista** (nome e link por linha, Remover, Adicionar, até 5), e o link nunca volta para a tela. **Falta provar** com um link iCal real e no tablet (cenário 25 de `app/docs/teste-manual.md`);
   a tela foi desenhada em mock mas nunca rodou num aparelho.
 - [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
+  Primeiro pedaço feito em 16/11/2026 (beta.5; falta provar no tablet, cenário 27 de `app/docs/teste-manual.md`): fonte **`network`** (decidida com o mantenedor: id `network`, nasce **desligada**, alvos
+  padrão `Roteador gateway; Internet 1.1.1.1`, só IPv4). O agente faz `ping` (ICMP, sem administrador, sem dependência nova) a até 4 alvos, guarda 30 amostras por alvo e publica média, mín, máx, jitter e perda
+  em inteiros (`null` é sem leitura; perda de 100% é medida válida e não erro); **só o nome do alvo** vai para o tablet, nunca o IP. A janela do agente tem a **lista de alvos** (nome e endereço por linha).
+  No app, **Sistema ganha o primeiro filho (Sistema › Rede)**, com um cartão por alvo e o gráfico dos últimos ~60 s. **Provado no PC** (com o roteador e a internet reais e um endereço que nunca responde): o gateway é achado
+  sozinho, os tempos batem com o `ping` e a perda de 100% não derruba a fonte. **Ficou de fora desta beta** (continua `[ ]`): sinal do tablet, velocidade, dispositivos da rede, alerta de "internet caiu" no cartão do relógio e o gráfico de tráfego (o item "Tráfego de rede" abaixo).
+  **Falta provar:** a tela no tablet (gráfico legível a 862 × 505 dp, desempenho no T68), roteador que ignora ICMP e a escolha do gateway com VPN ou várias placas.
 - [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
   nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).

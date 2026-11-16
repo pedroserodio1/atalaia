@@ -330,14 +330,14 @@ Não cole o `wol.log` em issue sem conferir que só aparece o final do MAC.
 
 ## 24. Submenus e arco (barra que troca, segurar e arrastar)
 
-Hoje a Mídia (Tocando agora, Mixer e Anime) e a Comunicação (Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês: submenu dentro de submenu) têm submenu. Início, Sistema e Jogo abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
+Hoje o Sistema (Visão geral e Rede), a Mídia (Tocando agora, Mixer e Anime) e a Comunicação (Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês: submenu dentro de submenu) têm submenu. Início e Jogo abrem a tela direto, sem trocar a barra (cada fonte nova entra como filho).
 
 1. Barra da raiz: Início, Sistema, Mídia, Jogo e Comunicação (cinco abas de 88 dp, com folga à direita para o Deck da 0.5.0). "Discord" deixou de ser aba: a tela dele é a Comunicação (a "Pessoas" da barra dela).
 2. Toque em Mídia: abre "Tocando agora" e a barra vira `‹ | Tocando agora | Mixer | Anime`, com "Tocando agora" destacado. Toque em Mixer: abre o mixer, que agora ocupa a tela toda.
    Toque em `‹`: a barra volta à raiz e a tela continua a do Mixer, com Mídia destacada.
 3. Segure Mídia (~0,4 s) sem mexer o dedo: o arco abre **por cima** da tela (véu escuro, a barra à vista, nada se move) com "Tocando agora", "Mixer" e "Anime". Arraste até Mixer (fica menta) e solte:
    abre o Mixer direto e a barra mostra o submenu de Mídia. Segure e solte longe dos botões, ou ainda no ponto de origem: fecha sem mudar nada.
-4. Segure Início, Sistema ou Jogo: não abre arco (não têm filhos); soltar depois do tempo vale como toque. Segure Comunicação: o arco mostra "Pessoas" e "Agenda"; arrastar até Agenda e soltar abre o Dia, com a barra `‹ | Dia | Semana | Mês`.
+4. Segure Início ou Jogo: não abre arco (não têm filhos); soltar depois do tempo vale como toque. Segure Sistema: o arco mostra "Visão geral" e "Rede". Segure Comunicação: o arco mostra "Pessoas" e "Agenda"; arrastar até Agenda e soltar abre o Dia, com a barra `‹ | Dia | Semana | Mês`.
 5. Mexer o dedo antes do tempo do toque longo: não abre o arco e não conta como toque.
 6. Os botões do arco e os nomes cabem na tela e não se sobrepõem (o nome fica do lado de fora do arco); conferir também com Mídia, que é a aba do meio.
 7. Troca por contexto (cenário 17) com o submenu aberto: estando em Mídia, Mixer e o jogo abrir, vai para Jogo; 5 min sem toque volta ao Início e a barra volta à raiz.
@@ -373,6 +373,20 @@ Precisa de um usuário do AniList com perfil público (ou `--simulate`, que traz
 7. **Privacidade:** no log do agente não pode aparecer o nome de usuário; só títulos, ações e contagens saem do PC.
 8. Limite da API: o agente pede uma vez a cada 10 min. Se a janela mostrar "limite de pedidos atingido", anotar a hora.
 
+## 27. Rede (Sistema › Rede)
+
+Precisa da fonte **Rede** ligada no agente (Fontes de dados › Rede; vem desligada) ou do `--simulate`, que traz dois alvos, um deles perdendo pacotes de vez em quando. Na janela do agente: Configurar mostra a **lista de alvos** (nome e endereço por linha, até 4, Remover, Adicionar e "Restaurar o padrão"); o endereço é `gateway` (o roteador desta máquina) ou um IPv4.
+
+1. Toque em **Sistema**: a barra vira `‹ | Visão geral | Rede` e a tela é a de sempre (o cenário 1 continua valendo). Toque em **Rede**: abre a tela, com o tráfego (`↓ ... · ↑ ...`) à direita do título.
+2. Um cartão por alvo: o nome, a **qualidade em texto** (ótimo, regular, ruim, sem resposta, ou "medindo" nos primeiros segundos), o tempo atual grande, `méd N ms · jitter N ms` e `perda N%` (coral se passar de 0).
+3. **Gráfico:** barras dos últimos ~60 s, enchendo da direita para a esquerda; a escala sobe em degraus (20, 50, 100, 200...) e o ping de 3 ms não vira uma linha reta. Um pacote perdido aparece como **faixa coral** de ponta a ponta, nunca como barra de zero.
+4. **Prova com a rede de verdade:** conferir o tempo do roteador e o da internet contra o `ping` do Windows no PC. Pôr um alvo que nunca responde (`192.0.2.1`) e ver "sem resposta", perda 100% e `—` nos tempos (nunca `0 ms`); desligar o Wi-Fi do PC por uns segundos e ver o gráfico mostrar a lacuna.
+5. **Roteador que ignora ping:** se o alvo `gateway` aparecer sempre "sem resposta", anotar o modelo do roteador e trocar o alvo (o tutorial da janela explica).
+6. Fonte desligada: a tela diz "A Rede está desligada. Ligue em Fontes de dados, no PC."; agente sem dado: "Sem dados da Rede"; agente fora do ar: "velho", sem fingir números atuais.
+7. Alvo com nome longo corta com `…`; a tela rola na vertical com 4 alvos (conferir em 862 × 505 dp).
+8. **Privacidade:** o endereço dos alvos (IP) não aparece no tablet nem no log do agente.
+9. Desempenho: sem animação; a tela lê o estado a 2 Hz (repetir a medição de quadros do cenário 12 com a Rede aberta).
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -400,3 +414,5 @@ Precisa de um usuário do AniList com perfil público (ou `--simulate`, que traz
 | 23 Wake-on-LAN | | |
 | 24 Submenus e arco | | |
 | 25 Agenda | | |
+| 26 Anime | | |
+| 27 Rede | | |
