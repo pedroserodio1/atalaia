@@ -1,6 +1,6 @@
 # Roadmap do Atalaia
 
-Status em **15/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
+Status em **16/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
 tag e número de versão estão em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Datas não são promessa: a ordem e o
 escopo de cada versão podem mudar, e quem decide é o mantenedor.
 
@@ -9,12 +9,12 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 
 ## Onde estamos
 
-- **Agente (Windows):** 10 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `steam`, `discord`, `weather`, `notifications`),
+- **Agente (Windows):** 12 fontes (`system`, `gpu`, `audio`, `media`, `ups`, `activeWindow`, `steam`, `discord`, `weather`, `notifications`, `calendar` e `anilist`; as duas últimas nascem desligadas),
   bandeja, janela de configuração (WinForms + WebView2) com onboarding de 6 passos, módulo USB (`adb reverse`), cofre de segredos, atualização
   automática.
-- **App (tablet):** 5 abas (Início, Sistema, Mídia, Discord, Jogo), coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de
-  configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) publicada em 15/11/2026); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **App (tablet):** 5 abas na raiz (Início, Sistema, Mídia, Jogo, Comunicação) com **submenus** (Mídia: Tocando agora, Mixer e Anime; Comunicação: Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês),
+  coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de configuração.
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; a `beta.4` (Agenda dentro da Comunicação e fonte AniList) está mesclada em `beta/0.4.0`, ainda sem tag); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
