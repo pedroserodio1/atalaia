@@ -32,7 +32,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
 | **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), AniList, Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
-| **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL e Fortnite |
+| **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL, Fortnite e Futebol |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
 
 ---
@@ -381,6 +381,20 @@ Para outras pessoas criarem fontes sem mexer no núcleo.
   aparece como velho. Fonte nova é mudança de contrato (`docs/protocolo-v1.md`): combinar com o mantenedor antes. Tela: 5 estados (em partida, lobby,
   vitória, eliminado, dado velho) dentro da aba Jogo, em esboço no artefato de design. Falta provar: lobby e fila (sem sinal claro no log), etapas da
   tempestade além de `StormHolding` e o parser de replay.
+- [ ] **Futebol (jogo do time do usuário ao vivo e o próximo).** Fonte desligada por padrão, com tutorial. Usa uma API pública e gratuita de futebol
+  (sondada em 18/11/2026 com um jogo do Brasileirão em andamento), que pede um **token**: ele vai para o cofre, nunca para o `settings.json`, e o valor não volta
+  para a página. O usuário escolhe o time na configuração. Dá para tirar, em texto pronto: placar, minuto e fase; estatísticas (posse, finalizações, no alvo, xG,
+  ataques perigosos, escanteios, faltas, precisão de passes); lances com cartões e xG; escalação e formação; confronto direto; transmissão (canais); e o **próximo
+  jogo com a previsão do modelo** (chance de vitória, empate e derrota, gols esperados e placar mais provável). A API entrega em **UTC**: o painel converte
+  para o horário local. Alerta de gol na coluna "agora", no mesmo molde do aviso da agenda. Tela em esboço no artefato de design (aba com dois estados:
+  jogo ao vivo e próximo jogo).
+  **Fora do escopo, decidido em 18/11/2026:** odds e "chance pelas odds" (o painel não mostra aposta). Cuidado ao ler a previsão: `draw_no_bet.prob_home` é a chance
+  de vitória **descartando o empate**, não a de "não perder".
+  Mudança de contrato (`docs/protocolo-v1.md`): combinar com o mantenedor antes. **Em aberto:** quem consulta a API (o agente, como nas outras fontes, ou o app);
+  a frequência de consulta (a API guarda cache de ~5 s em `events`, `leagues` e `teams`); o **limite de requisições**, que a página da API não informa
+  (está na página de convenções dela); e onde a aba entra na barra (ver o item da 7ª aba, abaixo).
+  Falta provar: `player-stats` veio vazio durante o jogo; o `commentary` veio enxuto (8 lances em 27 minutos); o `stats` só foi lido uma vez; sem teste com jogo
+  acabado, adiado ou com prorrogação e pênaltis; o canal WebSocket ao vivo é um addon pago, então fica de fora (a consulta periódica basta).
 - [ ] Extras: promoções da wishlist da Steam; timers, pomodoro e contagens regressivas.
 - [ ] A barra de abas já não comporta uma 7ª aba com ícone em cima: virar rolável ou ter um "Mais".
 
