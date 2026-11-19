@@ -79,6 +79,6 @@ class PanelApp : Application() {
 
     private companion object {
         /** Fontes que as telas atuais leem. As demais entram quando as abas delas entrarem. */
-        val SOURCES = listOf("system", "gpu", "ups", "media", "activeWindow", "steam", "weather", "notifications", "audio", "discord")
+        val SOURCES = listOf("system", "gpu", "ups", "media", "activeWindow", "steam", "weather", "notifications", "audio", "discord", "calendar", "anilist", "network")
     }
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Pedro Serôdio
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
@@ -20,6 +21,7 @@ public sealed class SystemPlugin : IPlugin
 
     private IPluginContext _ctx = null!;
     private PerformanceCounter? _cpu, _available;
+    private PerformanceCounter[]? _cores;   // um contador por núcleo lógico; nulo = sem leitura (contadores indisponíveis)
     private NetworkInterface? _nic;
     private string? _mac;   // MAC de cabo da placa escolhida; nulo no Wi-Fi ou sem placa
     private string _preferredNic = "";
@@ -41,6 +43,7 @@ public sealed class SystemPlugin : IPlugin
         _available = new PerformanceCounter("Memory", "Available MBytes");
         _cpu.NextValue();   // a primeira leitura vem 0
         _available.NextValue();
+        _cores = OpenCoreCounters();
         return Task.CompletedTask;
     }
 
@@ -48,6 +51,7 @@ public sealed class SystemPlugin : IPlugin
     {
         _cpu?.Dispose();
         _available?.Dispose();
+        foreach (var c in _cores ?? []) c.Dispose();
         return Task.CompletedTask;
     }
 
@@ -61,7 +65,7 @@ public sealed class SystemPlugin : IPlugin
         var (rx, tx) = ReadNetwork();
         return Task.FromResult<JsonElement?>(Json.ToElement(new
         {
-            cpu = new { percent = cpu },
+            cpu = new { percent = cpu, cores = ReadCores() },
             ram = new { usedMb = (int)Math.Round(usedMb), totalMb = (int)Math.Round(totalMb) },
             disks = ReadDisks(),
             net = new { rxKbps = rx, txKbps = tx, mac = _mac },
@@ -70,6 +74,41 @@ public sealed class SystemPlugin : IPlugin
 
     public Task<ActionResult> ExecuteAsync(string action, JsonElement args, CancellationToken ct) =>
         Task.FromResult(new ActionResult(false, "unknown_action"));
+
+    /// <summary>
+    /// Os contadores de uso por núcleo lógico, na ordem dos núcleos. Se a categoria não existe ou o Windows está com os contadores de desempenho
+    /// corrompidos, devolve <c>null</c>: o uso por núcleo fica sem leitura e o resto da fonte segue funcionando.
+    /// </summary>
+    private static PerformanceCounter[]? OpenCoreCounters()
+    {
+        try
+        {
+            var names = CoreInstances(new PerformanceCounterCategory("Processor").GetInstanceNames());
+            if (names.Count == 0) return null;
+            var counters = names.Select(n => new PerformanceCounter("Processor", "% Processor Time", n)).ToArray();
+            foreach (var c in counters) c.NextValue();   // a primeira leitura vem 0
+            return counters;
+        }
+        catch (Exception e) when (e is InvalidOperationException or UnauthorizedAccessException or Win32Exception) { return null; }
+    }
+
+    private int[]? ReadCores()
+    {
+        if (_cores is null) return null;
+        try { return ToPercents(_cores.Select(c => c.NextValue())); }
+        catch (InvalidOperationException) { return null; }   // um núcleo sumiu nesta rodada: sem leitura agora, tenta de novo na próxima
+    }
+
+    /// <summary>
+    /// Os nomes de instância da categoria <c>Processor</c> que são núcleos (só dígitos), em ordem numérica. Fica de fora o <c>_Total</c> e, em máquinas com mais
+    /// de 64 núcleos lógicos, os nomes de grupo (<c>0,1</c>): o uso por núcleo passa a ser só dos núcleos que o Windows lista assim.
+    /// </summary>
+    public static IReadOnlyList<string> CoreInstances(IEnumerable<string> instanceNames) =>
+        [.. instanceNames.Where(n => n.Length is > 0 and <= 4 && n.All(char.IsAsciiDigit)).OrderBy(n => int.Parse(n, CultureInfo.InvariantCulture))];
+
+    /// <summary>Uso de cada núcleo em porcentagem inteira, de 0 a 100 (o contador pode passar de 100 por arredondamento).</summary>
+    public static int[] ToPercents(IEnumerable<float> values) =>
+        [.. values.Select(v => Math.Clamp((int)Math.Round(float.IsFinite(v) ? v : 0, MidpointRounding.AwayFromZero), 0, 100))];
 
     private object[] ReadDisks()
     {

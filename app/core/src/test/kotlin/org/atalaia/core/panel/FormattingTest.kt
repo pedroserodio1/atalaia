@@ -10,6 +10,17 @@ import org.junit.jupiter.api.Test
 
 class FormattingTest {
     @Test
+    fun nomes_da_agenda_em_portugues() {
+        val d = java.time.LocalDate.of(2026, 11, 15)
+        assertEquals("Domingo, 15 de novembro", Pt.dayLong(d))
+        assertEquals("Segunda-feira, 16 de novembro", Pt.dayLong(d.plusDays(1)))
+        assertEquals("Novembro 2026", Pt.monthYear(java.time.YearMonth.of(2026, 11)))
+        assertEquals("15 nov – 21 nov", Pt.weekRange(d, d.plusDays(6)))
+        assertEquals("DOM", Pt.weekdayShort(d))
+        assertEquals("SÁB", Pt.weekdayShort(d.plusDays(6)))
+    }
+
+    @Test
     fun conexao_de_voz_conectada_mostra_o_ping() {
         assertEquals("Conectado · 38 ms", Pt.voiceConnection(DiscordConnection("connected", 38)))
     }

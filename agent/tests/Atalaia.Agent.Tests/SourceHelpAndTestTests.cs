@@ -11,7 +11,7 @@ namespace Atalaia.Agent.Tests;
 /// <summary>Os tutoriais embutidos no agente e as páginas de <c>docs/fontes/</c> são o mesmo texto; os endereços do botão "Abrir página" são uma lista fechada.</summary>
 public class SourceHelpTests
 {
-    private static readonly Dictionary<string, string> DocFile = new() { ["steam"] = "steam.md", ["discord"] = "discord.md", ["weather"] = "clima.md", ["ups"] = "nobreak.md" };
+    private static readonly Dictionary<string, string> DocFile = new() { ["steam"] = "steam.md", ["discord"] = "discord.md", ["weather"] = "clima.md", ["ups"] = "nobreak.md", ["calendar"] = "agenda.md", ["anilist"] = "anilist.md", ["network"] = "rede.md" };
 
     private static string RepoRoot()
     {
@@ -25,6 +25,9 @@ public class SourceHelpTests
     [InlineData("discord")]
     [InlineData("weather")]
     [InlineData("ups")]
+    [InlineData("calendar")]
+    [InlineData("anilist")]
+    [InlineData("network")]
     public void Pagina_do_docs_repete_o_texto_da_janela(string id)
     {
         var help = SourceHelp.For(id)!;
@@ -52,6 +55,8 @@ public class SourceHelpTests
         Assert.Equal("https://steamcommunity.com/dev/apikey", SourceHelp.PageUrl("steam"));
         Assert.Equal("https://discord.com/developers/applications", SourceHelp.PageUrl("discord"));
         Assert.Equal("https://www.openstreetmap.org/", SourceHelp.PageUrl("weather"));
+        Assert.Equal("https://calendar.google.com/calendar/r/settings", SourceHelp.PageUrl("calendar"));
+        Assert.Equal("https://anilist.co/", SourceHelp.PageUrl("anilist"));
         Assert.Null(SourceHelp.PageUrl("ups"));
         Assert.Null(SourceHelp.PageUrl("../x"));
         Assert.Null(SourceHelp.PageUrl("https://evil.example"));
@@ -60,7 +65,7 @@ public class SourceHelpTests
     [Fact]
     public void Tutoriais_nao_trazem_dado_pessoal_nem_chave_de_verdade()
     {
-        foreach (var id in new[] { "steam", "discord", "weather", "ups" })
+        foreach (var id in new[] { "steam", "discord", "weather", "ups", "calendar", "anilist", "network" })
         {
             var all = string.Join('\n', SourceHelp.For(id)!.Steps.Concat(SourceHelp.For(id)!.IfWrong));
             Assert.DoesNotMatch(@"\b\d{17}\b", all);                  // nenhum SteamID64

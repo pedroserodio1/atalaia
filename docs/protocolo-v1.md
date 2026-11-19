@@ -104,11 +104,14 @@ tensões, `freqHz`, `powerW`. Campo sem leitura vai como `null`.
 ### `system`
 
 ```json
-{ "cpu": { "percent": 0 }, "ram": { "usedMb": 0, "totalMb": 0 },
+{ "cpu": { "percent": 0, "cores": [0, 0] }, "ram": { "usedMb": 0, "totalMb": 0 },
   "disks": [ { "name": "C:", "usedGb": 0, "totalGb": 0 } ],
   "net": { "rxKbps": 0, "txKbps": 0, "mac": "AA:BB:CC:DD:EE:FF" } }
 ```
 
+- `cpu.cores` (acréscimo opcional da 0.4.0): o uso de **cada núcleo lógico**, em porcentagem inteira de 0 a 100, na ordem dos núcleos do Windows (contadores `Processor` de
+  `% Processor Time`, um por núcleo). `null` quando os contadores não estão disponíveis (o resto de `system` segue normal). Só uso: temperatura e frequência por núcleo
+  **não** são publicadas. Em máquinas com mais de 64 núcleos lógicos só entram os núcleos que o Windows lista por número simples. Clientes antigos ignoram o campo.
 - `net.mac` (acréscimo opcional da 0.3.0): MAC da placa que o plugin escolhe para o `rxKbps`, **só se ela for de cabo**
   (Ethernet, GigabitEthernet, FastEthernetT, FastEthernetFx ou Ethernet3Megabit), em hexadecimal **maiúsculo** separado por `:`.
   Placa Wi-Fi ou nenhuma placa: `null`. Não muda entre coletas (não gera `update` a mais) e nunca vai para o log.
@@ -250,11 +253,19 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 ```json
 { "connected": false, "user": "", "mute": false, "deaf": false, "inputVolume": 0, "outputVolume": 0,
   "channel": { "name": "", "guild": "", "connection": { "state": "connected", "pingMs": 38 },
-               "members": [ { "name": "", "muted": false, "deafened": false, "speaking": false } ] } }
+               "members": [ { "id": "123456789012345678", "name": "", "muted": false, "deafened": false, "speaking": false, "avatarHash": "0123456789abcdef",
+                              "volume": 100, "localMuted": false } ] } }
 ```
 
 - Fala com o Discord **desktop** pelo pipe local. `connected: false` (com o resto vazio e `channel: null`)
   quando o Discord está fechado: isso não é erro do plugin. `channel` é `null` fora de canais de voz.
+- `members[].avatarHash` (acréscimo opcional da 0.4.0-beta.7): o hash (16 hexadecimais) da foto do membro, para o tablet pedir em `GET /cover/{hash}` (mesma rota e mesmo token das capas da mídia).
+  `null` sem avatar ou enquanto a imagem não foi baixada (o tablet mostra a inicial). O agente baixa do CDN do Discord, de **um host fixo definido no código** (`cdn.discordapp.com`), só com o
+  id e o hash validados (nunca um endereço vindo do conteúdo), em 64 px e no máximo 256 KB, e guarda **só em memória** (as 32 mais recentes, reserva separada da das capas). O app não busca
+  nada da internet. Falha de rede deixa `null` e tenta de novo depois de 1 min. Cliente antigo ignora o campo.
+- `members[].id`, `members[].volume` e `members[].localMuted` (acréscimos opcionais da 0.4.0, para o volume e o mudo por pessoa): `id` é o **id de usuário do Discord** (só dígitos, 15 a 25), o que as ações
+  `set_user_volume` e `toggle_user_mute` recebem; ele passa pela rede local, mas não é segredo (qualquer um vê o id de quem está na call com o modo desenvolvedor). `volume` (0 a 200, `null` sem leitura) é o
+  volume que **o usuário** deu a essa pessoa (não o da pessoa) e `localMuted` é o mudo **só para o usuário**, diferente de `muted` (o mudo da própria pessoa ou do servidor). Cliente antigo ignora os campos.
 - `channel.connection` (acréscimo opcional da 0.3.0): qualidade da conexão de voz, do evento `VOICE_CONNECTION_STATUS`
   (chega logo ao assinar e depois a cada ~5 s). `state` é `connected`, `connecting` (inclui reconectando) ou `no_route`;
   `pingMs` é o `average_ping` arredondado, só em `connected`, senão `null`. O objeto todo é `null` quando não há leitura
@@ -264,6 +275,68 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
   mostra um pop-up de autorização (até 3 min para aceitar); o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json`,
   nunca no log.
 - Exige `clientId` e `clientSecret` na configuração (variável de ambiente ou `.env`).
+
+### `calendar` (agenda por link iCal)
+
+```json
+{ "calendars": [ { "name": "Trabalho", "ok": true } ],
+  "events": [ { "title": "Reunião de equipe", "start": "2026-11-16T09:00:00-03:00", "end": "2026-11-16T10:00:00-03:00", "allDay": false, "calendar": 0 } ],
+  "updatedAt": "2026-11-15T12:00:00-03:00" }
+```
+
+- Acréscimo da 0.4.0. Lê o arquivo iCal (`.ics`) de cada link secreto (até 5 agendas, só `https`) e publica os eventos do **mês atual e do seguinte**,
+  em ordem de início, no máximo 300. Evento que se repete vira uma entrada por ocorrência; `STATUS:CANCELLED` não aparece.
+- `calendars` é a lista na ordem da configuração; `calendar` em cada evento é o **índice** dela. O `name` é o que o usuário escreveu na configuração, nunca o que
+  vem dentro do arquivo (no Google, o da agenda principal costuma ser o e-mail da conta). `ok: false` é uma agenda que não respondeu nesta rodada (as outras seguem).
+  Se nenhuma responde, a fonte fica com `status: "error"`.
+- Só título (cortado em 80 caracteres), início, fim e `allDay`; local, descrição e participantes **não** são publicados. `allDay` começa à meia-noite local
+  e o `end` é o início do dia seguinte. As datas vêm com o offset da hora local do PC. Intervalo padrão: 5 min.
+- Exige `urls` na configuração: `Nome https://link`, separadas por `;` ou por linha (nome opcional; sem ele, "Agenda 1", "Agenda 2"...). O link é o segredo e fica no cofre.
+  Nunca vai para o log.
+
+### `anilist` (anime e mangá do perfil público)
+
+```json
+{ "user": "ExemploOtaku", "animeCount": 142, "mangaCount": 37, "episodesWatched": 2310, "minutesWatched": 55440, "chaptersRead": 1204,
+  "genres": [ { "name": "Action", "count": 61 } ],
+  "studios": [ { "name": "Estúdio Exemplo", "count": 12, "minutes": 4100 } ],
+  "recent": [ { "title": "Anime de Exemplo", "type": "ANIME", "action": "watched episode", "progress": "5", "at": "2026-11-16T09:00:00-03:00" } ],
+  "followers": 18, "following": 25,
+  "updatedAt": "2026-11-16T12:00:00-03:00" }
+```
+
+- Acréscimo da 0.4.0. Só leitura, **sem login e sem chave**: usa a API GraphQL pública do AniList (`https://graphql.anilist.co`) e só o nome de usuário do perfil,
+  que precisa ser público. Uma consulta por coleta; o agente resolve o id numérico do usuário na primeira vez e o guarda. Intervalo padrão: 10 min (a API limita pedidos por minuto).
+- `genres` (até 6, por contagem) e `studios` (até 5) vêm das estatísticas de **anime**; `recent` (até 10) são as últimas atividades **de lista** (assistiu episódio, leu capítulo, completou...). Os nomes de `action` e `type` são os originais do AniList
+  (`watched episode`, `read chapter`, `completed`, `plans to watch`, `ANIME`, `MANGA`...): a tradução fica no app.
+- Título: o romaji, ou o inglês quando não há romaji. `watching` (a lista "assistindo") existiu só na `0.4.0-beta.4` e foi retirado antes da estável: clientes antigos
+  que o esperavam recebem uma lista vazia, e o app ignora o campo se um agente antigo o mandar. `progress` em `recent` é o texto do AniList (`"5"`, `"3 - 5"`) e `""` quando a ação não tem progresso (`completed`). Campo sem leitura é `null`; listas sem itens são `[]`.
+- Só título, ação e progresso das atividades; texto livre, mensagens, notificações e imagens (avatar e capa) **não** são lidos nem publicados.
+- Exige `username` na configuração (o que aparece em `anilist.co/user/NOME`). Não é segredo: vai no `settings.json`, sem cofre. Nasce desligada. A consulta vai com um `User-Agent`
+  próprio (`Atalaia-Agent`): sem ele a Cloudflare que protege a API recusa com 403.
+
+### `network` (latência, jitter e perda até alguns alvos)
+
+```json
+{ "targets": [
+    { "name": "Roteador", "gateway": true, "rttMs": 3, "avgMs": 4, "minMs": 2, "maxMs": 11, "jitterMs": 1, "lossPercent": 0, "samples": [3, 4, null, 2] },
+    { "name": "Internet", "gateway": false, "rttMs": null, "avgMs": null, "minMs": null, "maxMs": null, "jitterMs": null, "lossPercent": 100, "samples": [null, null] } ] }
+```
+
+- Acréscimo da 0.4.0. Só leitura: o agente manda um `ping` (ICMP, sem administrador) a cada alvo, em paralelo, com timeout de 1 s, e guarda as últimas **30 amostras**
+  de cada um (~1 min a 2 s por coleta). Intervalo padrão: 2 s. Sem ações.
+- `samples` vai da amostra mais antiga para a mais nova, em milissegundos inteiros; **`null` é um pacote sem resposta** (perda). `rttMs` é a última amostra (`null` se
+  perdeu). `avgMs` e `jitterMs` são inteiros arredondados; o jitter é a média da diferença entre respostas seguidas (as perdas ficam de fora) e é `null` com menos de duas
+  respostas. `lossPercent` é a porcentagem de amostras sem resposta da janela (0 a 100). Sem nenhuma resposta, os tempos são `null` (nunca 0) e a perda é 100: isso é
+  uma medida válida (a internet caiu), **não** põe a fonte em `error`. A janela fica no agente, então o app não acumula nada e não perde o histórico ao reconectar.
+- `gateway` (acréscimo opcional da 0.4.0-beta.7): `true` no alvo cujo endereço configurado é `gateway` (o roteador), `false` nos outros. Não revela o endereço. O tablet usa para separar
+  "Internet fora" (o roteador responde e todos os outros alvos ficaram sem resposta nas últimas 3 amostras) de "Sem rede" (nenhum alvo responde). Cliente antigo ignora o campo; agente antigo
+  sem o campo é lido como `false` (e então só vale "Sem rede").
+- O JSON muda a cada coleta, então o agente envia a cada 2 s (menos de 1 KB).
+- Só o **nome** do alvo vai pela rede local, nunca o endereço, e nenhum endereço vai para o log.
+- Exige `targets` na configuração: `Nome endereço` separados por `;` ou por linha (até 4; nome opcional). O endereço é `gateway` (o roteador desta máquina: o primeiro gateway
+  IPv4 de uma interface ativa, que não seja loopback nem túnel, refeito a cada 30 s) ou um IPv4 com os quatro números; nome de host não vale (não resolve DNS). Não é segredo
+  (`settings.json`). Nasce desligada, com `Roteador gateway; Internet 1.1.1.1`.
 
 ## Ações por fonte
 
@@ -281,8 +354,10 @@ dispara coleta imediata). `args` é `{}` quando não há argumento.
 | `discord` | `set_input_volume` | `{ "value": 0..100 }` | Volume do microfone |
 | `discord` | `set_output_volume` | `{ "value": 0..200 }` | Volume de saída |
 | `discord` | `leave_call` | — | Sai do canal de voz (`SELECT_VOICE_CHANNEL` com `channel_id: null`). Fora de um canal devolve `ok` sem fazer nada. O tablet pede confirmação na tela |
+| `discord` | `set_user_volume` | `{ "id": "<members[].id>", "value": 0..200 }` | Volume de uma pessoa da call, só para o usuário (`SET_USER_VOICE_SETTINGS`). `id` que não é texto de dígitos devolve `invalid_args`; pessoa que não está na call, `unknown_session` |
+| `discord` | `toggle_user_mute` | `{ "id": "<members[].id>" }` | Liga/desliga o mudo de uma pessoa só para o usuário (`localMuted`). Mesmos erros de `id` da ação acima |
 | `notifications` | `clear_all` | — | Descarta **todas** as notificações do Windows (não há como desfazer) |
-| `weather`, `steam`, `claude`, `ups`, `notifications` | `refresh` | — | Coleta de novo agora (no `steam`, recarrega também nível, biblioteca, recentes e amigos) |
+| `weather`, `steam`, `claude`, `ups`, `notifications`, `calendar`, `anilist` | `refresh` | — | Coleta de novo agora (no `steam`, recarrega também nível, biblioteca, recentes e amigos) |
 
 Erros além dos já definidos: `unknown_session` (`audio`: aplicativo do mixer que não existe mais), `no_session` (`media` sem sessão de mídia), `not_supported` (o app de mídia não
 aceita esse controle agora), `not_connected` (`discord` fechado ou ainda sem conexão), `discord_recusou`

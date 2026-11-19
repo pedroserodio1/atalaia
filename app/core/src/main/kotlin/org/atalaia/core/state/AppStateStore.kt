@@ -103,9 +103,13 @@ class AppStateStore(private val clock: Clock = Clock.System) {
 
             val cpu = (data as? SystemData)?.cpu?.percent
             val history = if (cpu != null) (s.cpuHistory + cpu).takeLast(CPU_HISTORY) else s.cpuHistory
+            val net = (data as? SystemData)?.net
+            val rx = net?.rxKbps
+            val tx = net?.txKbps
+            val netHistory = if (rx != null && tx != null) (s.netHistory + NetSample(rx, tx)).takeLast(CPU_HISTORY) else s.netHistory
 
             s.copy(
-                sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history,
+                sources = s.sources + (source to entry), upsAlert = alert, cpuHistory = history, netHistory = netHistory,
                 limitAlerts = if (isLimitSource) limitTracker.active() else s.limitAlerts,
                 downloadDoneMono = if (downloadEnded) now else s.downloadDoneMono,
             )

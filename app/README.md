@@ -10,13 +10,27 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 
 - **Coluna "agora"** (em todas as telas): relógio, canal ativo (USB, Wi-Fi ou sem conexão), jogo ou janela em foco, mídia com
   controles.
-- **Abas:** Início, Sistema, Mídia (capa e mixer por aplicativo), Discord e Jogo (Steam). Na aba Discord a faixa da esquerda tem os botões de microfone e fones (ensurdecer desliga o microfone também) e os volumes em pé; a lista da call fica à direita, com o número de pessoas
+- **Navegação em submenus:** a barra de cima mostra os contextos (Início, Sistema, Mídia, Jogo e Comunicação). Tocar num que tem filhos abre a tela principal dele e a barra **troca** por `‹ voltar` e os botões dele
+  (hoje o Sistema, com Visão geral e Rede, a Mídia, com Tocando agora, Mixer e Anime, e a Comunicação, com Pessoas e a Agenda, que tem Dia, Semana e Mês: submenu dentro de submenu; cada fonte nova entra como filho). A profundidade não tem limite fixo: a tela é um caminho de ids (`media/mixer`), definido em `Nav.kt` no `:core`. **Segurar** um botão que tem filhos abre um arco por cima da tela
+  (sem empurrar nada); arrastar até um dos botões e soltar vai direto para ele, e soltar fora cancela.
+- **Volume e mudo por pessoa (Comunicação › Pessoas):** tocar numa pessoa da call abre o controle dela (volume de 0 a 200%, enviado ao soltar, e **Silenciar**, só para você); a linha mostra o volume quando não é 100% e "Silenciado" quando for o caso. O botão só existe se o `hello` do agente declarou `set_user_volume` e `toggle_user_mute` e a pessoa veio com o `id`; agente antigo: linhas sem toque.
+- **Foto dos membros da call (Comunicação › Pessoas):** o círculo de cada pessoa mostra a foto do Discord (campo `avatarHash`); sem foto, ou enquanto ela não chega, a inicial de sempre. O app **não busca nada da internet**: o agente baixa a imagem do CDN do Discord (host fixo, 64 px, no máximo 256 KB, só em memória) e o tablet a pede em `GET /cover/{hash}`, pelo mesmo caminho e com o mesmo cache pequeno das capas da mídia.
+- **Núcleos da CPU (Sistema › Visão geral):** ao lado do gráfico "CPU · últimos 60 s", um cartão com uma barra por núcleo lógico (o campo `system.cpu.cores` do agente), coral a partir de 85% e o pico em texto no canto. Sem o campo (agente antigo ou contadores de desempenho do Windows indisponíveis) o cartão não aparece. Só uso; temperatura e frequência por núcleo ficam fora.
+- **Rede (Sistema › Rede):** no alto, o **gráfico de tráfego** do PC (`↓` e `↑` dos últimos ~60 s, escala em degraus e escrita em texto); depois, latência, jitter e perda de pacotes até os alvos do ping que o agente mede (por padrão, o roteador e um resolvedor público; a fonte `network`, **desligada por padrão**,
+  só envia o **nome** do alvo, nunca o endereço). Um cartão por alvo com o tempo atual, a média, o jitter, a perda, a qualidade **em texto** (ótimo, regular, ruim, sem resposta) e um gráfico de barras dos últimos ~60 s
+  (perda aparece como faixa coral, e não como zero). A janela de amostras fica no agente, então o gráfico não se perde ao reconectar. As contas (qualidade e escala do gráfico) estão em `Latency.kt`, no `:core`.
+- **Anime (Mídia › Anime):** o perfil público do AniList (a fonte `anilist`, desligada por padrão, **sem login nem chave**: só o nome de usuário na janela do agente). Só mostra: contagens (animes, episódios, tempo assistido, mangás, capítulos), as **últimas atividades** ("Assistiu ep. 5 · há 3 h"), gêneros e estúdios mais vistos. A tradução e as contas de tempo ficam em `AniList.kt` no `:core`.
+- **Agenda (Comunicação › Agenda):** eventos de até 5 agendas por link iCal secreto (a fonte `calendar` do agente, desligada por padrão). Três visões, na barra de cima: **Dia** (lista, com os de dia inteiro no alto e o próximo evento em destaque),
+  **Semana** (sete colunas, de domingo a sábado) e **Mês** (grade com barrinhas por agenda). Tocar num dia da semana ou do mês abre um **modal** por cima, com setas para o dia anterior e o seguinte e "Abrir o dia".
+  Cada agenda tem o nome que o usuário deu (nunca o de dentro do arquivo) e uma cor pela ordem; os chips da legenda ligam e desligam cada uma na tela. **Aviso:** nos últimos 15 min antes de um evento o cartão do relógio
+  fica menta com "Em N min · título", e o tablet toca um bipe em 15 min e dois em 5 min (liga e desliga na configuração, "Som do aviso de agenda"; só toca com o app aberto e com dado fresco). O aviso olha todas as agendas, mesmo as desligadas na tela.
+- **Telas:** Início, Sistema, Mídia (Tocando agora, com a capa, e Mixer por aplicativo), Jogo (Steam) e Comunicação (o Discord). Na Comunicação a faixa da esquerda tem os botões de microfone e fones (ensurdecer desliga o microfone também) e os volumes em pé; a lista da call fica à direita, com o número de pessoas
   no cabeçalho e os estados por ícone (som para quem fala, microfone cortado para mudo, microfone e fones cortados para surdo).
 - **Conexão:** lista de endereços em ordem de prioridade (padrão: USB em `127.0.0.1`, depois o IP do PC no Wi-Fi). Uma conexão
   por vez; quando cai, tenta o próximo na hora; no Wi-Fi, testa o USB a cada 5 s e volta quando ele fica pronto.
 - **Segurança:** só aceita endereços de loopback e rede local; o token fica cifrado no Keystore e não é exibido de volta.
   Uma ação que ficou sem resposta por queda de conexão nunca é reenviada sozinha.
-- **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; "velho", "desligado" ou "erro" em vez de número desatualizado.
+- **Alertas:** o cartão do relógio vira coral cheio ("Sem energia da rede · 80%") enquanto o nobreak está na bateria, sem ocupar espaço nem mexer no layout; **"Internet fora"** (o roteador responde e todos os alvos de internet da Rede ficaram sem resposta por ~6 s) ou **"Sem rede"** (nenhum alvo responde) no cartão do relógio, em qualquer aba (tocar abre Sistema › Rede), abaixo da queda de energia e acima dos limites (ver `Latency.outage` no `:core`); "velho", "desligado" ou "erro" em vez de número desatualizado.
   **Limites:** GPU quente (85 °C), RAM no fim (90 %) e disco cheio (90 %) acendem a borda do relógio e trocam a linha do jogo por "RAM no fim · 93%" (com "+N" se houver mais de um).
   Só liga depois de 10 s acima do limite e só desliga 5 pontos abaixo dele; os limites (ou "Desligado") se ajustam na configuração.
 - **PC desligado:** depois de 1 min sem achar o PC (a troca USB e Wi-Fi não conta), a tela vira, conforme a configuração, **modo noite** (relógio escuro no horário escolhido, padrão 22h às 07h;
@@ -26,8 +40,8 @@ Alvo: tablet T68, Android 8.1 (API 27), 32 bits (`armeabi-v7a`), tela útil 862 
 - **Ligar PC (Wake-on-LAN):** com o PC desligado e um MAC de cabo guardado (o agente publica `system.net.mac`; Wi-Fi não vale), a tela de PC desligado mostra o botão redondo **Ligar PC**, que manda o pacote mágico (UDP, broadcast, portas 9 e 7) pela rede do tablet. Na tela apagada, um toque mostra o botão por 15 s. Cada pedido, com o desfecho, vai para `wol.log` na pasta do app (`Android/data/org.atalaia.app/files/`, as últimas ~100 linhas, MAC mascarado, sem IP) e para o `logcat` (tag `AtalaiaWol`). O registro só existe a partir da 0.3.0-beta.7, só no tablet, e reinstalar o app o apaga.
 - **Tela Atração:** com o PC conectado e 10 min sem toque, o painel vira um relógio com a data, o estado do PC e "Jogado hoje" (tempo com `steam.game` ativo visto pelo tablet, só em memória); um toque sai.
   Não entra por cima de queda de energia, alerta de limite ou call. Desliga na configuração.
-- **Troca de tela por contexto:** jogo da Steam que abre leva à aba Jogo; call no Discord (sem jogo aberto) leva à aba Discord; depois de 5 min sem toque volta ao Início (menos se a aba
-  é a do contexto ainda ativo). Só reage a um começo (reconectar com jogo ou call em andamento não puxa a tela, nem quem está mexendo). Ligada por padrão; desliga na configuração.
+- **Troca de tela por contexto:** jogo da Steam que abre leva à tela Jogo; call no Discord (sem jogo aberto) leva à Comunicação; depois de 5 min sem toque volta ao Início, com a barra na raiz (menos se a tela
+  é a do contexto ainda ativo; já estar dentro do contexto, mesmo num submenu, não puxa a tela). Só reage a um começo (reconectar com jogo ou call em andamento não puxa a tela, nem quem está mexendo). Ligada por padrão; desliga na configuração.
 - **PIN da configuração (opcional):** 4 a 6 dígitos pedidos ao abrir a configuração (menos na primeira); guarda só sal e hash, cinco erros seguidos trancam por 30 s. Esqueceu: reinstalar o app.
 - **Configuração:** abre sozinha na primeira vez, por toque longo no relógio ou tocando na faixa de erro de conexão.
 
@@ -81,7 +95,7 @@ derrubar o app no tablet.
 
 ## Testes e verificação
 
-- **Automáticos:** `:core:test` (248 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
+- **Automáticos:** `:core:test` (307 testes: protocolo, conexão com servidor falso e com OkHttp real, failover, estado,
   configuração) e `dotnet test` em `../agent` (114, inclusive o módulo USB com `adb` falso).
 - **Manual, com cabo e Wi-Fi reais:** [`docs/teste-manual.md`](docs/teste-manual.md).
 - **Desempenho no tablet:** `tools/measure-perf.ps1`.

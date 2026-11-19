@@ -181,7 +181,8 @@ public class GitHubReleaseClientTests
             r.Headers.Add("X-RateLimit-Reset", reset.ToString());
             return r;
         });
-        var e = await Assert.ThrowsAsync<GitHubException>(() => Client(fake).GetByTagAsync(Tag, CancellationToken.None));
+        // ListAsync: o feed (plano B) também responde limite aqui, então o erro original da API é o que sobe (GetByTagAsync não falha mais, veja os testes do plano B).
+        var e = await Assert.ThrowsAsync<GitHubException>(() => Client(fake).ListAsync(null, CancellationToken.None));
         Assert.Equal(GitHubFailure.RateLimited, e.Kind);
         Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(reset), e.RetryAt);
     }
@@ -190,7 +191,7 @@ public class GitHubReleaseClientTests
     public async Task Erro_429_com_retry_after_e_limite_tambem_e_403_sem_limite_e_erro_comum()
     {
         var tooMany = new FakeGitHub(_ => { var r = new HttpResponseMessage(HttpStatusCode.TooManyRequests); r.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(60)); return r; });
-        var e = await Assert.ThrowsAsync<GitHubException>(() => Client(tooMany).GetByTagAsync(Tag, CancellationToken.None));
+        var e = await Assert.ThrowsAsync<GitHubException>(() => Client(tooMany).ListAsync(null, CancellationToken.None));
         Assert.Equal(GitHubFailure.RateLimited, e.Kind);
         Assert.NotNull(e.RetryAt);
 
@@ -218,6 +219,89 @@ public class GitHubReleaseClientTests
     {
         var e = await Assert.ThrowsAsync<GitHubException>(() => Client(new FakeGitHub(_ => FakeGitHub.Json(json))).GetByTagAsync(Tag, CancellationToken.None));
         Assert.Equal(GitHubFailure.BadData, e.Kind);
+    }
+
+    // ---------------------------------------------------------------- plano B: API com o limite estourado
+
+    private const string FeedUrl = $"https://github.com/{Repo}/releases.atom";
+
+    /// <summary>A API responde "limite estourado"; o resto (github.com) é com <paramref name="web"/>.</summary>
+    private static FakeGitHub RateLimited(Func<HttpRequestMessage, HttpResponseMessage> web) => new(r =>
+    {
+        if (r.RequestUri!.Host != "api.github.com") return web(r);
+        var limit = new HttpResponseMessage(HttpStatusCode.Forbidden);
+        limit.Headers.Add("X-RateLimit-Remaining", "0");
+        limit.Headers.Add("X-RateLimit-Reset", DateTimeOffset.UtcNow.AddMinutes(20).ToUnixTimeSeconds().ToString());
+        return limit;
+    });
+
+    private static HttpResponseMessage Atom(string xml) => new(HttpStatusCode.OK) { Content = new StringContent(xml, Encoding.UTF8, "application/atom+xml") };
+
+    private static string Entry(string href, string html = "") =>
+        $"""<entry><link rel="alternate" type="text/html" href="{href}"/><title>x</title><content type="html">{WebUtility.HtmlEncode(html)}</content></entry>""";
+
+    private static string Feed(params string[] entries) => $"""<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">{string.Concat(entries)}</feed>""";
+
+    [Fact]
+    public async Task Lista_com_limite_estourado_cai_no_feed_do_github_com_sem_a_api()
+    {
+        var fake = RateLimited(_ => Atom(Feed(
+            Entry($"https://github.com/{Repo}/releases/tag/v0.4.0-beta.8", "<h3>Novidades</h3><ul><li>volume &amp; mudo</li></ul>"),
+            Entry($"https://github.com/{Repo}/releases/tag/v0.3.0"),
+            Entry($"https://github.com/outro/repo/releases/tag/v9.9.9"),          // outro repositório: ignorada
+            Entry($"https://github.com/{Repo}/releases/tag/nightly"))));          // tag fora do padrão: ignorada
+
+        var list = await Client(fake).ListAsync(null, CancellationToken.None);
+
+        Assert.Null(list.ETag);
+        Assert.Equal(["v0.4.0-beta.8", "v0.3.0"], list.Releases!.Select(r => r.Tag));
+        var beta = list.Releases![0];
+        Assert.True(beta.Prerelease);
+        Assert.False(list.Releases[1].Prerelease);
+        Assert.All(list.Releases, r => Assert.False(r.Draft));
+        Assert.Equal("Novidades\n- volume & mudo", beta.Body);
+        Assert.Equal($"https://github.com/{Repo}/releases/tag/v0.4.0-beta.8", beta.HtmlUrl);
+        Assert.Equal(
+            ["Atalaia-Agent-Setup-0.4.0-beta.8.exe", "Atalaia-Tablet-0.4.0-beta.8.apk", "SHA256SUMS.txt"],
+            beta.Assets.Select(a => a.Name));
+        Assert.Equal($"https://github.com/{Repo}/releases/download/v0.4.0-beta.8/SHA256SUMS.txt", beta.Find("SHA256SUMS.txt")!.Url);
+
+        Assert.Equal(["api.github.com", "github.com"], fake.Requests.Select(r => r.RequestUri!.Host));
+        Assert.Equal(FeedUrl, fake.Requests[1].RequestUri!.ToString());
+        Assert.Equal("Atalaia/0.1.1-beta.1", fake.Requests[1].Headers.UserAgent.ToString());   // só a versão
+        Assert.Null(fake.Requests[1].Headers.Authorization);
+    }
+
+    [Fact]
+    public async Task Lista_com_limite_estourado_e_feed_quebrado_mantem_o_aviso_de_limite()
+    {
+        foreach (var web in new Func<HttpRequestMessage, HttpResponseMessage>[]
+        {
+            _ => new HttpResponseMessage(HttpStatusCode.InternalServerError),
+            _ => throw new HttpRequestException("sem rede"),
+            _ => Atom("isto não é xml"),
+            _ => Atom("""<!DOCTYPE feed [<!ENTITY x "y">]><feed xmlns="http://www.w3.org/2005/Atom"/>"""),   // DTD é recusado
+        })
+        {
+            var e = await Assert.ThrowsAsync<GitHubException>(() => Client(RateLimited(web)).ListAsync(null, CancellationToken.None));
+            Assert.Equal(GitHubFailure.RateLimited, e.Kind);
+            Assert.NotNull(e.RetryAt);
+        }
+    }
+
+    [Fact]
+    public async Task Release_por_tag_com_limite_estourado_usa_os_nomes_fixos_sem_nenhuma_outra_consulta()
+    {
+        var fake = RateLimited(_ => throw new InvalidOperationException("não devia consultar mais nada"));
+
+        var r = await Client(fake).GetByTagAsync("v0.4.0-beta.9", CancellationToken.None);
+
+        Assert.Equal("v0.4.0-beta.9", r.Tag);
+        Assert.True(r.Prerelease);
+        Assert.Equal($"https://github.com/{Repo}/releases/download/v0.4.0-beta.9/Atalaia-Agent-Setup-0.4.0-beta.9.exe", r.Find("Atalaia-Agent-Setup-0.4.0-beta.9.exe")!.Url);
+        Assert.NotNull(r.Find("Atalaia-Tablet-0.4.0-beta.9.apk"));
+        Assert.NotNull(r.Find("SHA256SUMS.txt"));
+        Assert.Single(fake.Requests);   // só a tentativa da API
     }
 
     // ---------------------------------------------------------------- download

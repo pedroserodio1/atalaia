@@ -17,7 +17,10 @@ internal sealed class ApkProvider(GitHubReleaseClient client, string downloadsDi
     public const string SumsFile = "SHA256SUMS.txt";
 
     public string Tag => "v" + appVersion;
-    public string ApkName => $"Atalaia-Tablet-{appVersion}.apk";
+    public string ApkName => ApkNameFor(appVersion);
+
+    /// <summary>O nome do APK que a esteira publica na release de <paramref name="version"/> (sem o <c>v</c>).</summary>
+    public static string ApkNameFor(string version) => $"Atalaia-Tablet-{version}.apk";
 
     /// <summary>Só versões publicadas têm release (<c>0.1.1</c>, <c>0.1.1-beta.2</c>); <c>-dev</c> e o que não é uma versão válida, não.</summary>
     public bool CanDownload => ReleaseNames.IsValidTag(Tag);

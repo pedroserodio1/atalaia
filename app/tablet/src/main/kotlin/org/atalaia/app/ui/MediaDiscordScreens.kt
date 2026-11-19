@@ -3,6 +3,7 @@
 
 package org.atalaia.app.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,54 +63,57 @@ private fun intArgs(vararg pairs: Pair<String, Any>) = buildJsonObject {
 
 // ---------------------------------------------------------------- Mídia
 
+/** Tela "Tocando agora" da Mídia: a música com capa, controles e barra de posição. */
 @Composable
-fun MediaScreen(
-    state: AppState, now: Long, feedback: String?, covers: CoverRepository, clock: Clock, send: ActionSender, modifier: Modifier,
-) {
+fun NowPlayingScreen(state: AppState, now: Long, feedback: String?, covers: CoverRepository, send: ActionSender, modifier: Modifier) {
     val m = mediaLine(state, now)
-    val audio = state.dataOf<AudioData>("audio")
     val connected = state.connection is ConnectionState.Connected
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PanelCard(Modifier.fillMaxWidth()) {
-            CardLabel(Texts.NOW_PLAYING, m?.freshness ?: Freshness.NO_DATA, alert = feedback)
-            if (m == null || m.idle) {
-                Box(Modifier.fillMaxWidth().height(96.dp), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOTHING_PLAYING, Palette.TextMuted, 18) }
-            } else {
-                Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    CoverImage(m.coverHash, connected, covers, 96.dp)
-                    Column(Modifier.weight(1f).height(96.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        Column {
-                            BodyText(m.title, sp = 20)
-                            MonoText(m.artist, sp = 14)
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            RoundButton(IconKind.PREVIOUS, m.canPrevious, false) { send.send("media", "previous") }
-                            RoundButton(if (m.playing) IconKind.PAUSE else IconKind.PLAY, m.canPlayPause, true) { send.send("media", "play_pause") }
-                            RoundButton(IconKind.NEXT, m.canNext, false) { send.send("media", "next") }
-                        }
+    PanelCard(modifier.fillMaxWidth()) {
+        CardLabel(Texts.NOW_PLAYING, m?.freshness ?: Freshness.NO_DATA, alert = feedback)
+        if (m == null || m.idle) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOTHING_PLAYING, Palette.TextMuted, 18) }
+        } else {
+            Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                CoverImage(m.coverHash, connected, covers, 150.dp)
+                Column(Modifier.weight(1f).height(150.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        BodyText(m.title, sp = 24)
+                        MonoText(m.artist, sp = 15)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        RoundButton(IconKind.PREVIOUS, m.canPrevious, false) { send.send("media", "previous") }
+                        RoundButton(if (m.playing) IconKind.PAUSE else IconKind.PLAY, m.canPlayPause, true) { send.send("media", "play_pause") }
+                        RoundButton(IconKind.NEXT, m.canNext, false) { send.send("media", "next") }
                     }
                 }
-                SeekBar(m.positionSec, m.durationSec, m.canSeek) { send("media", "seek", intArgs("positionSec" to it.toInt())) }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    MonoText(Pt.duration(m.positionSec), sp = 11)
-                    if (m.durationSec > 0) MonoText(Pt.duration(m.durationSec), sp = 11)
-                }
+            }
+            Spacer(Modifier.height(10.dp))
+            SeekBar(m.positionSec, m.durationSec, m.canSeek) { send("media", "seek", intArgs("positionSec" to it.toInt())) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                MonoText(Pt.duration(m.positionSec), sp = 11)
+                if (m.durationSec > 0) MonoText(Pt.duration(m.durationSec), sp = 11)
             }
         }
-        PanelCard(Modifier.fillMaxWidth().weight(1f)) {
-            CardLabel(Texts.MIXER, state.freshness("audio", now))
-            if (audio == null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { MonoText(freshnessTag(state.freshness("audio", now)) ?: "") }
-            } else {
-                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    MixerRow(
-                        name = audio.output.ifBlank { Texts.MASTER }, volume = audio.volume, muted = audio.muted, active = true, clock = clock,
-                        canVolume = state.hasAction("audio", "set_volume"), canMute = state.hasAction("audio", "toggle_mute"),
-                        onVolume = { send("audio", "set_volume", intArgs("value" to it)) },
-                        onMute = { send.send("audio", "toggle_mute") },
-                    )
-                    audio.sessions.forEach { s -> SessionRow(s, state, clock, send) }
-                }
+    }
+}
+
+/** Tela "Mixer" da Mídia: volume geral e por aplicativo. */
+@Composable
+fun MixerScreen(state: AppState, now: Long, clock: Clock, send: ActionSender, modifier: Modifier) {
+    val audio = state.dataOf<AudioData>("audio")
+    PanelCard(modifier.fillMaxWidth()) {
+        CardLabel(Texts.MIXER, state.freshness("audio", now))
+        if (audio == null) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { MonoText(freshnessTag(state.freshness("audio", now)) ?: "") }
+        } else {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                MixerRow(
+                    name = audio.output.ifBlank { Texts.MASTER }, volume = audio.volume, muted = audio.muted, active = true, clock = clock,
+                    canVolume = state.hasAction("audio", "set_volume"), canMute = state.hasAction("audio", "toggle_mute"),
+                    onVolume = { send("audio", "set_volume", intArgs("value" to it)) },
+                    onMute = { send.send("audio", "toggle_mute") },
+                )
+                audio.sessions.forEach { s -> SessionRow(s, state, clock, send) }
             }
         }
     }
@@ -142,7 +151,7 @@ private fun MixerRow(
  * toda. Estados por ícone: o forma diz o estado, a cor só reforça.
  */
 @Composable
-fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, send: ActionSender, modifier: Modifier) {
+fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, covers: CoverRepository, send: ActionSender, modifier: Modifier) {
     val d = state.dataOf<DiscordData>("discord")
     val freshness = state.freshness("discord", now)
     if (d == null || !d.connected) {
@@ -186,9 +195,20 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, s
             if (channel == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
             } else {
+                // Tocar numa pessoa abre o controle dela (volume e silenciar, só para o usuário); tocar de novo fecha. Sem as ações no `hello`, ou sem id, a linha não é tocável.
+                val canVolume = state.hasAction("discord", "set_user_volume")
+                val canMute = state.hasAction("discord", "toggle_user_mute")
+                var selected by remember { mutableStateOf<String?>(null) }
+                val picked = channel.members.firstOrNull { it.id.isNotEmpty() && it.id == selected }   // quem saiu da call fecha o controle sozinho
                 Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
-                    channel.members.forEach { MemberRow(it) }
+                    val connected = state.connection is ConnectionState.Connected
+                    channel.members.forEach { m ->
+                        val tappable = (canVolume || canMute) && m.id.isNotEmpty()
+                        MemberRow(m, connected, covers, picked?.id == m.id && tappable, if (tappable) ({ selected = if (selected == m.id) null else m.id }) else null)
+                    }
                 }
+                if (picked != null) MemberControl(picked, canVolume, canMute, clock, { selected = null },
+                    { send("discord", "set_user_volume", intArgs("id" to picked.id, "value" to it)) }, { send("discord", "toggle_user_mute", intArgs("id" to picked.id)) })
                 if (state.hasAction("discord", "leave_call")) LeaveCallBar { send.send("discord", "leave_call") }
             }
         }
@@ -234,15 +254,43 @@ private fun VolumeColumn(icon: IconKind, value: Int?, max: Int, enabled: Boolean
     }
 }
 
+/** Controle de uma pessoa da call: volume dela (0 a 200, envia ao soltar) e silenciar só para o usuário. Fecha no X ou tocando de novo na pessoa. */
 @Composable
-private fun MemberRow(m: DiscordMember) {
-    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+private fun MemberControl(m: DiscordMember, canVolume: Boolean, canMute: Boolean, clock: Clock, onClose: () -> Unit, onVolume: (Int) -> Unit, onMute: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(52.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.width(96.dp)) {
+            BodyText(m.name, sp = 14)
+            MonoText(m.volume?.let { "$it%" } ?: Texts.NO_VALUE, sp = 12)
+        }
+        HeldSlider(m.volume, 200, canVolume, clock, onVolume, Modifier.weight(1f))
+        StateButton(if (m.localMuted) Texts.DISCORD_USER_MUTED else Texts.DISCORD_USER_MUTE, bad = m.localMuted, enabled = canMute, modifier = Modifier.width(104.dp), onClick = onMute)
+        Box(Modifier.size(48.dp).clickable(onClick = onClose), contentAlignment = Alignment.Center) { PanelIcon(IconKind.CLOSE, Palette.TextMuted, 22.dp) }
+    }
+}
+
+@Composable
+private fun MemberRow(m: DiscordMember, connected: Boolean, covers: CoverRepository, selected: Boolean = false, onClick: (() -> Unit)? = null) {
+    // A foto vem do agente (GET /cover/{hash}, o mesmo caminho das capas): o app não busca nada da internet. Sem foto, ou enquanto ela não chega, vale a inicial.
+    val avatar by produceState<ImageBitmap?>(null, m.avatarHash, connected) {
+        value = m.avatarHash?.takeIf { connected }?.let { covers.load(it) }
+    }
+    val rowShape = RoundedCornerShape(12.dp)
+    val tap = if (onClick != null) Modifier.clip(rowShape).clickable(onClick = onClick) else Modifier
+    Row(Modifier.fillMaxWidth().height(48.dp).then(tap).then(if (selected) Modifier.border(1.dp, Palette.Mint, rowShape) else Modifier).padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         // Quem fala ganha anel menta, nome em menta e o ícone de som; mudo e surdo são ícones cortados (o estado nunca depende só da cor).
         Box(
             Modifier.size(34.dp).background(Palette.Border, CircleShape).border(if (m.speaking) 3.dp else 1.dp, if (m.speaking) Palette.Mint else Palette.Border, CircleShape),
             contentAlignment = Alignment.Center,
-        ) { BodyText(m.name.take(1).uppercase(), sp = 14) }
+        ) {
+            val img = avatar
+            if (img != null) Image(img, null, Modifier.size(34.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+            else BodyText(m.name.take(1).uppercase(), sp = 14)
+        }
         Box(Modifier.weight(1f)) { BodyText(m.name, if (m.speaking) Palette.Mint else Palette.Text, 16) }
+        // O que o usuário ajustou para esta pessoa, em texto (nunca só cor): silenciada, ou o volume quando não é o normal (100%).
+        if (m.localMuted) MonoText(Texts.DISCORD_USER_MUTED, Palette.Coral, 12)
+        else if (m.volume != null && m.volume != 100) MonoText("${m.volume}%", sp = 12)
         if (m.speaking) PanelIcon(IconKind.VOLUME, Palette.Mint, 22.dp)
         if (m.deafened) {
             PanelIcon(IconKind.MIC_OFF, Palette.Coral, 22.dp)

@@ -2,14 +2,17 @@
 // Copyright (C) 2026 Pedro Serôdio
 
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Atalaia.Agent.Core;
 
 namespace Atalaia.Agent.Plugins.Discord;
 
 /// <summary>Estado da voz no Discord, atualizado pelos eventos. Nomes de pessoas nunca vão para log.</summary>
-public sealed class DiscordState
+public sealed partial class DiscordState
 {
-    private sealed record Member(string Name, bool Muted, bool Deafened);
+    /// <param name="Avatar">O hash do avatar no Discord (validado), ou <c>null</c>; <paramref name="AvatarBlob"/> é o hash da imagem já baixada (o que o tablet pede em <c>/cover</c>).</param>
+    /// <param name="Volume">O volume que o usuário deu a esta pessoa (0..200), ou <c>null</c> sem leitura; <paramref name="LocalMuted"/> é o mudo só para o usuário (não o mudo da pessoa).</param>
+    private sealed record Member(string Name, bool Muted, bool Deafened, string? Avatar = null, string? AvatarBlob = null, int? Volume = null, bool LocalMuted = false);
 
     private readonly object _lock = new();
     private bool _connected;
@@ -119,8 +122,10 @@ public sealed class DiscordState
                     connection = _connState is null ? null : new { state = _connState, pingMs = _pingMs },
                     members = _members.Select(m => new
                     {
-                        name = m.Value.Name, muted = m.Value.Muted, deafened = m.Value.Deafened,
+                        id = m.Key, name = m.Value.Name, muted = m.Value.Muted, deafened = m.Value.Deafened,
                         speaking = _speaking.Contains(m.Key),
+                        avatarHash = m.Value.AvatarBlob,
+                        volume = m.Value.Volume, localMuted = m.Value.LocalMuted,
                     }).OrderBy(m => m.name, StringComparer.CurrentCultureIgnoreCase).ToList(),
                 },
             });
@@ -158,11 +163,89 @@ public sealed class DiscordState
         if (name.Length == 0) name = Str(u, "global_name");
         if (name.Length == 0) name = Str(u, "username");
         var vs = s.TryGetProperty("voice_state", out var v) ? v : default;
-        _members[id] = new Member(name, Bool(vs, "mute") || Bool(vs, "self_mute"), Bool(vs, "deaf") || Bool(vs, "self_deaf"));
+        var avatar = ValidAvatar(Str(u, "avatar"));
+        _members.TryGetValue(id, out var old);
+        var blob = old is not null && old.Avatar == avatar ? old.AvatarBlob : null;   // o mesmo avatar não baixa de novo a cada atualização de voz
+        // volume e mute fora do voice_state são os do usuário para esta pessoa (SET_USER_VOICE_SETTINGS); evento sem eles não zera o que já se sabe
+        var volume = Percent(s, "volume") ?? old?.Volume;
+        var localMuted = OptBool(s, "mute") ?? old?.LocalMuted ?? false;
+        _members[id] = new Member(name, Bool(vs, "mute") || Bool(vs, "self_mute"), Bool(vs, "deaf") || Bool(vs, "self_deaf"), avatar, blob, volume, localMuted);
+    }
+
+    // ---------------------------------------------------------------- volume e mudo por pessoa
+
+    /// <summary>Quem está na call agora (o agente só age em quem ele mesmo listou).</summary>
+    public bool HasMember(string id)
+    {
+        lock (_lock) return _members.ContainsKey(id);
+    }
+
+    /// <summary>O mudo só para o usuário de quem está na call; <c>null</c> se a pessoa não está.</summary>
+    public bool? LocalMuted(string id)
+    {
+        lock (_lock) return _members.TryGetValue(id, out var m) ? m.LocalMuted : null;
+    }
+
+    /// <summary>Resposta do <c>SET_USER_VOICE_SETTINGS</c> (<c>{ user_id, volume, mute }</c>): reflete na coleta imediata. Só atualiza o que veio e só de quem está na call.</summary>
+    public void ApplyUserVoiceSettings(JsonElement d)
+    {
+        var id = Str(d, "user_id");
+        lock (_lock)
+        {
+            if (!_members.TryGetValue(id, out var m)) return;
+            _members[id] = m with { Volume = Percent(d, "volume") ?? m.Volume, LocalMuted = OptBool(d, "mute") ?? m.LocalMuted };
+        }
+    }
+
+    /// <summary>Volume do Discord (0..200) como inteiro; fora disso ou sem número é <c>null</c>.</summary>
+    private static int? Percent(JsonElement o, string name) =>
+        o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var n) && double.IsFinite(n)
+            ? (int)Math.Round(Math.Clamp(n, 0, 200)) : null;
+
+    // ---------------------------------------------------------------- avatares
+
+    [GeneratedRegex(@"^\d{15,25}$")]
+    private static partial Regex UserIdRule();
+
+    [GeneratedRegex(@"^(a_)?[0-9a-f]{32}$")]
+    private static partial Regex AvatarRule();
+
+    /// <summary>Id de usuário do Discord: só dígitos (snowflake). Entra em uma URL, então nada além disso passa.</summary>
+    public static bool IsUserId(string id) => UserIdRule().IsMatch(id);
+
+    /// <summary>O hash de avatar do Discord (32 hexadecimais, com <c>a_</c> na frente se animado), em minúsculas; <c>null</c> se vazio ou fora do formato (nunca entra em URL).</summary>
+    public static string? ValidAvatar(string hash)
+    {
+        var h = hash.ToLowerInvariant();
+        return AvatarRule().IsMatch(h) ? h : null;
+    }
+
+    /// <summary>
+    /// O endereço da imagem: **um host fixo do CDN do Discord**, definido aqui, com só o id e o hash já validados (nunca um endereço vindo do conteúdo). Peço 64 px
+    /// direto ao CDN e em PNG (o animado vem como o primeiro quadro), então o agente não redimensiona nada.
+    /// </summary>
+    public static string AvatarUrl(string userId, string avatar) => $"https://cdn.discordapp.com/avatars/{userId}/{avatar}.png?size=64";
+
+    /// <summary>Quem tem avatar e ainda não tem a imagem baixada.</summary>
+    public IReadOnlyList<(string Id, string Avatar)> PendingAvatars()
+    {
+        lock (_lock)
+            return [.. _members.Where(m => m.Value.Avatar is not null && m.Value.AvatarBlob is null && IsUserId(m.Key)).Select(m => (m.Key, m.Value.Avatar!))];
+    }
+
+    /// <summary>A imagem baixada (<paramref name="blob"/> = hash do <c>/cover</c>) vale só se o membro ainda está na call com o mesmo avatar.</summary>
+    public void SetAvatarBlob(string id, string avatar, string blob)
+    {
+        lock (_lock)
+            if (_members.TryGetValue(id, out var m) && m.Avatar == avatar) _members[id] = m with { AvatarBlob = blob };
     }
 
     private static string Str(JsonElement o, string name) =>
         o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
+
+    /// <summary>Booleano que pode faltar: <c>null</c> se a propriedade não veio (diferente de <c>false</c>).</summary>
+    private static bool? OptBool(JsonElement o, string name) =>
+        o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) ? v.ValueKind switch { JsonValueKind.True => true, JsonValueKind.False => false, _ => null } : null;
 
     private static bool Bool(JsonElement o, string name) =>
         o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.True;

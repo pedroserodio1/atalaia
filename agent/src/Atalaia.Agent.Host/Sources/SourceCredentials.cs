@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace Atalaia.Agent.Host.Sources;
 
-internal enum FieldKind { Latitude, Longitude, SteamId64, Text }
+internal enum FieldKind { Latitude, Longitude, SteamId64, Text, IcalUrls, AniListUser, NetworkTargets }
 
 /// <param name="Secret">Segredo: vai para o cofre (DPAPI), nunca para o <c>settings.json</c>, e o valor nunca volta para a tela.</param>
 internal sealed record CredentialField(string Name, string Label, FieldKind Kind, bool Secret)
@@ -24,6 +24,7 @@ internal sealed record CredentialField(string Name, string Label, FieldKind Kind
 internal static class SourceCredentials
 {
     public const int MaxLength = 256;
+    public const int MaxLengthLinks = 2048;   // até 5 links iCal secretos
 
     private static readonly Dictionary<string, CredentialField[]> Fields = new(StringComparer.Ordinal)
     {
@@ -43,6 +44,21 @@ internal static class SourceCredentials
             new("clientId", "Client ID", FieldKind.Text, Secret: false),
             new("clientSecret", "Client Secret", FieldKind.Text, Secret: true),
         ],
+        // O link iCal secreto é o segredo (quem o tem lê a agenda): vai para o cofre.
+        ["calendar"] =
+        [
+            new("urls", "Agendas (nome e link iCal)", FieldKind.IcalUrls, Secret: true),
+        ],
+        // O nome de usuário é público (está na URL do perfil, anilist.co/user/NOME) e não dá acesso a nada: vai para o settings.json, sem cofre.
+        ["anilist"] =
+        [
+            new("username", "Usuário do AniList", FieldKind.AniListUser, Secret: false),
+        ],
+        // Os alvos do ping (nome e endereço) não são segredo: vão para o settings.json e voltam para a janela, que os mostra numa lista.
+        ["network"] =
+        [
+            new("targets", "Alvos do ping (nome e endereço)", FieldKind.NetworkTargets, Secret: false),
+        ],
     };
 
     /// <summary>Os campos da fonte, na ordem da tela; vazio se a janela não configura essa fonte.</summary>
@@ -57,7 +73,7 @@ internal static class SourceCredentials
         normalized = "";
         var v = raw?.Trim() ?? "";
         if (v.Length == 0) { error = $"{field.Label}: preencha este campo."; return false; }
-        if (v.Length > MaxLength) { error = $"{field.Label}: valor grande demais."; return false; }
+        if (v.Length > (field.Kind == FieldKind.IcalUrls ? MaxLengthLinks : MaxLength)) { error = $"{field.Label}: valor grande demais."; return false; }
 
         switch (field.Kind)
         {
@@ -65,6 +81,25 @@ internal static class SourceCredentials
                 return Coordinate(field, v, 90, "-90 e 90", out normalized, out error);
             case FieldKind.Longitude:
                 return Coordinate(field, v, 180, "-180 e 180", out normalized, out error);
+            case FieldKind.IcalUrls:
+                {
+                    var links = Atalaia.Agent.Plugins.Calendar.CalendarPlugin.ParseLinks(v, out var linkError);
+                    if (linkError is not null) { error = $"{field.Label}: {linkError}"; return false; }
+                    normalized = string.Join("; ", links.Select(l => $"{l.Name} {l.Url.OriginalString}"));
+                    error = null;
+                    return true;
+                }
+            case FieldKind.NetworkTargets:
+                {
+                    var targets = Atalaia.Agent.Plugins.Network.NetworkPlugin.ParseTargets(v, out var targetsError);
+                    if (targetsError is not null) { error = $"{field.Label}: {targetsError}"; return false; }
+                    normalized = string.Join("; ", targets.Select(t => $"{t.Name} {t.Address}"));
+                    error = null;
+                    return true;
+                }
+            case FieldKind.AniListUser:
+                if (!Atalaia.Agent.Plugins.AniList.AniListPlugin.IsValidName(v)) { error = $"{field.Label}: use só letras, números, ponto, hífen e sublinhado (até 40), o nome que aparece em anilist.co/user/NOME."; return false; }
+                break;
             case FieldKind.SteamId64:
                 if (v.Length != 17 || !v.All(char.IsAsciiDigit)) { error = $"{field.Label}: precisa ter exatamente 17 dígitos (só números)."; return false; }
                 break;

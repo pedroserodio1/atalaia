@@ -3,6 +3,33 @@
 Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] - 2026-11-20
+
+### Novidades
+
+- **app:** Navegação em submenus com arco ao segurar uma aba (#88)
+- Agenda por link iCal (agente e app), com modal do dia, aviso e som (#91)
+- Lista de agendas na janela e Agenda como aba da raiz (#93)
+- **app:** Agenda vira filha da Comunicação e o aviso do relógio abre a Agenda (#95)
+- Fonte AniList (agente e tela Mídia › Anime) (#96)
+- **agent:** Fonte Rede (ping, jitter e perda até o roteador e a internet) (#100)
+- **app:** Tela Rede em Sistema com latência, jitter e perda por alvo (#101)
+- Uso por núcleo da CPU (system.cpu.cores e cartão na tela Sistema) (#105)
+- Alerta "internet caiu" no cartão do relógio (gateway no alvo da Rede) (#109)
+- **app:** Gráfico de tráfego (descida e subida) no alto da tela Rede (#110)
+- Foto dos membros da call do Discord (avatarHash) (#111)
+- Volume e mudo por pessoa na call do Discord (#115)
+
+### Correções
+
+- **app:** Arco que travava aberto ao soltar o dedo e aba Tocando agora cortada (#90)
+- **app:** Estatísticas da Rede sem corte e ruim só com perda, oscilação ou ping muito alto (#104)
+- **app:** Cor das barras da Rede segue a mesma regra da qualidade (#108)
+- **agent:** Atualização usa o feed e os arquivos do github.com quando a API estoura o limite (#118)
+
+### Outros
+
+- Anime sem a lista "assistindo agora" (tela, agente e contrato) (#99)
 ## [0.3.0] - 2026-11-15
 
 ### Novidades
@@ -22,31 +49,6 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as ver
 - **agent:** A janela não diz mais que o app não está instalado durante a atualização por USB (#66) (#68)
 - **ci:** Notas da release estável sem grupos repetidos (#23) (#76)
 
-### Outros
-
-- Roadmap ganha a 0.3.1 com a correção das notas da release (#23)
-- Roadmap ganha as melhorias do Discord (0.3.0, 0.4.0 e 0.5.0)
-- Abre o ciclo 0.3.0
-- Roadmap da 0.3.0 (ordem de trabalho, contrato e riscos) e 0.2.0 fechada
-- Roadmap da 0.3.0 com as decisões (tela de PC desligado configurável e aviso de transferência na versão)
-- Permite commitar sem pedir quando a mudança concluída faz sentido como commit (#58)
-- Roadmap com a 0.3.0-beta.1 em publicação
-- Roadmap com a 0.3.0-beta.1 publicada
-- Roadmap marca os alertas de limite como provados no tablet
-- 0.3.0-beta.1 (alertas de limite) (#59)
-- 0.3.0, tela de PC desligado e roadmap (#61)
-- Roadmap com a 0.3.0-beta.2 publicada e a beta.3 em publicação
-- Roadmap com a 0.3.0-beta.3 publicada e o que da troca de tela já foi provado
-- 0.3.0-beta.3 (troca de tela por contexto) (#63)
-- Roadmap com a 0.3.0-beta.4 em publicação
-- Roadmap com a #66 (mensagem de app não instalado durante a atualização por USB) na 0.3.1
-- Roadmap marca a tela mais clara do Discord como provada no tablet
-- **agent:** Folga para a abertura do powershell nos testes do runner real (#67)
-- 0.3.0-beta.4 (aba Discord nova) (#65)
-- Roadmap com a 0.3.0-beta.5 em publicação
-- 0.3.0-beta.5 (aviso de download, PIN, tela Atração e #66) (#72)
-- Roadmap com a beta.7 publicada, Wake-on-LAN e Discord provados no tablet (#79)
-- Roadmap com a fonte do Fortnite (log do jogo) no item Jogos da 0.6.0 (#80)
 
 ## [0.2.0] - 2026-11-13
 

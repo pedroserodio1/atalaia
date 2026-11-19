@@ -15,7 +15,8 @@ import kotlinx.serialization.json.JsonObject
  */
 sealed interface SourceData
 
-@Serializable data class Cpu(val percent: Int? = null)
+/** `cores`: uso de cada núcleo lógico, em %, na ordem do Windows (acréscimo da 0.4.0); `null` sem leitura. Só uso: sem temperatura nem frequência por núcleo. */
+@Serializable data class Cpu(val percent: Int? = null, val cores: List<Int>? = null)
 @Serializable data class Ram(val usedMb: Long? = null, val totalMb: Long? = null)
 @Serializable data class Disk(val name: String = "", val usedGb: Double? = null, val totalGb: Double? = null)
 /** `mac`: MAC da placa de cabo do PC (`AA:BB:CC:DD:EE:FF`) para o Wake-on-LAN; `null` no Wi-Fi ou sem leitura. */
@@ -150,6 +151,80 @@ data class WeatherData(
     val updatedAt: String? = null,
 ) : SourceData
 
+/** Uma agenda configurada no agente (o nome é o que o usuário escreveu) e se ela respondeu nesta rodada. */
+@Serializable data class CalendarInfo(val name: String = "", val ok: Boolean = true)
+
+/** Um evento: `start` e `end` em ISO-8601 com o offset do PC; `calendar` é o índice em [CalendarData.calendars]. Dia inteiro começa à meia-noite. */
+@Serializable
+data class CalendarEvent(
+    val title: String = "",
+    val start: String = "",
+    val end: String = "",
+    val allDay: Boolean = false,
+    val calendar: Int = 0,
+)
+
+/** Agenda por link iCal: os eventos do mês atual e do seguinte, só com título e horário. */
+@Serializable
+data class CalendarData(
+    val calendars: List<CalendarInfo> = emptyList(),
+    val events: List<CalendarEvent> = emptyList(),
+    val updatedAt: String? = null,
+) : SourceData
+
+/** Um gênero mais visto e quantos títulos tem. */
+@Serializable data class AniListGenre(val name: String = "", val count: Int? = null)
+
+/** Um estúdio mais visto: quantos títulos e quantos minutos assistidos. */
+@Serializable data class AniListStudio(val name: String = "", val count: Int? = null, val minutes: Int? = null)
+
+/** Uma atividade de lista, com os nomes originais do AniList (`watched episode`, `ANIME`...): quem traduz é o app. `progress` é texto (`"5"`, `"3 - 5"`, `""`). */
+@Serializable
+data class AniListActivity(
+    val title: String = "",
+    val type: String = "",
+    val action: String = "",
+    val progress: String = "",
+    val at: String? = null,
+)
+
+/** Anime e mangá do perfil público do AniList. Campo sem leitura é `null`; só título, ação e progresso das atividades. */
+@Serializable
+data class AniListData(
+    val user: String = "",
+    val animeCount: Int? = null,
+    val mangaCount: Int? = null,
+    val episodesWatched: Int? = null,
+    val minutesWatched: Int? = null,
+    val chaptersRead: Int? = null,
+    val genres: List<AniListGenre> = emptyList(),
+    val studios: List<AniListStudio> = emptyList(),
+    val recent: List<AniListActivity> = emptyList(),
+    val followers: Int? = null,
+    val following: Int? = null,
+    val updatedAt: String? = null,
+) : SourceData
+
+/**
+ * Um alvo do ping. Tempos em ms inteiros; `null` é sem leitura (nunca 0). `samples` vai da amostra mais antiga para a mais nova e `null` ali é um pacote sem
+ * resposta. O endereço do alvo nunca chega ao app: só o nome.
+ */
+@Serializable
+data class NetworkTarget(
+    val name: String = "",
+    val gateway: Boolean = false,   // o alvo é o roteador (agente da beta.7 em diante); sem o campo vale false
+    val rttMs: Int? = null,
+    val avgMs: Int? = null,
+    val minMs: Int? = null,
+    val maxMs: Int? = null,
+    val jitterMs: Int? = null,
+    val lossPercent: Int? = null,
+    val samples: List<Int?> = emptyList(),
+)
+
+/** Latência, jitter e perda até os alvos do ping (a janela de ~30 amostras fica no agente). */
+@Serializable data class NetworkData(val targets: List<NetworkTarget> = emptyList()) : SourceData
+
 /** Só o nome do app e a contagem: o agente nunca manda título nem texto das notificações. */
 @Serializable data class NotificationApp(val name: String = "", val count: Int = 0)
 
@@ -158,10 +233,17 @@ data class NotificationsData(val count: Int = 0, val apps: List<NotificationApp>
 
 @Serializable
 data class DiscordMember(
+    /** O id de usuário do Discord (o que `set_user_volume` e `toggle_user_mute` recebem); vazio em agente anterior à 0.4.0 (sem o id não há controle por pessoa). */
+    val id: String = "",
     val name: String = "",
     val muted: Boolean = false,
     val deafened: Boolean = false,
     val speaking: Boolean = false,
+    /** O hash da foto do membro (16 hexadecimais) para pedir em `GET /cover/{hash}`; `null` sem avatar ou enquanto o agente não baixou (a tela usa a inicial). Campo da beta.7. */
+    val avatarHash: String? = null,
+    /** O volume (0 a 200) que o usuário deu a esta pessoa, `null` sem leitura; `localMuted` é o mudo só para o usuário (diferente de `muted`). */
+    val volume: Int? = null,
+    val localMuted: Boolean = false,
 )
 
 /** Qualidade da conexão de voz: `state` é `connected`, `connecting` ou `no_route`; `pingMs` só em `connected`. */
@@ -221,6 +303,9 @@ object Sources {
                     "weather" -> json.decodeFromJsonElement(WeatherData.serializer(), data)
                     "notifications" -> json.decodeFromJsonElement(NotificationsData.serializer(), data)
                     "discord" -> json.decodeFromJsonElement(DiscordData.serializer(), data)
+                    "calendar" -> json.decodeFromJsonElement(CalendarData.serializer(), data)
+                    "anilist" -> json.decodeFromJsonElement(AniListData.serializer(), data)
+                    "network" -> json.decodeFromJsonElement(NetworkData.serializer(), data)
                     else -> return Decoded.UnknownSource
                 },
             )

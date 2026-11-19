@@ -145,6 +145,10 @@ button { font: inherit; color: inherit; }
 .input.wide { width: 100%; box-sizing: border-box; }
 .cfg { padding: 4px 0 16px; border-bottom: 1px solid var(--border); }
 .frow { display: grid; gap: 6px; margin-bottom: 12px; }
+.alist { display: grid; gap: 8px; margin-bottom: 8px; }
+.arow { display: flex; gap: 8px; align-items: center; }
+.arow .aname { width: 170px; flex: none; }
+.arow .aurl { flex: 1; width: auto; }
 .flabel { font-weight: 700; font-size: 15px; }
 .input:disabled { opacity: .6; }
 .input.ro { flex: 1; width: auto; display: flex; align-items: center; font-size: 14px; color: var(--text-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

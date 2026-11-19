@@ -121,6 +121,11 @@ class SettingsStore(context: Context) {
         set(v) { prefs.edit().putString("lastMac", v).apply() }
 
     /** Trocar de aba sozinho (jogo, call, volta ao Início); ligado por padrão. */
+    /** Som curto no tablet quando falta 15 e 5 min para um evento da agenda. */
+    var agendaSound: Boolean
+        get() = prefs.getBoolean("agendaSound", true)
+        set(v) { prefs.edit().putBoolean("agendaSound", v).apply() }
+
     var autoSwitch: Boolean
         get() = prefs.getBoolean("autoSwitch", true)
         set(v) { prefs.edit().putBoolean("autoSwitch", v).apply() }

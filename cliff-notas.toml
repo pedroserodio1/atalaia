@@ -27,5 +27,7 @@ topo_order = false
 commit_parsers = [
   { message = "^feat", group = "<!-- 0 -->Novidades" },
   { message = "^fix", group = "<!-- 1 -->Correções" },
-  { message = "^(docs|refactor|perf|test|build|ci|chore|style|revert)", group = "<!-- 2 -->Outros" },
+  # docs, testes, build, CI, chore, style e revert são rotina do repositório: ficam fora das notas e do changelog.
+  { message = "^(docs|test|build|ci|chore|style|revert)", skip = true },
+  { message = "^(refactor|perf)", group = "<!-- 2 -->Outros" },
 ]

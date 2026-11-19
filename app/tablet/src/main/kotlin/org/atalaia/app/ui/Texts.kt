@@ -14,8 +14,82 @@ object Texts {
     const val TAB_HOME = "Início"
     const val TAB_SYSTEM = "Sistema"
     const val TAB_MEDIA = "Mídia"
-    const val TAB_DISCORD = "Discord"
+    const val TAB_COMM = "Comunicação"
     const val TAB_GAME = "Jogo"
+    const val NAV_MAIN = "Principal"
+    const val NAV_NOW_PLAYING = "Tocando agora"
+    const val NAV_BACK = "Voltar"
+    const val NAV_AGENDA = "Agenda"
+    const val NAV_DAY = "Dia"
+    const val NAV_PEOPLE = "Pessoas"
+    const val NAV_WEEK = "Semana"
+    const val NAV_MONTH = "Mês"
+    const val NAV_ANIME = "Anime"
+    const val NAV_NET = "Rede"
+    const val NAV_OVERVIEW = "Visão geral"
+
+    const val NET_OFF = "A Rede está desligada. Ligue em Fontes de dados, no PC."
+    const val NET_NO_DATA = "Sem dados da Rede"
+    const val NET_OUTAGE_INTERNET = "Internet fora"
+    const val NET_OUTAGE_NONET = "Sem rede"
+
+    fun netQuality(q: org.atalaia.core.panel.NetQuality): String = when (q) {
+        org.atalaia.core.panel.NetQuality.GOOD -> "ótimo"
+        org.atalaia.core.panel.NetQuality.OK -> "regular"
+        org.atalaia.core.panel.NetQuality.BAD -> "ruim"
+        org.atalaia.core.panel.NetQuality.DOWN -> "sem resposta"
+        org.atalaia.core.panel.NetQuality.NONE -> "medindo"
+    }
+
+    /** `méd 10 ms` e `jitter 1 ms`, uma por linha. */
+    fun netAverage(avg: String): String = "méd $avg"
+
+    fun netJitter(jitter: String): String = "jitter $jitter"
+
+    fun netLoss(loss: Int?): String = "perda ${loss?.let { "$it%" } ?: NO_VALUE}"
+
+    fun netDown(rx: String?): String = "↓ ${rx ?: NO_VALUE}"
+
+    fun netUp(tx: String?): String = "↑ ${tx ?: NO_VALUE}"
+
+    /** `escala até 1 Mb/s`: o teto do gráfico de tráfego, para ninguém ler a altura da linha sem saber a escala. */
+    fun netScale(max: String): String = "escala até $max"
+
+    const val ANIME_OFF = "O AniList está desligado ou sem usuário. Configure no PC (Fontes de dados)."
+    const val ANIME_NO_DATA = "Sem dados do AniList"
+    const val ANIME_RECENT = "Últimas atividades"
+    const val ANIME_GENRES = "Gêneros mais vistos"
+    const val ANIME_STUDIOS = "Estúdios mais vistos"
+    const val ANIME_NOTHING_RECENT = "Sem atividades recentes."
+    const val ANIME_STAT_ANIME = "animes"
+    const val ANIME_STAT_EPISODES = "episódios"
+    const val ANIME_STAT_TIME = "assistidos"
+    const val ANIME_STAT_MANGA = "mangás"
+    const val ANIME_STAT_CHAPTERS = "capítulos"
+
+    fun animeFollowers(followers: Int?, following: Int?): String? = when {
+        followers == null && following == null -> null
+        else -> "${followers ?: NO_VALUE} seguidores · ${following ?: NO_VALUE} seguindo"
+    }
+
+    /** `12 animes · 2 d 20 h`. */
+    fun animeStudio(count: Int?, watched: String?): String = listOfNotNull(count?.let { "$it animes" }, watched).joinToString(" · ")
+
+    const val AGENDA_TODAY = "Hoje"
+    const val AGENDA_OPEN_DAY = "Abrir o dia"
+    const val AGENDA_CLOSE = "Fechar"
+    const val AGENDA_PREVIOUS = "Anterior"
+    const val AGENDA_NEXT = "Seguinte"
+    const val AGENDA_NOTHING = "Nada marcado para este dia."
+    const val AGENDA_ALL_DAY = "Dia inteiro"
+    const val AGENDA_OFF = "A agenda está desligada ou sem link. Configure no PC (Fontes de dados)."
+    const val AGENDA_NO_DATA = "Sem dados da agenda"
+    const val AGENDA_SOUND_LABEL = "Som do aviso de agenda"
+    const val AGENDA_UNAVAILABLE = "sem resposta"
+
+    fun agendaAlertLine(minutes: Int, title: String): String = "Em $minutes min · $title"
+    fun agendaIn(minutes: Int): String = "em $minutes min"
+    fun agendaMore(n: Int): String = "+$n"
 
     const val TAG_STALE = "velho"
     const val TAG_DISABLED = "desligado"
@@ -48,6 +122,10 @@ object Texts {
     const val DISK = "Disco"
     const val CPU_LAST_60 = "CPU · últimos 60 s"
 
+    fun cpuCores(n: Int): String = "$n núcleos"
+
+    fun cpuCoresPeak(percent: Int): String = "pico $percent%"
+
     const val MIXER = "Mixer"
     const val MASTER = "Volume geral"
     const val MUTED = "mudo"
@@ -59,6 +137,8 @@ object Texts {
     const val DISCORD_LEAVE = "Sair da call"
     const val DISCORD_LEAVE_ASK = "Sair da call?"
     const val DISCORD_LEAVE_YES = "Sair"
+    const val DISCORD_USER_MUTE = "Silenciar"
+    const val DISCORD_USER_MUTED = "Silenciado"
     const val MIC_VOLUME = "Microfone"
     const val OUT_VOLUME = "Saída"
 
@@ -111,8 +191,8 @@ object Texts {
     fun attractPlayed(time: String): String = "Jogado hoje · $time"
 
     const val AUTO_SWITCH_TITLE = "Troca de tela"
-    const val AUTO_SWITCH_HINT = "Vai sozinho para a aba Jogo ou Discord e volta ao Início depois de 5 min sem toque."
-    const val AUTO_SWITCH_LABEL = "Trocar de aba sozinho"
+    const val AUTO_SWITCH_HINT = "Vai sozinho para a tela Jogo ou Comunicação e volta ao Início depois de 5 min sem toque."
+    const val AUTO_SWITCH_LABEL = "Trocar de tela sozinho"
 
     fun onOff(on: Boolean): String = if (on) "Ligado" else "Desligado"
 

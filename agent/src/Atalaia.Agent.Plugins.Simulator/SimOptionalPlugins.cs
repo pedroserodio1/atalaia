@@ -128,10 +128,15 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
     private bool _mute, _deaf;
     private int _input = 100, _output = 100;
     private DateTime? _leftAt;   // saiu da call; o canal volta sozinho em ~10 s para dar para testar o botão
+    private readonly int[] _userVolume = [100, 100, 100, 100];
+    private readonly bool[] _userMuted = new bool[4];
+
+    // Ids falsos, no formato do Discord (só dígitos).
+    private static string IdOf(int i) => $"10000000000000000{i}";
 
     public override IReadOnlyList<ActionDescriptor> Actions { get; } =
         [new("toggle_mute"), new("toggle_deaf"), new("set_input_volume", "args.value 0..100"), new("set_output_volume", "args.value 0..200"),
-         new("leave_call")];
+         new("leave_call"), new("set_user_volume", "args.id, args.value 0..200"), new("toggle_user_mute", "args.id")];
 
     private bool InCall => _leftAt is not { } t || DateTime.UtcNow - t > TimeSpan.FromSeconds(10);
 
@@ -139,6 +144,7 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
     {
         int Volume(int max) => args.ValueKind == JsonValueKind.Object && args.TryGetProperty("value", out var v)
             && v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var d) ? (int)Math.Round(Math.Clamp(d, 0, max)) : -1;
+        string? UserId() => args.ValueKind == JsonValueKind.Object && args.TryGetProperty("id", out var i) && i.ValueKind == JsonValueKind.String ? i.GetString() : null;
         switch (action)
         {
             case "toggle_mute": _mute = !_mute; break;
@@ -150,10 +156,20 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
                 if (Volume(200) < 0) return Task.FromResult(new ActionResult(false, "invalid_args"));
                 _output = Volume(200); break;
             case "leave_call": if (InCall) _leftAt = DateTime.UtcNow; break;   // fora da call: ok sem fazer nada
+            case "set_user_volume":
+                if (UserId() is not { } volumeOf || Volume(200) < 0) return Task.FromResult(new ActionResult(false, "invalid_args"));
+                if (Member(volumeOf) is not { } v) return Task.FromResult(new ActionResult(false, "unknown_session"));
+                _userVolume[v] = Volume(200); break;
+            case "toggle_user_mute":
+                if (UserId() is not { } muteOf) return Task.FromResult(new ActionResult(false, "invalid_args"));
+                if (Member(muteOf) is not { } m) return Task.FromResult(new ActionResult(false, "unknown_session"));
+                _userMuted[m] = !_userMuted[m]; break;
             default: return Task.FromResult(new ActionResult(false, "unknown_action"));
         }
         return Task.FromResult(new ActionResult(true));
     }
+
+    private int? Member(string id) => !InCall ? null : Enumerable.Range(0, Names.Length).Select(i => (int?)i).FirstOrDefault(i => IdOf(i!.Value) == id);
 
     public override Task<JsonElement?> CollectAsync(CancellationToken ct)
     {
@@ -163,7 +179,11 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
             name = "Geral",
             guild = "Servidor de teste",
             connection = new { state = "connected", pingMs = 38 },
-            members = Names.Select((n, i) => new { name = n, muted = i == 3, deafened = false, speaking = i == _speaker }).ToList(),
+            members = Names.Select((n, i) => new
+            {
+                id = IdOf(i), name = n, muted = i == 3, deafened = false, speaking = i == _speaker,
+                volume = (int?)_userVolume[i], localMuted = _userMuted[i],
+            }).ToList(),
         };
         return Result(new
         {
@@ -175,5 +195,109 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
             outputVolume = _output,
             channel,
         });
+    }
+}
+
+/// <summary>Agenda de exemplo: eventos fixos nos dois meses e um que começa daqui a ~16 min, para o aviso de evento aparecer.</summary>
+public sealed class SimCalendar() : SimBase("calendar", "Agenda", 5000)
+{
+    public override IReadOnlyList<ActionDescriptor> Actions { get; } = [RefreshAction];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        var now = DateTimeOffset.Now;
+        var first = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
+        var events = new List<(DateTimeOffset Start, DateTimeOffset End, string Title, bool AllDay, int Cal)>();
+        for (var d = 0; d < 62; d++)
+        {
+            var day = first.AddDays(d);
+            if (day >= first.AddMonths(2)) break;
+            if (d % 2 == 0) events.Add((day.AddHours(10), day.AddHours(11), "Reunião de exemplo", false, 0));
+            if (d % 3 == 0) events.Add((day.AddHours(15), day.AddHours(16).AddMinutes(30), "Estudo", false, 1));
+            if (d % 7 == 0) events.Add((day, day.AddDays(1), "Aniversário de exemplo", true, 1));
+        }
+        var soon = new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, now.Offset).AddMinutes(16);
+        events.Add((soon, soon.AddMinutes(30), "Evento em breve", false, 1));
+        return Result(new
+        {
+            calendars = new[] { new { name = "Trabalho", ok = true }, new { name = "Pessoal", ok = true } },
+            events = events.OrderBy(e => e.Start).Select(e => new
+            {
+                title = e.Title, start = Json.Iso(e.Start), end = Json.Iso(e.End), allDay = e.AllDay, calendar = e.Cal,
+            }).ToList(),
+            updatedAt = Json.Iso(now),
+        });
+    }
+}
+
+/// <summary>AniList de exemplo (usuário de mentira).</summary>
+public sealed class SimAniList() : SimBase("anilist", "AniList", 10000)
+{
+    public override IReadOnlyList<ActionDescriptor> Actions { get; } = [RefreshAction];
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        var now = DateTimeOffset.Now;
+        return Result(new
+        {
+            user = "ExemploOtaku",
+            animeCount = 142,
+            mangaCount = 37,
+            episodesWatched = 2310,
+            minutesWatched = 55440,
+            chaptersRead = 1204,
+            genres = new[] { new { name = "Action", count = 61 }, new { name = "Comedy", count = 48 }, new { name = "Drama", count = 33 }, new { name = "Fantasy", count = 29 }, new { name = "Slice of Life", count = 21 } },
+            studios = new[] { new { name = "Estúdio Exemplo", count = 12, minutes = 4100 }, new { name = "Outro Estúdio", count = 7, minutes = 2200 }, new { name = "Terceiro Estúdio", count = 5, minutes = 1500 } },
+            recent = new[]
+            {
+                new { title = "Anime de Exemplo", type = "ANIME", action = "watched episode", progress = "5", at = (string?)Json.Iso(now.AddHours(-3)) },
+                new { title = "Mangá de Exemplo", type = "MANGA", action = "read chapter", progress = "112", at = (string?)Json.Iso(now.AddDays(-1)) },
+                new { title = "Filme de Exemplo", type = "ANIME", action = "completed", progress = "", at = (string?)Json.Iso(now.AddDays(-2)) },
+            },
+            followers = 18,
+            following = 25,
+            updatedAt = Json.Iso(now),
+        });
+    }
+}
+
+/// <summary>Rede de exemplo: o roteador responde sempre; a internet oscila e perde um pacote de vez em quando (para o app mostrar os dois estados).</summary>
+public sealed class SimNetwork() : SimBase("network", "Rede", 2000)
+{
+    private readonly List<int?> _router = [];
+    private readonly List<int?> _internet = [];
+    private int _tick;
+
+    public override Task<JsonElement?> CollectAsync(CancellationToken ct)
+    {
+        // A cada ~2 min a internet fica 12 s fora (o roteador segue vivo), para o aviso "Internet fora" do relógio aparecer em --simulate.
+        var outage = ++_tick % 60 >= 54;
+        Add(_router, Random.Shared.NextDouble() < 0.01 ? null : (int)Rand(1, 6));
+        Add(_internet, outage || Random.Shared.NextDouble() < 0.12 ? null : (int)Rand(9, 38));
+        return Result(new { targets = new[] { Target("Roteador", _router, gateway: true), Target("Internet", _internet, gateway: false) } });
+    }
+
+    private static void Add(List<int?> window, int? sample)
+    {
+        window.Add(sample);
+        if (window.Count > 30) window.RemoveAt(0);
+    }
+
+    private static object Target(string name, List<int?> window, bool gateway)
+    {
+        var ok = window.Where(s => s.HasValue).Select(s => s!.Value).ToList();
+        int? Some(Func<int> f) => ok.Count > 0 ? f() : null;
+        return new
+        {
+            name,
+            gateway,
+            rttMs = window[^1],
+            avgMs = Some(() => (int)Math.Round(ok.Average())),
+            minMs = Some(() => ok.Min()),
+            maxMs = Some(() => ok.Max()),
+            jitterMs = ok.Count > 1 ? (int?)Math.Round(Enumerable.Range(1, ok.Count - 1).Average(i => Math.Abs(ok[i] - ok[i - 1]))) : null,
+            lossPercent = (int)Math.Round(100.0 * (window.Count - ok.Count) / window.Count),
+            samples = window.ToList(),
+        };
     }
 }

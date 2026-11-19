@@ -188,6 +188,122 @@ class SourcesTest {
     }
 
     @Test
+    fun calendar() {
+        val d = decode<CalendarData>("calendar", """{"calendars":[{"name":"Trabalho","ok":true},{"name":"Pessoal","ok":false}],"events":[{"title":"Reunião","start":"2026-11-16T09:00:00-03:00","end":"2026-11-16T10:00:00-03:00","allDay":false,"calendar":0},{"title":"Feriado","start":"2026-11-20T00:00:00-03:00","end":"2026-11-21T00:00:00-03:00","allDay":true,"calendar":1}],"updatedAt":"2026-11-15T12:00:00-03:00"}""")
+        assertEquals(listOf("Trabalho", "Pessoal"), d.calendars.map { it.name })
+        assertFalse(d.calendars[1].ok)
+        assertEquals(2, d.events.size)
+        assertEquals("Reunião", d.events[0].title)
+        assertTrue(d.events[1].allDay)
+        assertEquals(1, d.events[1].calendar)
+        // campo ausente, null e campo extra
+        assertEquals(0, decode<CalendarData>("calendar", """{}""").events.size)
+        assertEquals(0, decode<CalendarData>("calendar", """{"events":[],"calendars":[],"novo":1}""").calendars.size)
+        assertNull(decode<CalendarData>("calendar", """{"updatedAt":null}""").updatedAt)
+        assertEquals("", decode<CalendarData>("calendar", """{"events":[{"start":"2026-11-16T09:00:00-03:00"}]}""").events.single().title)   // evento sem título
+    }
+
+    @Test
+    fun anilist() {
+        val d = decode<AniListData>(
+            "anilist",
+            """{"user":"ExemploOtaku","animeCount":142,"mangaCount":37,"episodesWatched":2310,"minutesWatched":55440,"chaptersRead":1204,
+            "genres":[{"name":"Action","count":61}],"studios":[{"name":"Estúdio Exemplo","count":12,"minutes":4100}],
+            "recent":[{"title":"Anime de Exemplo","type":"ANIME","action":"watched episode","progress":"5","at":"2026-11-16T09:00:00-03:00"},
+              {"title":"Mangá","type":"MANGA","action":"completed","progress":"","at":null}],
+            "followers":18,"following":25,"updatedAt":"2026-11-16T12:00:00-03:00"}""",
+        )
+        assertEquals("ExemploOtaku", d.user)
+        assertEquals(142, d.animeCount)
+        assertEquals(55440, d.minutesWatched)
+        assertEquals(listOf("Action" to 61), d.genres.map { it.name to it.count })
+        assertEquals(4100, d.studios.single().minutes)
+        assertEquals("watched episode", d.recent[0].action)
+        assertEquals("", d.recent[1].progress)
+        assertNull(d.recent[1].at)
+        assertEquals(18, d.followers)
+        // campo ausente, null e campo extra
+        val empty = decode<AniListData>("anilist", """{}""")
+        assertNull(empty.animeCount)                        // sem leitura: null, nunca 0
+        assertEquals("", empty.user)
+        assertTrue(empty.recent.isEmpty() && empty.genres.isEmpty() && empty.studios.isEmpty())
+        assertNull(decode<AniListData>("anilist", """{"followers":null,"mangaCount":null,"novo":1}""").followers)
+        assertEquals("", decode<AniListData>("anilist", """{"recent":[{"action":"completed"}]}""").recent.single().title)   // sem título
+        assertEquals(0, decode<AniListData>("anilist", """{"watching":[{"title":"antigo"}]}""").recent.size)             // campo que o agente da beta.4 ainda mandava: ignorado
+    }
+
+    @Test
+    fun system_com_uso_por_nucleo() {
+        val d = decode<SystemData>("system", """{"cpu":{"percent":16,"cores":[31,39,0,100]},"ram":{"usedMb":1,"totalMb":2}}""")
+        assertEquals(listOf(31, 39, 0, 100), d.cpu.cores)
+        assertNull(decode<SystemData>("system", """{"cpu":{"percent":16}}""").cpu.cores)                 // agente antigo: sem o campo
+        assertNull(decode<SystemData>("system", """{"cpu":{"percent":16,"cores":null}}""").cpu.cores)    // contadores indisponíveis: sem leitura, nunca lista de zeros
+        assertEquals(emptyList<Int>(), decode<SystemData>("system", """{"cpu":{"cores":[],"novo":1}}""").cpu.cores)
+    }
+
+    @Test
+    fun discord_avatar_do_membro() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"channel":{"name":"Geral","guild":"X","members":[
+            {"name":"Ana","muted":false,"deafened":false,"speaking":true,"avatarHash":"0123456789abcdef"},
+            {"name":"Beto","muted":false,"deafened":false,"speaking":false,"avatarHash":null},
+            {"name":"Caio","muted":true,"deafened":false,"speaking":false},
+            {"name":"Dani","novo":1}]}}""",
+        )
+        val m = d.channel!!.members
+        assertEquals("0123456789abcdef", m[0].avatarHash)
+        assertNull(m[1].avatarHash)                            // sem imagem: null
+        assertNull(m[2].avatarHash)                            // agente antigo: sem o campo
+        assertNull(m[3].avatarHash)
+    }
+
+    @Test
+    fun discord_volume_e_mudo_por_pessoa() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"channel":{"name":"Geral","guild":"X","members":[
+            {"id":"123456789012345678","name":"Ana","volume":135,"localMuted":true},
+            {"id":"223456789012345678","name":"Beto","volume":null,"localMuted":false},
+            {"name":"Caio"},
+            {"id":"323456789012345678","name":"Dani","novo":1}]}}""",
+        )
+        val m = d.channel!!.members
+        assertEquals("123456789012345678", m[0].id)
+        assertEquals(135, m[0].volume)
+        assertTrue(m[0].localMuted)
+        assertNull(m[1].volume)                                // sem leitura
+        assertFalse(m[1].localMuted)
+        assertEquals("", m[2].id)                              // agente antigo: sem id, sem controle por pessoa
+        assertNull(m[2].volume)
+        assertFalse(m[2].localMuted)
+        assertEquals("323456789012345678", m[3].id)            // campo extra é ignorado
+    }
+
+    @Test
+    fun network() {
+        val d = decode<NetworkData>(
+            "network",
+            """{"targets":[{"name":"Roteador","rttMs":2,"avgMs":3,"minMs":1,"maxMs":6,"jitterMs":1,"lossPercent":25,"samples":[3,4,null,2]},
+            {"name":"Internet","rttMs":null,"avgMs":null,"minMs":null,"maxMs":null,"jitterMs":null,"lossPercent":100,"samples":[null,null]}]}""",
+        )
+        assertEquals(listOf("Roteador", "Internet"), d.targets.map { it.name })
+        assertEquals(listOf(true, false), decode<NetworkData>("network", """{"targets":[{"name":"R","gateway":true},{"name":"I","gateway":false}]}""").targets.map { it.gateway })
+        assertEquals(false, d.targets[0].gateway)                       // agente antigo: sem o campo vale false
+        assertEquals(2, d.targets[0].rttMs)
+        assertEquals(25, d.targets[0].lossPercent)
+        assertEquals(listOf(3, 4, null, 2), d.targets[0].samples)         // null = pacote sem resposta
+        assertNull(d.targets[1].rttMs)                                    // sem leitura: null, nunca 0
+        assertNull(d.targets[1].avgMs)
+        assertEquals(100, d.targets[1].lossPercent)
+        // campo ausente, null e campo extra
+        assertEquals(0, decode<NetworkData>("network", "{}").targets.size)
+        val bare = decode<NetworkData>("network", """{"targets":[{"name":"X","novo":1}]}""").targets.single()
+        assertNull(bare.lossPercent)
+        assertTrue(bare.samples.isEmpty())
+    }
+
+    @Test
     fun notifications_so_nome_e_contagem() {
         val d = decode<NotificationsData>("notifications", """{"count":4,"apps":[{"name":"Discord","count":2},{"name":"WhatsApp","count":1}]}""")
         assertEquals(4, d.count)

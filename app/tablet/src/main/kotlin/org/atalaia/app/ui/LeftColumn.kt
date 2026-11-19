@@ -31,6 +31,7 @@ import org.atalaia.core.connection.ChannelKind
 import org.atalaia.core.connection.ConnectionState
 import org.atalaia.core.connection.activeChannel
 import org.atalaia.core.panel.GameLine
+import org.atalaia.core.panel.NetOutage
 import org.atalaia.core.panel.Pt
 import org.atalaia.core.panel.gameLine
 import org.atalaia.core.panel.mediaLine
@@ -39,6 +40,7 @@ import org.atalaia.core.state.AppState
 import org.atalaia.core.state.Freshness
 import org.atalaia.core.state.downloadDoneActive
 import org.atalaia.core.state.limitAlerts
+import org.atalaia.core.panel.AgendaAlert
 import java.time.LocalDateTime
 
 /** Relógio do tablet: acorda só na virada do minuto. */
@@ -59,32 +61,45 @@ fun LeftColumn(
     onMedia: (action: String, positionSec: Double?) -> Unit,
     onOpenConfig: () -> Unit,
     onDismissDownload: () -> Unit,
+    agendaAlert: AgendaAlert?,
+    onOpenAgenda: () -> Unit,
+    netOutage: NetOutage?,
+    onOpenNetwork: () -> Unit,
     modifier: Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ClockCard(state, now, onOpenConfig, onDismissDownload)
+        ClockCard(state, now, onOpenConfig, onDismissDownload, agendaAlert, onOpenAgenda, netOutage, onOpenNetwork)
         MediaCard(state, now, feedback, onMedia, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDismissDownload: () -> Unit) {
+private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDismissDownload: () -> Unit, agendaAlert: AgendaAlert?, onOpenAgenda: () -> Unit,
+    netOutage: NetOutage?, onOpenNetwork: () -> Unit,
+) {
     val time by rememberLocalDateTime()
     // Queda de energia: o próprio cartão do relógio vira coral cheio. Fica na coluna que aparece em todas as abas, não ocupa
     // espaço novo e nada se mexe quando liga ou desliga (a faixa de antes tomava 48 dp e empurrava o layout).
     val power = state.upsAlert
     val alert = power != null
-    // Limite estourado (GPU, RAM, disco): só a borda e a linha de baixo ficam coral; a queda de energia, que é pior, tem prioridade.
-    val limits = if (alert) emptyList() else limitAlerts(state, now)
+    // Rede fora (internet ou tudo): borda e linha de baixo coral, abaixo da queda de energia (que ela mesma derruba o roteador) e acima do resto.
+    val net = !alert && netOutage != null
+    // Limite estourado (GPU, RAM, disco): só a borda e a linha de baixo ficam coral; a queda de energia e a rede fora, que são piores, têm prioridade.
+    val limits = if (alert || net) emptyList() else limitAlerts(state, now)
     // Download terminou no PC: boa notícia, então borda e texto menta (e só se não há nada pior); um toque no cartão dispensa.
-    val download = !alert && limits.isEmpty() && downloadDoneActive(state, now)
+    // Evento da agenda chegando (últimos 15 min): borda e texto menta, abaixo dos alertas de energia e de limite.
+    val agenda = !alert && !net && limits.isEmpty() && agendaAlert != null
+    val download = !alert && !net && limits.isEmpty() && !agenda && downloadDoneActive(state, now)
     val fg = if (alert) Palette.OnCoral else Palette.Text
     val muted = if (alert) Palette.OnCoral else Palette.TextMuted
-    // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel).
+    // Toque longo no relógio abre a configuração (fica fora do caminho de quem só olha o painel). Toque curto: com o aviso da agenda
+    // na tela, abre a Agenda; com o de rede, abre Sistema › Rede; senão dispensa o aviso do download.
     PanelCard(
-        Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures(onLongPress = { onOpenConfig() }, onTap = { onDismissDownload() }) },
+        Modifier.fillMaxWidth().pointerInput(agenda, net) {
+            detectTapGestures(onLongPress = { onOpenConfig() }, onTap = { if (net) onOpenNetwork() else if (agenda) onOpenAgenda() else onDismissDownload() })
+        },
         container = if (alert) Palette.Coral else Palette.Panel,
-        line = if (alert || limits.isNotEmpty()) Palette.Coral else if (download) Palette.Mint else Palette.Border,
+        line = if (alert || net || limits.isNotEmpty()) Palette.Coral else if (download || agenda) Palette.Mint else Palette.Border,
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             MonoText(Pt.date(time.toLocalDate()), muted)
@@ -96,8 +111,12 @@ private fun ClockCard(state: AppState, now: Long, onOpenConfig: () -> Unit, onDi
                 // O aviso toma o lugar da linha do jogo enquanto durar: é o que mais importa nessa hora.
                 val battery = state.dataOf<UpsData>("ups")?.batteryPercent
                 BodyText(Texts.POWER_ALERT_TITLE + (battery?.let { " · $it%" } ?: ""), Palette.OnCoral, 15)
+            } else if (net && netOutage != null) {
+                BodyText(if (netOutage == NetOutage.NO_NETWORK) Texts.NET_OUTAGE_NONET else Texts.NET_OUTAGE_INTERNET, Palette.Coral, 15)
             } else if (limits.isNotEmpty()) {
                 BodyText(Texts.limitAlertLine(limits), Palette.Coral, 15)
+            } else if (agenda && agendaAlert != null) {
+                BodyText(Texts.agendaAlertLine(agendaAlert.minutes, agendaAlert.title), Palette.Mint, 15)
             } else if (download) {
                 BodyText(Texts.DOWNLOAD_DONE, Palette.Mint, 15)
             } else {

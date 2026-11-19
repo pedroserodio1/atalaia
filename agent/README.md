@@ -56,7 +56,7 @@ Seis passos, todos com o estado **real** do PC (nada é valor de exemplo) e todo
    configuração do app. Em build de desenvolvimento (`-dev`) não há release: você escolhe um APK do seu computador. O QR leva à página da release,
    para instalar sem cabo.
 4. **Código de pareamento:** mostra o código de 6 dígitos (só aqui e no menu da bandeja), copia, e conclui sozinho quando um tablet conecta (USB ou Wi-Fi).
-5. **Fontes de dados:** as dez fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
+5. **Fontes de dados:** as treze fontes com o estado do agente, liga e desliga, e o que falta configurar (clima sem latitude e longitude, nobreak sem
    banco, Steam e Discord sem credencial, GPU sem `nvidia-smi`). **Clima, Steam e Discord têm o botão Configurar**, com um
    formulário por fonte (veja [Credenciais das fontes](#credenciais-das-fontes-pela-janela)): o que é segredo vai para um cofre criptografado
    com a sua conta do Windows e **nunca volta à tela** (só "Configurada", com Trocar e Remover).
@@ -140,6 +140,9 @@ Em **Fontes de dados** (e no passo 5 do onboarding), o botão **Configurar** de 
 |---|---|---|
 | Clima (Open-Meteo) | `Plugins:weather:latitude` (−90 a 90) e `longitude` (−180 a 180), graus decimais **com ponto** | `settings.json` (não são segredo) |
 | Steam | `Plugins:steam:apiKey` (obrigatória) e `steamId64` (exatamente 17 dígitos) | `apiKey` no cofre; `steamId64` no `settings.json` |
+| Rede | `Plugins:network:targets`: `Nome endereço` separados por `;` (até 4; `gateway` = o roteador desta máquina; só IPv4). Na janela é uma **lista** (nome e endereço por linha, Remover, Adicionar) | `settings.json` (não é segredo) |
+| AniList | `Plugins:anilist:username`: o nome de usuário do perfil público (1 a 40 letras, números, `.`, `-`, `_`); sem login e sem chave | `settings.json` (não é segredo) |
+| Agenda | `Plugins:calendar:urls`. Na janela é uma **lista** (uma linha por agenda com nome e link, até 5, botões Remover e Adicionar; o link nunca volta para a tela). Por variável de ambiente: `Nome https://link` separadas por `;` (nome opcional; só `https`) | no cofre (o link iCal é o segredo) |
 | Discord | `Plugins:discord:clientId` e `clientSecret` (obrigatórios, sem espaços) | `clientSecret` no cofre; `clientId` (identificador público do aplicativo) no `settings.json` |
 
 - **Como conseguir.** Cada fonte com credencial (Steam, Discord, clima) e o nobreak têm um bloco **Como conseguir** na própria janela, com os passos
@@ -209,6 +212,9 @@ nunca no `appsettings.json`; veja o `.env.example`):
 |---|---|
 | `Plugins:weather:latitude` / `longitude` | Local do clima (Open-Meteo), graus decimais com ponto. Sem isso o plugin fica em erro |
 | `Plugins:steam:apiKey` / `steamId64` | Chave da Web API e SteamID64 (`ATALAIA_Plugins__steam__apiKey`) |
+| `Plugins:calendar:urls` | Agendas por link iCal secreto, `Nome https://link` separadas por `;` (`ATALAIA_Plugins__calendar__urls`). Nasce desligada |
+| `Plugins:network:targets` | Alvos do ping, `Nome endereço` separados por `;` (`ATALAIA_Plugins__network__targets`). Nasce desligada. Só o nome do alvo vai para o tablet; o endereço fica no PC |
+| `Plugins:anilist:username` | Perfil público do AniList (`ATALAIA_Plugins__anilist__username`). Nasce desligada e sem cofre: só o nome de usuário, nada de senha nem chave |
 | `Plugins:discord:clientId` / `clientSecret` | App do Discord (`ATALAIA_Plugins__discord__clientId`). Na primeira vez o Discord mostra um pop-up de autorização; o refresh token fica em `%LOCALAPPDATA%\AtalaiaAgent\discord.json` |
 | `Plugins:notifications` | Só nome do app e contagem; exige liberar o acesso em Configurações > Privacidade > Notificações |
 
@@ -235,9 +241,10 @@ Página única, sem dependências, com um cartão por fonte (as 11) e controles 
 - **Áudio:** volume (slider) e silenciar o dispositivo, e o **mixer por aplicativo**: um slider e um botão de
   mudo para cada app com sessão de áudio (Spotify, navegador, Discord, sons do sistema…), os ativos primeiro.
   Sessões do mesmo executável viram uma linha só, como no mixer do Windows.
-- **Discord:** microfone mudo, áudio desligado (ensurdecer), volumes de entrada e saída, quem está falando.
+- **Discord:** microfone mudo, áudio desligado (ensurdecer), volumes de entrada e saída, quem está falando, e o **volume e o mudo de cada pessoa da call** (`set_user_volume`
+  e `toggle_user_mute`, só para você: o agente só age em quem ele mesmo listou, pelo id de usuário do Discord).
 - **Notificações:** "Limpar tudo" (pede confirmação; não dá para desfazer).
-- **↻ em cada cartão** que suporta: coleta de novo agora (`weather`, `steam`, `ups`, `notifications`).
+- **↻ em cada cartão** que suporta: coleta de novo agora (`weather`, `steam`, `ups`, `notifications`, `calendar`, `anilist`, `network`).
 - Eventos (queda de energia etc.), envio manual de ações e as mensagens brutas num painel recolhível.
 
 Os controles só aparecem quando o agente declara a ação no `hello`, e o efeito aparece na hora (a falha desfaz
