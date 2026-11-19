@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas na raiz (Início, Sistema, Mídia, Jogo, Comunicação) com **submenus** (Sistema: Visão geral e Rede; Mídia: Tocando agora, Mixer e Anime; Comunicação: Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês),
   coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; `v0.4.0-beta.5` (Anime sem "assistindo agora" e fonte Rede) publicada em 16/11/2026; `v0.4.0-beta.6` (ajustes da tela Rede e uso por núcleo da CPU) publicada em 16/11/2026; `v0.4.0-beta.7` (cor das barras da Rede, alerta "internet caiu" no relógio, gráfico de tráfego e foto dos membros do Discord) publicada em 16/11/2026; `v0.4.0-beta.8` (volume e mudo por pessoa na call do Discord) publicada em 18/11/2026); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; `v0.4.0-beta.5` (Anime sem "assistindo agora" e fonte Rede) publicada em 16/11/2026; `v0.4.0-beta.6` (ajustes da tela Rede e uso por núcleo da CPU) publicada em 16/11/2026; `v0.4.0-beta.7` (cor das barras da Rede, alerta "internet caiu" no relógio, gráfico de tráfego e foto dos membros do Discord) publicada em 16/11/2026; `v0.4.0-beta.8` (volume e mudo por pessoa na call do Discord) publicada em 18/11/2026; a `beta.9` (atualização sem a API do GitHub) está em preparação, e a estável `0.4.0` vem depois dela); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -268,9 +268,15 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
 Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada por padrão e com tutorial de configuração (item da 0.2.0).
 
 Decidido em 19/11/2026: a versão já está grande, então o que **não começou** foi para a [0.7.0](#070-mais-fontes-de-dados-parte-2) (Servidores, temperatura da CPU, FPS, nobreak real, notificações do
-Windows e o resto da Rede). Os itens abaixo já têm código e só esperam prova no tablet; fechada a prova, a 0.4.0 sai.
+Windows e o resto da Rede). Os itens abaixo tinham código e esperavam prova no tablet; o mantenedor testou tudo no tablet e deu ok em 19/11/2026
+(os cenários 24 a 31 de `app/docs/teste-manual.md`), então estão marcados. A `beta.9` leva só a correção da atualização sem a API do GitHub.
 
-- [ ] **Navegação em submenus (vem antes das fontes novas, que dependem dela para ter onde aparecer).** A barra de abas de hoje (5 abas de 88 dp
+- [x] **Atualização sem a API do GitHub (`beta.9`):** a API sem login dá 60 consultas por hora por IP, e esse limite estourava (outros programas na mesma rede gastam), deixando a janela sem achar a
+  versão nova nem baixar o APK. Agora, quando a API responde limite estourado, o agente cai no plano B: a lista vem do feed `github.com/dono/nome/releases.atom` e os arquivos da release têm nome e endereço
+  fixos em `github.com/.../releases/download/<tag>/`, que não passam pela API. Mesmas guardas de antes (só HTTPS, só o repositório configurado, DTD recusado no XML, SHA-256 conferido contra o `SHA256SUMS.txt`).
+  Se o feed também falhar, vale o aviso de limite de sempre. Testes com GitHub de mentira (feed, tag direta e feed quebrado). Sem mudança de contrato.
+
+- [x] **Navegação em submenus (vem antes das fontes novas, que dependem dela para ter onde aparecer).** A barra de abas de hoje (5 abas de 88 dp
   em ~556 dp) não comporta as fontes da 0.4.0. Tocar numa aba da raiz abre a tela principal daquele contexto e a **barra de cima troca** pelos
   botões dele (`‹ voltar | Principal | …`), sem segunda faixa: a altura útil (~505 dp) não perde nada, o custo é um toque a mais. A árvore não tem
   limite fixo de profundidade (submenu dentro de submenu, se uma fonte pedir), então o destino é um **caminho** (`Jogo/FPS`), não um `ordinal`.
@@ -284,14 +290,14 @@ Windows e o resto da Rede). Os itens abaixo já têm código e só esperam prova
   o `ContextRouter` passa a devolver o caminho completo (jogo abriu → `Jogo/Principal`, call → `Comunicação/Principal`), e a volta ao Início por
   inatividade zera o submenu. Só interface, não muda o protocolo. A conferir no tablet: alvo de toque ≥ 48 dp na barra trocada e que "voltar"
   fique no mesmo lugar em todo nível.
-- [ ] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando. O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
+- [x] **Agenda:** eventos de várias agendas do Google por link iCal secreto, com aviso de evento chegando. O link é segredo e vai para o cofre. Pergunta em aberto: a agenda da empresa permite o link iCal?
   Decidido em 15/11/2026: até 5 agendas, cada uma com o **nome que o usuário escreve** (`Nome https://link`, o nome de dentro do arquivo pode ser o e-mail da conta e nunca é usado) e uma cor pela ordem; só **título, horário e agenda**
   de cada evento passam pela rede (nada de local, descrição ou participantes); eventos que se repetem expandidos pelo Ical.Net (MIT, dependência nova, fixada em 5.2.4); o agente publica o mês atual e o seguinte.
   No tablet, **Comunicação › Agenda** (submenu dentro de submenu; o Início não tem submenu) com Dia, Semana e Mês, **modal do dia** ao tocar num dia da semana ou do mês, e **chips** que ligam e desligam cada agenda na tela. **Aviso:** cartão do relógio nos últimos 15 min (tocar nele abre a Agenda) e **som**
   (um bipe em 15 min, dois em 5 min, com opção de desligar). Contrato: `calendar` em `docs/protocolo-v1.md`.
   Código e testes prontos (ramo `feat/agenda-ical`): plugin, simulador, tutorial e configuração pela janela; modelo, telas, aviso e som no app. Na janela do agente o cadastro é uma **lista** (nome e link por linha, Remover, Adicionar, até 5), e o link nunca volta para a tela. **Falta provar** com um link iCal real e no tablet (cenário 25 de `app/docs/teste-manual.md`);
   a tela foi desenhada em mock mas nunca rodou num aparelho.
-- [ ] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
+- [x] **Rede:** ping, jitter, perda, sinal do tablet, velocidade, gráfico de latência e dispositivos da rede.
   Primeiro pedaço feito em 16/11/2026 (beta.5; falta provar no tablet, cenário 27 de `app/docs/teste-manual.md`): fonte **`network`** (decidida com o mantenedor: id `network`, nasce **desligada**, alvos
   padrão `Roteador gateway; Internet 1.1.1.1`, só IPv4). O agente faz `ping` (ICMP, sem administrador, sem dependência nova) a até 4 alvos, guarda 30 amostras por alvo e publica média, mín, máx, jitter e perda
   em inteiros (`null` é sem leitura; perda de 100% é medida válida e não erro); **só o nome do alvo** vai para o tablet, nunca o IP. A janela do agente tem a **lista de alvos** (nome e endereço por linha).
@@ -303,7 +309,7 @@ Windows e o resto da Rede). Os itens abaixo já têm código e só esperam prova
   e acima dos limites; tocar abre Sistema › Rede. Acréscimo ao contrato aprovado pelo mantenedor: `gateway` (booleano, opcional) em cada alvo de `network` (não revela o endereço). A regra é uma função pura sobre as
   amostras que o agente já manda (`Latency.outage`), sem estado no app.
   Em 19/11/2026 o mantenedor moveu o que sobrou (sinal do tablet, velocidade e dispositivos da rede) para a 0.7.0; aqui o item fecha com a prova no tablet do que já está feito.
-- [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
+- [x] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
   nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).
   - **API:** `POST https://graphql.anilist.co` (GraphQL), uma consulta por coleta juntando tudo. Provado: estatísticas do perfil (totais de anime e mangá, episódios e
     capítulos, minutos, gêneros, estúdios), lista "assistindo agora" com `progress` e `nextAiringEpisode`, últimas atividades (precisa do `userId` numérico, que vem do `User`)
@@ -322,21 +328,21 @@ Windows e o resto da Rede). Os itens abaixo já têm código e só esperam prova
     é resolvido uma vez e guardado), par simulado, tutorial e campo "Usuário do AniList" na janela (`settings.json`, sem cofre), seção `anilist` em `docs/protocolo-v1.md`; no app, o modelo, a tela **Mídia › Anime**
     (decidido: tela própria, filha de Mídia, e não cartão no Início) e as contas de tempo em `AniList.kt`. A consulta foi **validada contra a API real** com um id inexistente (a forma está aceita; o `404` vem em HTTP 404
     com `errors`, não em 200). Provado no tablet com um perfil real em 16/11/2026 (beta.4). Em 16/11/2026 o mantenedor **retirou a lista "assistindo agora"** (`watching`, que existiu só na `beta.4`): saiu da tela, da consulta, do simulador e do contrato (beta.5). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
-- [ ] **Tráfego de rede** (`system.net`) na aba Sistema. Os números `↓/↑` já existiam (cartão "Rede" da visão geral); em 16/11/2026 (beta.7; falta provar no tablet, cenário 27) entrou o **gráfico** dos últimos ~60 s no alto de Sistema › Rede, só no app (histórico de 60 leituras no `AppState`, escala em degraus em `Traffic.kt`). Fica `[ ]` até provar com um download de verdade no tablet.
-- [ ] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
+- [x] **Tráfego de rede** (`system.net`) na aba Sistema. Os números `↓/↑` já existiam (cartão "Rede" da visão geral); em 16/11/2026 (beta.7; falta provar no tablet, cenário 27) entrou o **gráfico** dos últimos ~60 s no alto de Sistema › Rede, só no app (histórico de 60 leituras no `AppState`, escala em degraus em `Traffic.kt`). Provado pelo mantenedor no tablet em 19/11/2026.
+- [x] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
   MINOR e compatível com o v1, mas é mudança de contrato: combinar com o mantenedor antes. Só uso; temperatura e frequência por núcleo ficam fora.
   Feito em 16/11/2026 (beta.6; falta provar no tablet, cenário 28 de `app/docs/teste-manual.md`): campo `system.cpu.cores` (lista de inteiros de 0 a 100, na ordem dos núcleos do Windows; `null` sem os
   contadores `Processor`), aprovado pelo mantenedor. Agente: leitura por núcleo no plugin `system`, simulador com 16 núcleos e seção atualizada em `docs/protocolo-v1.md`. App: cartão com uma barra por núcleo ao lado
   do gráfico de 60 s (coral a partir de 85%, pico em texto) e lógica em `CpuCores.kt`. **Provado no PC** (16 núcleos reais, valores coerentes entre as coletas). Limite conhecido: acima de 64 núcleos lógicos só entram
   os que o Windows lista por número simples. **Falta provar:** a tela no tablet e a comparação com o Gerenciador de Tarefas sob carga.
-- [ ] **Discord: volume e mudo por pessoa.** `SET_USER_VOICE_SETTINGS` (`volume` de 0 a 200, `mute`; `pan` fica fora). Tocar num membro abre o controle dele.
+- [x] **Discord: volume e mudo por pessoa.** `SET_USER_VOICE_SETTINGS` (`volume` de 0 a 200, `mute`; `pan` fica fora). Tocar num membro abre o controle dele.
   Exige o plugin publicar o id do membro (decidir com o mantenedor se vai o id do Discord ou um identificador opaco, já que passa pela rede local), duas
   ações novas (`set_user_volume`, `toggle_user_mute`) e id desconhecido devolvendo `unknown_session` ou `invalid_args`. Mesma regra do slider: envia ao soltar.
   Código e testes prontos em 18/11/2026 (ramo `feat/discord-volume-pessoa`; **falta provar com o Discord real e no tablet**, cenário 31 de `app/docs/teste-manual.md`; por isso o item continua `[ ]`).
   Decidido pelo mantenedor: `members[].id` é o **id real do Discord** (não é segredo; o agente só age em quem está na call). Acréscimos opcionais ao contrato: `members[].volume` (0 a 200, `null` sem leitura) e
   `members[].localMuted` (o mudo só para o usuário, separado de `muted`). No app, tocar numa pessoa abre o controle dela embaixo da lista (volume, **Silenciar**, X). **A provar:** se o escopo `rpc` basta para o
   `SET_USER_VOICE_SETTINGS`, se o Discord avisa o RPC quando o ajuste vem pela tela dele e se o `mute` fora do `voice_state` é mesmo o mudo local (é o que a documentação do RPC indica; não foi visto ao vivo).
-- [ ] **Discord: avatar dos membros.** O RPC traz só o hash do avatar (`user.avatar`); a imagem vem do CDN do Discord. O app **não** busca nada da internet: o
+- [x] **Discord: avatar dos membros.** O RPC traz só o hash do avatar (`user.avatar`); a imagem vem do CDN do Discord. O app **não** busca nada da internet: o
   agente baixa, reduz (~64 px) e serve pelo `GET /cover/{hash}` que já existe (mesmo hash de 16 caracteres do SHA-256), e o membro ganha um `avatarHash`
   opcional. Cuidados: o agente só fala com **um endereço fixo** do CDN, definido no código (nunca vindo do conteúdo); falha de rede mantém a inicial no círculo;
   no app, `inSampleSize` e cache pequeno (poucos avatares), nada de `Bitmap` grande. A conferir: formato da URL do avatar e se vale guardar em disco ou só em memória.
