@@ -195,10 +195,20 @@ fun DiscordScreen(state: AppState, now: Long, feedback: String?, clock: Clock, c
             if (channel == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { BodyText(Texts.NOT_IN_CALL, Palette.TextMuted, 16) }
             } else {
+                // Tocar numa pessoa abre o controle dela (volume e silenciar, só para o usuário); tocar de novo fecha. Sem as ações no `hello`, ou sem id, a linha não é tocável.
+                val canVolume = state.hasAction("discord", "set_user_volume")
+                val canMute = state.hasAction("discord", "toggle_user_mute")
+                var selected by remember { mutableStateOf<String?>(null) }
+                val picked = channel.members.firstOrNull { it.id.isNotEmpty() && it.id == selected }   // quem saiu da call fecha o controle sozinho
                 Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
                     val connected = state.connection is ConnectionState.Connected
-                    channel.members.forEach { MemberRow(it, connected, covers) }
+                    channel.members.forEach { m ->
+                        val tappable = (canVolume || canMute) && m.id.isNotEmpty()
+                        MemberRow(m, connected, covers, picked?.id == m.id && tappable, if (tappable) ({ selected = if (selected == m.id) null else m.id }) else null)
+                    }
                 }
+                if (picked != null) MemberControl(picked, canVolume, canMute, clock, { selected = null },
+                    { send("discord", "set_user_volume", intArgs("id" to picked.id, "value" to it)) }, { send("discord", "toggle_user_mute", intArgs("id" to picked.id)) })
                 if (state.hasAction("discord", "leave_call")) LeaveCallBar { send.send("discord", "leave_call") }
             }
         }
@@ -244,13 +254,30 @@ private fun VolumeColumn(icon: IconKind, value: Int?, max: Int, enabled: Boolean
     }
 }
 
+/** Controle de uma pessoa da call: volume dela (0 a 200, envia ao soltar) e silenciar só para o usuário. Fecha no X ou tocando de novo na pessoa. */
 @Composable
-private fun MemberRow(m: DiscordMember, connected: Boolean, covers: CoverRepository) {
+private fun MemberControl(m: DiscordMember, canVolume: Boolean, canMute: Boolean, clock: Clock, onClose: () -> Unit, onVolume: (Int) -> Unit, onMute: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 6.dp).height(52.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.width(96.dp)) {
+            BodyText(m.name, sp = 14)
+            MonoText(m.volume?.let { "$it%" } ?: Texts.NO_VALUE, sp = 12)
+        }
+        HeldSlider(m.volume, 200, canVolume, clock, onVolume, Modifier.weight(1f))
+        StateButton(if (m.localMuted) Texts.DISCORD_USER_MUTED else Texts.DISCORD_USER_MUTE, bad = m.localMuted, enabled = canMute, modifier = Modifier.width(104.dp), onClick = onMute)
+        Box(Modifier.size(48.dp).clickable(onClick = onClose), contentAlignment = Alignment.Center) { PanelIcon(IconKind.CLOSE, Palette.TextMuted, 22.dp) }
+    }
+}
+
+@Composable
+private fun MemberRow(m: DiscordMember, connected: Boolean, covers: CoverRepository, selected: Boolean = false, onClick: (() -> Unit)? = null) {
     // A foto vem do agente (GET /cover/{hash}, o mesmo caminho das capas): o app não busca nada da internet. Sem foto, ou enquanto ela não chega, vale a inicial.
     val avatar by produceState<ImageBitmap?>(null, m.avatarHash, connected) {
         value = m.avatarHash?.takeIf { connected }?.let { covers.load(it) }
     }
-    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    val rowShape = RoundedCornerShape(12.dp)
+    val tap = if (onClick != null) Modifier.clip(rowShape).clickable(onClick = onClick) else Modifier
+    Row(Modifier.fillMaxWidth().height(48.dp).then(tap).then(if (selected) Modifier.border(1.dp, Palette.Mint, rowShape) else Modifier).padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         // Quem fala ganha anel menta, nome em menta e o ícone de som; mudo e surdo são ícones cortados (o estado nunca depende só da cor).
         Box(
             Modifier.size(34.dp).background(Palette.Border, CircleShape).border(if (m.speaking) 3.dp else 1.dp, if (m.speaking) Palette.Mint else Palette.Border, CircleShape),
@@ -261,6 +288,9 @@ private fun MemberRow(m: DiscordMember, connected: Boolean, covers: CoverReposit
             else BodyText(m.name.take(1).uppercase(), sp = 14)
         }
         Box(Modifier.weight(1f)) { BodyText(m.name, if (m.speaking) Palette.Mint else Palette.Text, 16) }
+        // O que o usuário ajustou para esta pessoa, em texto (nunca só cor): silenciada, ou o volume quando não é o normal (100%).
+        if (m.localMuted) MonoText(Texts.DISCORD_USER_MUTED, Palette.Coral, 12)
+        else if (m.volume != null && m.volume != 100) MonoText("${m.volume}%", sp = 12)
         if (m.speaking) PanelIcon(IconKind.VOLUME, Palette.Mint, 22.dp)
         if (m.deafened) {
             PanelIcon(IconKind.MIC_OFF, Palette.Coral, 22.dp)

@@ -45,6 +45,7 @@ public sealed class DiscordPlugin : IPlugin
         new("toggle_mute", "liga/desliga o microfone"), new("toggle_deaf", "liga/desliga o áudio (ensurdecer)"),
         new("set_input_volume", "args.value 0..100"), new("set_output_volume", "args.value 0..200"),
         new("leave_call", "sai do canal de voz"),
+        new("set_user_volume", "args.id (de members[].id), args.value 0..200"), new("toggle_user_mute", "args.id (de members[].id): liga/desliga o mudo só para você"),
     ];
 
     private static string TokenFile => Path.Combine(
@@ -154,6 +155,20 @@ public sealed class DiscordPlugin : IPlugin
                 cmd = "SELECT_VOICE_CHANNEL";
                 settings = new { channel_id = (string?)null };
                 break;
+            case "set_user_volume":
+                if (!TryParseUserVolume(args, out var volumeOf, out var userVolume)) return new ActionResult(false, "invalid_args");
+                if (_live is null) return new ActionResult(false, "not_connected");
+                if (!_state.HasMember(volumeOf)) return new ActionResult(false, "unknown_session");   // só quem o agente listou
+                cmd = "SET_USER_VOICE_SETTINGS";
+                settings = new { user_id = volumeOf, volume = userVolume };
+                break;
+            case "toggle_user_mute":
+                if (!TryParseUserId(args, out var muteOf)) return new ActionResult(false, "invalid_args");
+                if (_live is null) return new ActionResult(false, "not_connected");
+                if (_state.LocalMuted(muteOf) is not { } muted) return new ActionResult(false, "unknown_session");
+                cmd = "SET_USER_VOICE_SETTINGS";
+                settings = new { user_id = muteOf, mute = !muted };
+                break;
             default: return new ActionResult(false, "unknown_action");
         }
 
@@ -170,7 +185,11 @@ public sealed class DiscordPlugin : IPlugin
             await WriteAsync(pipe, DiscordIpc.OpFrame, payload, ct);
             var root = await reply.Task.WaitAsync(TimeSpan.FromSeconds(4), ct);
             if (IsError(root)) return new ActionResult(false, "discord_recusou");
-            if (cmd == "SET_VOICE_SETTINGS" && root.TryGetProperty("data", out var data)) _state.ApplyVoiceSettings(data);   // já reflete na coleta imediata
+            if (root.TryGetProperty("data", out var data))   // já reflete na coleta imediata
+            {
+                if (cmd == "SET_VOICE_SETTINGS") _state.ApplyVoiceSettings(data);
+                else if (cmd == "SET_USER_VOICE_SETTINGS") _state.ApplyUserVoiceSettings(data);
+            }
             return new ActionResult(true);
         }
         catch (TimeoutException) { return new ActionResult(false, "timeout"); }
@@ -186,6 +205,24 @@ public sealed class DiscordPlugin : IPlugin
             || v.ValueKind != JsonValueKind.Number || !v.TryGetDouble(out var d) || !double.IsFinite(d)) return false;
         volume = (int)Math.Round(Math.Clamp(d, 0, max));
         return true;
+    }
+
+    /// <summary><c>args.id</c>: o id de usuário do Discord (só dígitos). Vai para o Discord, então nada além disso passa; quem está na call quem confere é o estado.</summary>
+    public static bool TryParseUserId(JsonElement args, out string id)
+    {
+        id = "";
+        if (args.ValueKind != JsonValueKind.Object || !args.TryGetProperty("id", out var v) || v.ValueKind != JsonValueKind.String) return false;
+        var s = v.GetString() ?? "";
+        if (!DiscordState.IsUserId(s)) return false;
+        id = s;
+        return true;
+    }
+
+    /// <summary><c>args.id</c> e <c>args.value</c> numérico, limitado a 0..200.</summary>
+    public static bool TryParseUserVolume(JsonElement args, out string id, out int volume)
+    {
+        volume = 0;
+        return TryParseUserId(args, out id) && TryParseVolume(args, 200, out volume);
     }
 
     private async Task WriteAsync(Stream pipe, int op, string json, CancellationToken ct)

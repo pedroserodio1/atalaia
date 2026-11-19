@@ -11,7 +11,8 @@ namespace Atalaia.Agent.Plugins.Discord;
 public sealed partial class DiscordState
 {
     /// <param name="Avatar">O hash do avatar no Discord (validado), ou <c>null</c>; <paramref name="AvatarBlob"/> é o hash da imagem já baixada (o que o tablet pede em <c>/cover</c>).</param>
-    private sealed record Member(string Name, bool Muted, bool Deafened, string? Avatar = null, string? AvatarBlob = null);
+    /// <param name="Volume">O volume que o usuário deu a esta pessoa (0..200), ou <c>null</c> sem leitura; <paramref name="LocalMuted"/> é o mudo só para o usuário (não o mudo da pessoa).</param>
+    private sealed record Member(string Name, bool Muted, bool Deafened, string? Avatar = null, string? AvatarBlob = null, int? Volume = null, bool LocalMuted = false);
 
     private readonly object _lock = new();
     private bool _connected;
@@ -121,9 +122,10 @@ public sealed partial class DiscordState
                     connection = _connState is null ? null : new { state = _connState, pingMs = _pingMs },
                     members = _members.Select(m => new
                     {
-                        name = m.Value.Name, muted = m.Value.Muted, deafened = m.Value.Deafened,
+                        id = m.Key, name = m.Value.Name, muted = m.Value.Muted, deafened = m.Value.Deafened,
                         speaking = _speaking.Contains(m.Key),
                         avatarHash = m.Value.AvatarBlob,
+                        volume = m.Value.Volume, localMuted = m.Value.LocalMuted,
                     }).OrderBy(m => m.name, StringComparer.CurrentCultureIgnoreCase).ToList(),
                 },
             });
@@ -164,8 +166,41 @@ public sealed partial class DiscordState
         var avatar = ValidAvatar(Str(u, "avatar"));
         _members.TryGetValue(id, out var old);
         var blob = old is not null && old.Avatar == avatar ? old.AvatarBlob : null;   // o mesmo avatar não baixa de novo a cada atualização de voz
-        _members[id] = new Member(name, Bool(vs, "mute") || Bool(vs, "self_mute"), Bool(vs, "deaf") || Bool(vs, "self_deaf"), avatar, blob);
+        // volume e mute fora do voice_state são os do usuário para esta pessoa (SET_USER_VOICE_SETTINGS); evento sem eles não zera o que já se sabe
+        var volume = Percent(s, "volume") ?? old?.Volume;
+        var localMuted = OptBool(s, "mute") ?? old?.LocalMuted ?? false;
+        _members[id] = new Member(name, Bool(vs, "mute") || Bool(vs, "self_mute"), Bool(vs, "deaf") || Bool(vs, "self_deaf"), avatar, blob, volume, localMuted);
     }
+
+    // ---------------------------------------------------------------- volume e mudo por pessoa
+
+    /// <summary>Quem está na call agora (o agente só age em quem ele mesmo listou).</summary>
+    public bool HasMember(string id)
+    {
+        lock (_lock) return _members.ContainsKey(id);
+    }
+
+    /// <summary>O mudo só para o usuário de quem está na call; <c>null</c> se a pessoa não está.</summary>
+    public bool? LocalMuted(string id)
+    {
+        lock (_lock) return _members.TryGetValue(id, out var m) ? m.LocalMuted : null;
+    }
+
+    /// <summary>Resposta do <c>SET_USER_VOICE_SETTINGS</c> (<c>{ user_id, volume, mute }</c>): reflete na coleta imediata. Só atualiza o que veio e só de quem está na call.</summary>
+    public void ApplyUserVoiceSettings(JsonElement d)
+    {
+        var id = Str(d, "user_id");
+        lock (_lock)
+        {
+            if (!_members.TryGetValue(id, out var m)) return;
+            _members[id] = m with { Volume = Percent(d, "volume") ?? m.Volume, LocalMuted = OptBool(d, "mute") ?? m.LocalMuted };
+        }
+    }
+
+    /// <summary>Volume do Discord (0..200) como inteiro; fora disso ou sem número é <c>null</c>.</summary>
+    private static int? Percent(JsonElement o, string name) =>
+        o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var n) && double.IsFinite(n)
+            ? (int)Math.Round(Math.Clamp(n, 0, 200)) : null;
 
     // ---------------------------------------------------------------- avatares
 
@@ -207,6 +242,10 @@ public sealed partial class DiscordState
 
     private static string Str(JsonElement o, string name) =>
         o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
+
+    /// <summary>Booleano que pode faltar: <c>null</c> se a propriedade não veio (diferente de <c>false</c>).</summary>
+    private static bool? OptBool(JsonElement o, string name) =>
+        o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) ? v.ValueKind switch { JsonValueKind.True => true, JsonValueKind.False => false, _ => null } : null;
 
     private static bool Bool(JsonElement o, string name) =>
         o.ValueKind == JsonValueKind.Object && o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.True;

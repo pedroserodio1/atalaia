@@ -422,6 +422,20 @@ Precisa de uma call de verdade (o `--simulate` não traz foto). Agente da beta.7
 5. **Privacidade:** no log do agente não aparece nome nem id de ninguém; a foto não é gravada em disco (só na memória do agente), e o tablet não conversa com a internet para isso (conferir que o Wi-Fi do tablet pode estar sem internet e a foto ainda aparece).
 6. Memória e desempenho: numa call grande (10+ pessoas) a tela rola sem engasgo e as capas da mídia continuam carregando (as fotos têm reserva própria no agente e não despejam a capa).
 
+## 31. Volume e mudo por pessoa do Discord (Comunicação › Pessoas)
+
+Com `--simulate` dá para ver a tela; só o Discord real prova o efeito. Agente e app da 0.4.0 (o campo `members[].id` e as ações `set_user_volume` e `toggle_user_mute`).
+
+1. Com `--simulate`: a lista da call tem 4 pessoas; tocar numa abre embaixo da lista o controle dela (nome, porcentagem, controle deslizante até 200%, botão **Silenciar** e um X) e a linha ganha a borda menta. Tocar de novo na mesma pessoa, ou no X, fecha. Tocar em outra troca o controle.
+2. Arrastar o controle e soltar: o valor só é enviado ao soltar, a tela não volta ao valor antigo enquanto o agente não confirma, e a linha da pessoa mostra `NN%` quando o volume não é 100%. **Silenciar** vira **Silenciado** (coral) e a linha mostra "Silenciado" em coral; tocar de novo desfaz. O mudo da própria pessoa (ícone de microfone cortado) continua separado e aparece junto.
+3. **Com o Discord real**, na call com outra pessoa: mudar o volume dela no tablet e conferir no Discord do PC (clique direito na pessoa, "Volume do usuário"): o número bate, de 0 a 200%. Mudar o volume pelo Discord e conferir que o tablet acompanha (**não provado:** se o Discord avisa o RPC quando o ajuste vem pela tela dele; senão o tablet só atualiza na próxima troca de canal ou no próximo ajuste pelo tablet).
+4. **Silenciar** pelo tablet: no Discord a pessoa aparece como silenciada só para você (ela continua falando para os outros, e o ícone de mudo dela, o microfone cortado, **não** muda). Anote o que o Discord mostra.
+5. **Escopo:** se o Discord recusar o comando, a tela mostra o aviso de ação recusada (`discord_recusou`); anotar a mensagem e se o `rpc` basta ou se pede escopo novo (isso mudaria a autorização e o tutorial).
+6. **Você mesmo** na lista: tocar em si e mexer no controle. Anotar o que acontece (o Discord pode recusar ou aceitar sem efeito).
+7. Alguém sai da call com o controle dele aberto: o controle fecha sozinho. Trocar de canal fecha também.
+8. Altura: com o controle aberto e 5 ou mais pessoas, nada corta nos 505 dp (a lista rola; o controle e o botão "Sair da call" ficam inteiros).
+9. **Agente antigo** (sem o id e sem as ações): as linhas não são tocáveis e nada quebra. **Privacidade:** o log do agente não mostra nome nem id de ninguém.
+
 ## Resultado
 
 | Cenário | Passou? | Observação |
@@ -454,3 +468,4 @@ Precisa de uma call de verdade (o `--simulate` não traz foto). Agente da beta.7
 | 28 Núcleos da CPU | | |
 | 29 Rede fora | | |
 | 30 Foto dos membros do Discord | | |
+| 31 Volume e mudo por pessoa do Discord | | |

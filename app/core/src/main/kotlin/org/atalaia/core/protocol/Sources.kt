@@ -233,12 +233,17 @@ data class NotificationsData(val count: Int = 0, val apps: List<NotificationApp>
 
 @Serializable
 data class DiscordMember(
+    /** O id de usuário do Discord (o que `set_user_volume` e `toggle_user_mute` recebem); vazio em agente anterior à 0.4.0 (sem o id não há controle por pessoa). */
+    val id: String = "",
     val name: String = "",
     val muted: Boolean = false,
     val deafened: Boolean = false,
     val speaking: Boolean = false,
     /** O hash da foto do membro (16 hexadecimais) para pedir em `GET /cover/{hash}`; `null` sem avatar ou enquanto o agente não baixou (a tela usa a inicial). Campo da beta.7. */
     val avatarHash: String? = null,
+    /** O volume (0 a 200) que o usuário deu a esta pessoa, `null` sem leitura; `localMuted` é o mudo só para o usuário (diferente de `muted`). */
+    val volume: Int? = null,
+    val localMuted: Boolean = false,
 )
 
 /** Qualidade da conexão de voz: `state` é `connected`, `connecting` ou `no_route`; `pingMs` só em `connected`. */

@@ -259,6 +259,28 @@ class SourcesTest {
     }
 
     @Test
+    fun discord_volume_e_mudo_por_pessoa() {
+        val d = decode<DiscordData>(
+            "discord",
+            """{"connected":true,"channel":{"name":"Geral","guild":"X","members":[
+            {"id":"123456789012345678","name":"Ana","volume":135,"localMuted":true},
+            {"id":"223456789012345678","name":"Beto","volume":null,"localMuted":false},
+            {"name":"Caio"},
+            {"id":"323456789012345678","name":"Dani","novo":1}]}}""",
+        )
+        val m = d.channel!!.members
+        assertEquals("123456789012345678", m[0].id)
+        assertEquals(135, m[0].volume)
+        assertTrue(m[0].localMuted)
+        assertNull(m[1].volume)                                // sem leitura
+        assertFalse(m[1].localMuted)
+        assertEquals("", m[2].id)                              // agente antigo: sem id, sem controle por pessoa
+        assertNull(m[2].volume)
+        assertFalse(m[2].localMuted)
+        assertEquals("323456789012345678", m[3].id)            // campo extra é ignorado
+    }
+
+    @Test
     fun network() {
         val d = decode<NetworkData>(
             "network",
