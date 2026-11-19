@@ -1,6 +1,6 @@
 # Roadmap do Atalaia
 
-Status em **16/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
+Status em **19/11/2026**. Este arquivo organiza o que falta em versões. O que manda sobre o contrato é `docs/protocolo-v1.md`; as regras de ramo,
 tag e número de versão estão em [`docs/versionamento-e-releases.md`](docs/versionamento-e-releases.md). Datas não são promessa: a ordem e o
 escopo de cada versão podem mudar, e quem decide é o mantenedor.
 
@@ -14,7 +14,7 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
   automática.
 - **App (tablet):** 5 abas na raiz (Início, Sistema, Mídia, Jogo, Comunicação) com **submenus** (Sistema: Visão geral e Rede; Mídia: Tocando agora, Mixer e Anime; Comunicação: Pessoas e Agenda, e a Agenda tem Dia, Semana e Mês),
   coluna "agora", failover USB/Wi-Fi, alerta de queda de energia, tela de configuração.
-- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; `v0.4.0-beta.5` (Anime sem "assistindo agora" e fonte Rede) publicada em 16/11/2026; `v0.4.0-beta.6` (ajustes da tela Rede e uso por núcleo da CPU) publicada em 16/11/2026; a `beta.7` (cor das barras da Rede, alerta "internet caiu" no relógio, gráfico de tráfego e foto dos membros do Discord) está mesclada em `beta/0.4.0`, ainda sem tag); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
+- **Release:** pipeline por tag, instalador Inno Setup e APK assinado; a 0.1.1, a 0.1.2 e a 0.2.0 (`v0.2.0`, 13/11/2026) estão fechadas; a 0.4.0 está em andamento (ciclo `beta/0.4.0` aberto em 15/11/2026; `v0.4.0-beta.1` (navegação em submenus) e `v0.4.0-beta.2` (Agenda por link iCal, aviso e som, correção do arco) publicadas em 15/11/2026; `v0.4.0-beta.3` (lista de agendas na janela) publicada em 16/11/2026; `v0.4.0-beta.4` (Agenda dentro da Comunicação e fonte AniList) publicada em 16/11/2026; `v0.4.0-beta.5` (Anime sem "assistindo agora" e fonte Rede) publicada em 16/11/2026; `v0.4.0-beta.6` (ajustes da tela Rede e uso por núcleo da CPU) publicada em 16/11/2026; `v0.4.0-beta.7` (cor das barras da Rede, alerta "internet caiu" no relógio, gráfico de tráfego e foto dos membros do Discord) publicada em 16/11/2026; `v0.4.0-beta.8` (volume e mudo por pessoa na call do Discord) publicada em 18/11/2026); a 0.3.0 está fechada (`v0.3.0`, 15/11/2026; ciclo `beta/0.3.0` fechado; `v0.3.0-beta.1` (alertas de limite), `v0.3.0-beta.2` (tela de PC desligado) e `v0.3.0-beta.3` (troca de tela por contexto) e `v0.3.0-beta.4` (aba Discord nova) publicadas em 13/11/2026; `beta.5` (aviso de download, PIN, tela Atração e a correção da #66) `beta.6` (Discord: ping da call e sair da call) e `beta.7` (Wake-on-LAN e #23) publicadas em 13/11/2026).
 - **Issues abertas:** [#14](https://github.com/pedroserodio1/atalaia/issues/14) (controle do Google Meet pelo tablet),
   [#15](https://github.com/pedroserodio1/atalaia/issues/15) (digitar o código no tablet a cada reinício; opção A feita, falta o pareamento),
   [#23](https://github.com/pedroserodio1/atalaia/issues/23) (notas da release estável com grupos repetidos; corrigida e provada na `v0.3.0`; a issue segue aberta no GitHub),
@@ -30,9 +30,10 @@ Como ler os números (SemVer, antes da 1.0): **PATCH** = correção compatível;
 | **0.2.0** | Primeira experiência | minor, fechada (`v0.2.0`) | **Tutorial de chaves e serviços externos no onboarding**, "Testar conexão", código de acesso sem redigitar (#15), porta ocupada no boot (#13, feita), app abrindo ao ligar o tablet (feito); provas e #15 (opção A) feitas |
 | **0.3.0** | Tablet esperto | minor, fechada (`v0.3.0`) | Troca de tela por contexto, alertas de limite, tela de PC desligado e modo noite, Wake-on-LAN, tela Atração, Discord (ping, sair da call, tela mais clara), #23 |
 | **0.3.1** | Correções | patch | A definir (a #23 passou para a 0.3.0) |
-| **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), AniList, Rede, Servidores (VPS e GitHub), temperatura e núcleos da CPU e FPS, Discord (volume por pessoa e avatares) |
+| **0.4.0** | Mais fontes de dados | minor, em andamento (`beta/0.4.0`) | Navegação em submenus (com a aba Comunicação), Agenda (iCal), AniList, Rede, núcleos da CPU, Discord (volume por pessoa e avatares); falta provar no tablet. O que não começou (Servidores, temperatura da CPU, FPS, nobreak real, notificações do Windows, resto da Rede) foi para a 0.7.0 |
 | **0.5.0** | Ações no PC | minor | Deck, integração com o Google Meet (#14), Discord (entrar em canal pelo tablet) |
 | **0.6.0** | Plataforma aberta | minor | Catálogo de widgets, plugins externos, coluna "agora" configurável, docs em inglês, FFXIV, LoL, Fortnite e Futebol |
+| **0.7.0** | Mais fontes de dados, parte 2 | minor | Servidores (VPS e GitHub), temperatura e potência da CPU, FPS, nobreak real, notificações do Windows, resto da Rede (sinal do tablet, velocidade, dispositivos) |
 | **1.0.0** | Estável | major | Protocolo e plugins estáveis (critérios no fim) |
 
 ---
@@ -266,6 +267,9 @@ Só correção compatível, sem mexer no protocolo nem na configuração.
 
 Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada por padrão e com tutorial de configuração (item da 0.2.0).
 
+Decidido em 19/11/2026: a versão já está grande, então o que **não começou** foi para a [0.7.0](#070-mais-fontes-de-dados-parte-2) (Servidores, temperatura da CPU, FPS, nobreak real, notificações do
+Windows e o resto da Rede). Os itens abaixo já têm código e só esperam prova no tablet; fechada a prova, a 0.4.0 sai.
+
 - [ ] **Navegação em submenus (vem antes das fontes novas, que dependem dela para ter onde aparecer).** A barra de abas de hoje (5 abas de 88 dp
   em ~556 dp) não comporta as fontes da 0.4.0. Tocar numa aba da raiz abre a tela principal daquele contexto e a **barra de cima troca** pelos
   botões dele (`‹ voltar | Principal | …`), sem segunda faixa: a altura útil (~505 dp) não perde nada, o custo é um toque a mais. A árvore não tem
@@ -298,7 +302,7 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
   no cartão do relógio entrou: "Internet fora" (o roteador responde e todos os alvos de internet ficam 3 amostras, ~6 s, sem resposta) ou "Sem rede" (nenhum responde), em qualquer aba, abaixo da queda de energia
   e acima dos limites; tocar abre Sistema › Rede. Acréscimo ao contrato aprovado pelo mantenedor: `gateway` (booleano, opcional) em cada alvo de `network` (não revela o endereço). A regra é uma função pura sobre as
   amostras que o agente já manda (`Latency.outage`), sem estado no app.
-- [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
+  Em 19/11/2026 o mantenedor moveu o que sobrou (sinal do tablet, velocidade e dispositivos da rede) para a 0.7.0; aqui o item fecha com a prova no tablet do que já está feito.
 - [ ] **AniList (anime e mangá):** fonte nova `anilist`, só leitura, **sem login e sem segredo**: usa só o nome de usuário do perfil público (vai na configuração,
   nunca no código, no exemplo nem no log), então nasce desligada e sem cofre. Pesquisa feita contra a API real em 15/11/2026 (nada rodou ainda no agente nem no tablet).
   - **API:** `POST https://graphql.anilist.co` (GraphQL), uma consulta por coleta juntando tudo. Provado: estatísticas do perfil (totais de anime e mangá, episódios e
@@ -318,12 +322,6 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
     é resolvido uma vez e guardado), par simulado, tutorial e campo "Usuário do AniList" na janela (`settings.json`, sem cofre), seção `anilist` em `docs/protocolo-v1.md`; no app, o modelo, a tela **Mídia › Anime**
     (decidido: tela própria, filha de Mídia, e não cartão no Início) e as contas de tempo em `AniList.kt`. A consulta foi **validada contra a API real** com um id inexistente (a forma está aceita; o `404` vem em HTTP 404
     com `errors`, não em 200). Provado no tablet com um perfil real em 16/11/2026 (beta.4). Em 16/11/2026 o mantenedor **retirou a lista "assistindo agora"** (`watching`, que existiu só na `beta.4`): saiu da tela, da consulta, do simulador e do contrato (beta.5). **Descoberta:** a Cloudflare do AniList recusa pedido sem `User-Agent` próprio (403, erro 1010, até o do Python é barrado): o agente se identifica como `Atalaia-Agent`.
-- [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
-  é decisão do mantenedor.
-- [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).
-- [ ] **Nobreak real** fora do `--simulate`, conferido contra os valores do aparelho. Hoje só há compatibilidade com Intelbras (ver
-  "Contribuições bem-vindas").
-- [ ] **Notificações do Windows** com texto legível (ainda a confirmar se o texto vem completo).
 - [ ] **Tráfego de rede** (`system.net`) na aba Sistema. Os números `↓/↑` já existiam (cartão "Rede" da visão geral); em 16/11/2026 (beta.7; falta provar no tablet, cenário 27) entrou o **gráfico** dos últimos ~60 s no alto de Sistema › Rede, só no app (histórico de 60 leituras no `AppState`, escala em degraus em `Traffic.kt`). Fica `[ ]` até provar com um download de verdade no tablet.
 - [ ] **Núcleos da CPU:** uso por núcleo lógico na aba Sistema (lista ou grade, um item por núcleo). Campo novo e opcional em `system.cpu`, então
   MINOR e compatível com o v1, mas é mudança de contrato: combinar com o mantenedor antes. Só uso; temperatura e frequência por núcleo ficam fora.
@@ -401,6 +399,19 @@ Para outras pessoas criarem fontes sem mexer no núcleo.
   acabado, adiado ou com prorrogação e pênaltis; o canal WebSocket ao vivo é um addon pago, então fica de fora (a consulta periódica basta).
 - [ ] Extras: promoções da wishlist da Steam; timers, pomodoro e contagens regressivas.
 - [ ] A barra de abas já não comporta uma 7ª aba com ícone em cima: virar rolável ou ter um "Mais".
+
+## 0.7.0: mais fontes de dados, parte 2
+
+Itens que estavam na 0.4.0 e não começaram; saíram de lá em 19/11/2026 para o ciclo fechar só com provas. Mesmo fluxo da 0.4.0 (`/novo-plugin-agente` e `/fonte-no-app`,
+fonte desligada por padrão, tutorial de configuração).
+- [ ] **Servidores:** VPS (CPU, RAM, disco, uptime; por SSH ou coletor), containers, site no ar e status do GitHub (Actions, PRs, notificações).
+- [ ] **Temperatura e potência da CPU:** depende do driver PawnIO e de administrador; precisa de processo auxiliar separado. Instalar driver
+  é decisão do mantenedor.
+- [ ] **FPS:** fonte a decidir (PresentMon ou RTSS).
+- [ ] **Nobreak real** fora do `--simulate`, conferido contra os valores do aparelho. Hoje só há compatibilidade com Intelbras (ver
+  "Contribuições bem-vindas").
+- [ ] **Notificações do Windows** com texto legível (ainda a confirmar se o texto vem completo).
+- [ ] **Rede, o que sobrou da 0.4.0:** sinal do tablet, velocidade (teste de velocidade) e dispositivos da rede. A latência, o jitter, a perda, o alerta "internet caiu" e o gráfico de tráfego já estão na 0.4.0.
 
 ## 1.0.0: critérios
 
