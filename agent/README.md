@@ -241,7 +241,8 @@ Página única, sem dependências, com um cartão por fonte (as 11) e controles 
 - **Áudio:** volume (slider) e silenciar o dispositivo, e o **mixer por aplicativo**: um slider e um botão de
   mudo para cada app com sessão de áudio (Spotify, navegador, Discord, sons do sistema…), os ativos primeiro.
   Sessões do mesmo executável viram uma linha só, como no mixer do Windows.
-- **Discord:** microfone mudo, áudio desligado (ensurdecer), volumes de entrada e saída, quem está falando.
+- **Discord:** microfone mudo, áudio desligado (ensurdecer), volumes de entrada e saída, quem está falando, e o **volume e o mudo de cada pessoa da call** (`set_user_volume`
+  e `toggle_user_mute`, só para você: o agente só age em quem ele mesmo listou, pelo id de usuário do Discord).
 - **Notificações:** "Limpar tudo" (pede confirmação; não dá para desfazer).
 - **↻ em cada cartão** que suporta: coleta de novo agora (`weather`, `steam`, `ups`, `notifications`, `calendar`, `anilist`, `network`).
 - Eventos (queda de energia etc.), envio manual de ações e as mensagens brutas num painel recolhível.

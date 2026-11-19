@@ -253,7 +253,8 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
 ```json
 { "connected": false, "user": "", "mute": false, "deaf": false, "inputVolume": 0, "outputVolume": 0,
   "channel": { "name": "", "guild": "", "connection": { "state": "connected", "pingMs": 38 },
-               "members": [ { "name": "", "muted": false, "deafened": false, "speaking": false, "avatarHash": "0123456789abcdef" } ] } }
+               "members": [ { "id": "123456789012345678", "name": "", "muted": false, "deafened": false, "speaking": false, "avatarHash": "0123456789abcdef",
+                              "volume": 100, "localMuted": false } ] } }
 ```
 
 - Fala com o Discord **desktop** pelo pipe local. `connected: false` (com o resto vazio e `channel: null`)
@@ -262,6 +263,9 @@ fonte simplesmente a ignora. Nenhuma delas nunca vai para o arquivo de log. As a
   `null` sem avatar ou enquanto a imagem não foi baixada (o tablet mostra a inicial). O agente baixa do CDN do Discord, de **um host fixo definido no código** (`cdn.discordapp.com`), só com o
   id e o hash validados (nunca um endereço vindo do conteúdo), em 64 px e no máximo 256 KB, e guarda **só em memória** (as 32 mais recentes, reserva separada da das capas). O app não busca
   nada da internet. Falha de rede deixa `null` e tenta de novo depois de 1 min. Cliente antigo ignora o campo.
+- `members[].id`, `members[].volume` e `members[].localMuted` (acréscimos opcionais da 0.4.0, para o volume e o mudo por pessoa): `id` é o **id de usuário do Discord** (só dígitos, 15 a 25), o que as ações
+  `set_user_volume` e `toggle_user_mute` recebem; ele passa pela rede local, mas não é segredo (qualquer um vê o id de quem está na call com o modo desenvolvedor). `volume` (0 a 200, `null` sem leitura) é o
+  volume que **o usuário** deu a essa pessoa (não o da pessoa) e `localMuted` é o mudo **só para o usuário**, diferente de `muted` (o mudo da própria pessoa ou do servidor). Cliente antigo ignora os campos.
 - `channel.connection` (acréscimo opcional da 0.3.0): qualidade da conexão de voz, do evento `VOICE_CONNECTION_STATUS`
   (chega logo ao assinar e depois a cada ~5 s). `state` é `connected`, `connecting` (inclui reconectando) ou `no_route`;
   `pingMs` é o `average_ping` arredondado, só em `connected`, senão `null`. O objeto todo é `null` quando não há leitura
@@ -350,6 +354,8 @@ dispara coleta imediata). `args` é `{}` quando não há argumento.
 | `discord` | `set_input_volume` | `{ "value": 0..100 }` | Volume do microfone |
 | `discord` | `set_output_volume` | `{ "value": 0..200 }` | Volume de saída |
 | `discord` | `leave_call` | — | Sai do canal de voz (`SELECT_VOICE_CHANNEL` com `channel_id: null`). Fora de um canal devolve `ok` sem fazer nada. O tablet pede confirmação na tela |
+| `discord` | `set_user_volume` | `{ "id": "<members[].id>", "value": 0..200 }` | Volume de uma pessoa da call, só para o usuário (`SET_USER_VOICE_SETTINGS`). `id` que não é texto de dígitos devolve `invalid_args`; pessoa que não está na call, `unknown_session` |
+| `discord` | `toggle_user_mute` | `{ "id": "<members[].id>" }` | Liga/desliga o mudo de uma pessoa só para o usuário (`localMuted`). Mesmos erros de `id` da ação acima |
 | `notifications` | `clear_all` | — | Descarta **todas** as notificações do Windows (não há como desfazer) |
 | `weather`, `steam`, `claude`, `ups`, `notifications`, `calendar`, `anilist` | `refresh` | — | Coleta de novo agora (no `steam`, recarrega também nível, biblioteca, recentes e amigos) |
 

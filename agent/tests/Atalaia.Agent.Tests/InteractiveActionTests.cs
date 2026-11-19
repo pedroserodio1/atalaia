@@ -78,6 +78,30 @@ public class InteractiveActionTests
     }
 
     [Fact]
+    public async Task Discord_simulado_ajusta_volume_e_muda_uma_pessoa()
+    {
+        await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
+        var d = await WaitAsync(s, "discord", _ => true);
+        var ana = d.GetProperty("channel").GetProperty("members").EnumerateArray().First();
+        var id = ana.GetProperty("id").GetString()!;
+        Assert.Equal(100, ana.GetProperty("volume").GetInt32());
+        Assert.False(ana.GetProperty("localMuted").GetBoolean());
+
+        JsonElement Of(JsonElement x) => x.GetProperty("channel").GetProperty("members").EnumerateArray().First(m => m.GetProperty("id").GetString() == id);
+        Assert.True((await Run(s, "discord", "set_user_volume", new { id, value = 250 })).Ok);          // limita a 200
+        await WaitAsync(s, "discord", x => Of(x).GetProperty("volume").GetInt32() == 200);
+        Assert.True((await Run(s, "discord", "toggle_user_mute", new { id })).Ok);
+        await WaitAsync(s, "discord", x => Of(x).GetProperty("localMuted").GetBoolean());
+        Assert.True((await Run(s, "discord", "toggle_user_mute", new { id })).Ok);
+        await WaitAsync(s, "discord", x => !Of(x).GetProperty("localMuted").GetBoolean());
+
+        Assert.Equal("invalid_args", (await Run(s, "discord", "set_user_volume", new { id, value = "alto" })).Error);
+        Assert.Equal("invalid_args", (await Run(s, "discord", "set_user_volume", new { value = 50 })).Error);          // sem id
+        Assert.Equal("invalid_args", (await Run(s, "discord", "toggle_user_mute", new { id = 7 })).Error);            // id que não é texto
+        Assert.Equal("unknown_session", (await Run(s, "discord", "toggle_user_mute", new { id = "999999999999999999" })).Error);   // quem não está na call
+    }
+
+    [Fact]
     public async Task Discord_simulado_mostra_o_ping_e_sai_da_call()
     {
         await using var s = await TestServer.StartAsync(SimulatorPlugins.All());
@@ -115,7 +139,7 @@ public class InteractiveActionTests
             .First(p => p.GetProperty("id").GetString() == id).GetProperty("actions").EnumerateArray()
             .Select(a => a.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["play_pause", "play", "pause", "next", "previous", "seek"], Actions("media"));
-        Assert.Equal(["toggle_mute", "toggle_deaf", "set_input_volume", "set_output_volume", "leave_call"], Actions("discord"));
+        Assert.Equal(["toggle_mute", "toggle_deaf", "set_input_volume", "set_output_volume", "leave_call", "set_user_volume", "toggle_user_mute"], Actions("discord"));
         Assert.Contains("clear_all", Actions("notifications"));
     }
 
