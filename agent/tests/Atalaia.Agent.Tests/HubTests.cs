@@ -111,9 +111,11 @@ public class HubTests
         await c.HelloAsync();
 
         await c.SendAsync(new { v = 1, type = "subscribe", data = new { sources = new[] { "a" } } });
-        var seen = await c.CollectForAsync(600);
-        Assert.Contains(seen, f => f.Type == "snapshot" && f.Source == "a");
-        Assert.Contains(seen, f => f.Type == "update" && f.Source == "a");
+        // Espera o que precisa chegar (até 5 s) em vez de uma janela fixa: num runner lento de CI 600 ms já não bastou para um update.
+        var snapshot = await c.ReceiveUntilAsync(f => f.Type == "snapshot" && f.Source == "a");
+        Assert.False(snapshot.IsClose);
+        var update = await c.ReceiveUntilAsync(f => f.Type == "update" && f.Source == "a");
+        Assert.False(update.IsClose);
     }
 
     [Fact]
