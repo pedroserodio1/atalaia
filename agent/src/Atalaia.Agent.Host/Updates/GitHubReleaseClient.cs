@@ -4,6 +4,9 @@
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace Atalaia.Agent.Host.Updates;
 
@@ -38,13 +41,28 @@ internal sealed class GitHubReleaseClient(HttpClient http, GitHubReleaseClient.O
 {
     /// <param name="ApiBase">Só os testes mudam isto (servidor falso em 127.0.0.1).</param>
     /// <param name="AllowLoopbackHttp">Só os testes ligam isto: aceita <c>http</c> e qualquer host em loopback.</param>
-    public sealed record Options(string Repository, string AppVersion, Uri? ApiBase = null, bool AllowLoopbackHttp = false);
+    public sealed record Options(string Repository, string AppVersion, Uri? ApiBase = null, bool AllowLoopbackHttp = false, Uri? WebBase = null);
 
     public const long DefaultMaxDownloadBytes = 300L * 1024 * 1024;
     private static readonly Uri DefaultApi = new("https://api.github.com/");
+    private static readonly Uri DefaultWeb = new("https://github.com/");
     private readonly Uri _api = options.ApiBase ?? DefaultApi;
+    private readonly Uri _web = options.WebBase ?? DefaultWeb;
 
+    /// <summary>
+    /// A release de uma tag. Se a API do GitHub estiver com o limite de consultas estourado (o limite sem login é de 60 por hora por IP e outros
+    /// programas na mesma rede gastam), cai no plano B: os arquivos da release têm nome e endereço fixos em <c>github.com</c>, que não passa pela API.
+    /// </summary>
     public async Task<ReleaseInfo> GetByTagAsync(string tag, CancellationToken ct)
+    {
+        try { return await GetByTagFromApiAsync(tag, ct); }
+        catch (GitHubException e) when (e.Kind == GitHubFailure.RateLimited)
+        {
+            return FromTag(tag, body: null) ?? throw e;   // arquivo que não existir dá 404 no download, com a mensagem de sempre
+        }
+    }
+
+    private async Task<ReleaseInfo> GetByTagFromApiAsync(string tag, CancellationToken ct)
     {
         if (!ReleaseNames.IsValidRepository(options.Repository)) throw new GitHubException(GitHubFailure.BadData, "O repositório configurado é inválido (use dono/nome).");
         if (!ReleaseNames.IsValidTag(tag)) throw new GitHubException(GitHubFailure.BadData, "Tag de release inválida.");
@@ -70,6 +88,17 @@ internal sealed class GitHubReleaseClient(HttpClient http, GitHubReleaseClient.O
     /// </summary>
     public async Task<ReleaseList> ListAsync(string? etag, CancellationToken ct)
     {
+        try { return await ListFromApiAsync(etag, ct); }
+        catch (GitHubException e) when (e.Kind == GitHubFailure.RateLimited)
+        {
+            // Plano B: o feed de releases do github.com (fora da API). Se ele também falhar, vale o aviso de limite de sempre.
+            try { return await ListFromFeedAsync(ct); }
+            catch (GitHubException) { throw e; }
+        }
+    }
+
+    private async Task<ReleaseList> ListFromApiAsync(string? etag, CancellationToken ct)
+    {
         if (!ReleaseNames.IsValidRepository(options.Repository)) throw new GitHubException(GitHubFailure.BadData, "O repositório configurado é inválido (use dono/nome).");
 
         using var request = NewRequest(new Uri(_api, $"repos/{options.Repository}/releases?per_page={ListPageSize}"));
@@ -94,6 +123,65 @@ internal sealed class GitHubReleaseClient(HttpClient http, GitHubReleaseClient.O
             return new ReleaseList(list, newTag);
         }
         catch (JsonException) { throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado."); }
+    }
+
+    // ---------------------------------------------------------------- plano B (sem a API)
+
+    private const int MaxFeedChars = 2_000_000;
+    private static readonly XNamespace Atom = "http://www.w3.org/2005/Atom";
+
+    /// <summary>
+    /// As releases publicadas pelo feed <c>github.com/dono/nome/releases.atom</c> (as 10 mais recentes; rascunho não aparece). O feed só traz a tag, a página
+    /// e as notas: o resto vem das regras do próprio Atalaia (beta é o que tem <c>-beta.N</c> na tag e os arquivos têm o nome que a esteira publica, em
+    /// <see cref="FromTag"/>). Entrada com tag fora do padrão ou de outro repositório é ignorada.
+    /// </summary>
+    private async Task<ReleaseList> ListFromFeedAsync(CancellationToken ct)
+    {
+        using var request = NewRequest(new Uri(_web, $"{options.Repository}/releases.atom"));
+        request.Headers.Accept.ParseAdd("application/atom+xml");
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+        using var response = await SendAsync(request, cts.Token, HttpCompletionOption.ResponseHeadersRead);
+        Check(response);
+        try
+        {
+            await using var body = await response.Content.ReadAsStreamAsync(cts.Token);
+            var xml = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = MaxFeedChars };
+            using var reader = XmlReader.Create(body, xml);
+            var doc = XDocument.Load(reader);
+
+            var prefix = new Uri(_web, $"{options.Repository}/releases/tag/").ToString();
+            var list = new List<ReleaseInfo>();
+            foreach (var entry in doc.Descendants(Atom + "entry"))
+            {
+                var href = entry.Elements(Atom + "link").Select(l => (string?)l.Attribute("href")).FirstOrDefault(h => h is not null && h.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                if (href is not null && FromTag(href[prefix.Length..], HtmlToText((string?)entry.Element(Atom + "content"))) is { } release) list.Add(release);
+            }
+            return new ReleaseList(list, null);
+        }
+        catch (XmlException) { throw new GitHubException(GitHubFailure.BadData, "A resposta do GitHub veio num formato inesperado."); }
+    }
+
+    /// <summary>A release de uma tag do Atalaia (<c>vX.Y.Z[-beta.N]</c>) sem perguntar nada à API; <c>null</c> se a tag não é desse formato.</summary>
+    private ReleaseInfo? FromTag(string tag, string? body)
+    {
+        if (!ReleaseNames.IsValidTag(tag) || !AtalaiaVersion.TryParseTag(tag, out var version)) return null;
+        var assets = new[] { UpdateCandidate.InstallerName(version), Install.ApkProvider.ApkNameFor(version.ToString()), UpdateCandidate.SumsFile }
+            .Select(name => new ReleaseAsset(name, new Uri(_web, $"{options.Repository}/releases/download/{tag}/{name}").ToString(), 0))   // tamanho: só se sabe ao baixar
+            .ToList();
+        return new ReleaseInfo(tag, version.IsBeta, false, body, new Uri(_web, $"{options.Repository}/releases/tag/{tag}").ToString(), assets);
+    }
+
+    /// <summary>As notas do feed vêm em HTML; a tela mostra texto simples, então tira as marcas (item de lista vira "- ").</summary>
+    private static string? HtmlToText(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return null;
+        var text = Regex.Replace(html, @"<li[^>]*>", "- ", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"</(p|li|h[1-6]|ul|ol|div)>|<br\s*/?>", "\n", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, "<[^>]+>", "");
+        text = Regex.Replace(WebUtility.HtmlDecode(text), @"\n{3,}", "\n\n").Trim();
+        return text.Length == 0 ? null : text;
     }
 
     /// <summary>
