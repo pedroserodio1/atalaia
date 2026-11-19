@@ -3,6 +3,33 @@
 Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] - 2026-11-20
+
+### Novidades
+
+- **app:** Navegação em submenus com arco ao segurar uma aba (#88)
+- Agenda por link iCal (agente e app), com modal do dia, aviso e som (#91)
+- Lista de agendas na janela e Agenda como aba da raiz (#93)
+- **app:** Agenda vira filha da Comunicação e o aviso do relógio abre a Agenda (#95)
+- Fonte AniList (agente e tela Mídia › Anime) (#96)
+- **agent:** Fonte Rede (ping, jitter e perda até o roteador e a internet) (#100)
+- **app:** Tela Rede em Sistema com latência, jitter e perda por alvo (#101)
+- Uso por núcleo da CPU (system.cpu.cores e cartão na tela Sistema) (#105)
+- Alerta "internet caiu" no cartão do relógio (gateway no alvo da Rede) (#109)
+- **app:** Gráfico de tráfego (descida e subida) no alto da tela Rede (#110)
+- Foto dos membros da call do Discord (avatarHash) (#111)
+- Volume e mudo por pessoa na call do Discord (#115)
+
+### Correções
+
+- **app:** Arco que travava aberto ao soltar o dedo e aba Tocando agora cortada (#90)
+- **app:** Estatísticas da Rede sem corte e ruim só com perda, oscilação ou ping muito alto (#104)
+- **app:** Cor das barras da Rede segue a mesma regra da qualidade (#108)
+- **agent:** Atualização usa o feed e os arquivos do github.com quando a API estoura o limite (#118)
+
+### Outros
+
+- Anime sem a lista "assistindo agora" (tela, agente e contrato) (#99)
 ## [0.3.0] - 2026-11-15
 
 ### Novidades
