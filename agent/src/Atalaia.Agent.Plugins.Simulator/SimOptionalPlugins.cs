@@ -128,10 +128,15 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
     private bool _mute, _deaf;
     private int _input = 100, _output = 100;
     private DateTime? _leftAt;   // saiu da call; o canal volta sozinho em ~10 s para dar para testar o botão
+    private readonly int[] _userVolume = [100, 100, 100, 100];
+    private readonly bool[] _userMuted = new bool[4];
+
+    // Ids falsos, no formato do Discord (só dígitos).
+    private static string IdOf(int i) => $"10000000000000000{i}";
 
     public override IReadOnlyList<ActionDescriptor> Actions { get; } =
         [new("toggle_mute"), new("toggle_deaf"), new("set_input_volume", "args.value 0..100"), new("set_output_volume", "args.value 0..200"),
-         new("leave_call")];
+         new("leave_call"), new("set_user_volume", "args.id, args.value 0..200"), new("toggle_user_mute", "args.id")];
 
     private bool InCall => _leftAt is not { } t || DateTime.UtcNow - t > TimeSpan.FromSeconds(10);
 
@@ -139,6 +144,7 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
     {
         int Volume(int max) => args.ValueKind == JsonValueKind.Object && args.TryGetProperty("value", out var v)
             && v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var d) ? (int)Math.Round(Math.Clamp(d, 0, max)) : -1;
+        string? UserId() => args.ValueKind == JsonValueKind.Object && args.TryGetProperty("id", out var i) && i.ValueKind == JsonValueKind.String ? i.GetString() : null;
         switch (action)
         {
             case "toggle_mute": _mute = !_mute; break;
@@ -150,10 +156,20 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
                 if (Volume(200) < 0) return Task.FromResult(new ActionResult(false, "invalid_args"));
                 _output = Volume(200); break;
             case "leave_call": if (InCall) _leftAt = DateTime.UtcNow; break;   // fora da call: ok sem fazer nada
+            case "set_user_volume":
+                if (UserId() is not { } volumeOf || Volume(200) < 0) return Task.FromResult(new ActionResult(false, "invalid_args"));
+                if (Member(volumeOf) is not { } v) return Task.FromResult(new ActionResult(false, "unknown_session"));
+                _userVolume[v] = Volume(200); break;
+            case "toggle_user_mute":
+                if (UserId() is not { } muteOf) return Task.FromResult(new ActionResult(false, "invalid_args"));
+                if (Member(muteOf) is not { } m) return Task.FromResult(new ActionResult(false, "unknown_session"));
+                _userMuted[m] = !_userMuted[m]; break;
             default: return Task.FromResult(new ActionResult(false, "unknown_action"));
         }
         return Task.FromResult(new ActionResult(true));
     }
+
+    private int? Member(string id) => !InCall ? null : Enumerable.Range(0, Names.Length).Select(i => (int?)i).FirstOrDefault(i => IdOf(i!.Value) == id);
 
     public override Task<JsonElement?> CollectAsync(CancellationToken ct)
     {
@@ -163,7 +179,11 @@ public sealed class SimDiscord() : SimBase("discord", "Discord", 1000)
             name = "Geral",
             guild = "Servidor de teste",
             connection = new { state = "connected", pingMs = 38 },
-            members = Names.Select((n, i) => new { name = n, muted = i == 3, deafened = false, speaking = i == _speaker }).ToList(),
+            members = Names.Select((n, i) => new
+            {
+                id = IdOf(i), name = n, muted = i == 3, deafened = false, speaking = i == _speaker,
+                volume = (int?)_userVolume[i], localMuted = _userMuted[i],
+            }).ToList(),
         };
         return Result(new
         {

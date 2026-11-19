@@ -334,6 +334,10 @@ Cada fonte nova segue o fluxo `/novo-plugin-agente` e `/fonte-no-app`, desligada
 - [ ] **Discord: volume e mudo por pessoa.** `SET_USER_VOICE_SETTINGS` (`volume` de 0 a 200, `mute`; `pan` fica fora). Tocar num membro abre o controle dele.
   Exige o plugin publicar o id do membro (decidir com o mantenedor se vai o id do Discord ou um identificador opaco, já que passa pela rede local), duas
   ações novas (`set_user_volume`, `toggle_user_mute`) e id desconhecido devolvendo `unknown_session` ou `invalid_args`. Mesma regra do slider: envia ao soltar.
+  Código e testes prontos em 18/11/2026 (ramo `feat/discord-volume-pessoa`; **falta provar com o Discord real e no tablet**, cenário 31 de `app/docs/teste-manual.md`; por isso o item continua `[ ]`).
+  Decidido pelo mantenedor: `members[].id` é o **id real do Discord** (não é segredo; o agente só age em quem está na call). Acréscimos opcionais ao contrato: `members[].volume` (0 a 200, `null` sem leitura) e
+  `members[].localMuted` (o mudo só para o usuário, separado de `muted`). No app, tocar numa pessoa abre o controle dela embaixo da lista (volume, **Silenciar**, X). **A provar:** se o escopo `rpc` basta para o
+  `SET_USER_VOICE_SETTINGS`, se o Discord avisa o RPC quando o ajuste vem pela tela dele e se o `mute` fora do `voice_state` é mesmo o mudo local (é o que a documentação do RPC indica; não foi visto ao vivo).
 - [ ] **Discord: avatar dos membros.** O RPC traz só o hash do avatar (`user.avatar`); a imagem vem do CDN do Discord. O app **não** busca nada da internet: o
   agente baixa, reduz (~64 px) e serve pelo `GET /cover/{hash}` que já existe (mesmo hash de 16 caracteres do SHA-256), e o membro ganha um `avatarHash`
   opcional. Cuidados: o agente só fala com **um endereço fixo** do CDN, definido no código (nunca vindo do conteúdo); falha de rede mantém a inicial no círculo;
