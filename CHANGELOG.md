@@ -3,7 +3,7 @@
 Mudanças notáveis do Atalaia, por versão estável. As notas de cada beta ficam nas releases do GitHub.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/) e as versões seguem o [SemVer](https://semver.org/lang/pt-BR/).
 
-## [0.4.0] - 2026-11-20
+## [0.4.0] - 2026-11-19
 
 ### Novidades
 
